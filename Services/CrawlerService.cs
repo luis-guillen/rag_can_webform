@@ -6,6 +6,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace rag_can_aspx.Services
 {
@@ -15,6 +17,9 @@ namespace rag_can_aspx.Services
     /// </summary>
     public class CrawlerService
     {
+        private readonly int _requestDelayMs;
+        private readonly TimeSpan _httpTimeout;
+
         private static readonly string[] _nodosBasura =
         {
             "script", "style", "noscript", "nav", "header", "footer", "aside"
@@ -55,6 +60,18 @@ namespace rag_can_aspx.Services
             "aceptar cookies", "rechazar cookies"
         };
 
+        public CrawlerService()
+            : this(CrawlerSettings.Load())
+        {
+        }
+
+        public CrawlerService(CrawlerSettings settings)
+        {
+            settings = settings ?? CrawlerSettings.Load();
+            _requestDelayMs = settings.RequestDelayMs;
+            _httpTimeout = TimeSpan.FromSeconds(settings.HttpTimeoutSeconds);
+        }
+
         /// <summary>
         /// Resultado del crawling con información estructurada
         /// </summary>
@@ -70,32 +87,38 @@ namespace rag_can_aspx.Services
         /// <summary>
         /// Realiza crawling de un dominio completo
         /// </summary>
-        /// <param name="urlSemilla">URL inicial a rastrear (ej: https://ejemplo.com/)</param>
-        /// <param name="carpetaGuardado">Ruta absoluta donde guardar los archivos</param>
-        /// <param name="maxPaginas">Máximo de páginas a descargar (default 50)</param>
-        /// <param name="maxDepth">Profundidad máxima de enlaces a seguir (default 2)</param>
-        /// <returns>ResultadoCrawl con información del resultado</returns>
         public ResultadoCrawl CrawlDominio(string urlSemilla, string carpetaGuardado, int maxPaginas = 50, int maxDepth = 2)
+        {
+            return CrawlDominioAsync(urlSemilla, carpetaGuardado, maxPaginas, maxDepth, CancellationToken.None)
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
+        }
+
+        public async Task<ResultadoCrawl> CrawlDominioAsync(
+            string urlSemilla,
+            string carpetaGuardado,
+            int maxPaginas = 50,
+            int maxDepth = 2,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             var resultado = new ResultadoCrawl();
 
             try
             {
-                if (!Uri.TryCreate(urlSemilla, UriKind.Absolute, out Uri startUri))
+                Uri startUri;
+                if (!Uri.TryCreate(urlSemilla, UriKind.Absolute, out startUri))
                 {
                     resultado.Exitoso = false;
                     resultado.Mensaje = $"URL inválida: {urlSemilla}";
                     return resultado;
                 }
 
-                // Crear carpeta si no existe
                 try
                 {
                     Directory.CreateDirectory(carpetaGuardado);
                     if (!Directory.Exists(carpetaGuardado))
-                    {
                         throw new Exception($"No se pudo crear la carpeta: {carpetaGuardado}");
-                    }
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -112,8 +135,15 @@ namespace rag_can_aspx.Services
                     return resultado;
                 }
 
-                // Ejecutar crawl
-                var (totalDescargadas, primerError) = EjecutarCrawl(startUri, maxPaginas, maxDepth, carpetaGuardado);
+                var crawlResult = await EjecutarCrawlAsync(
+                    startUri,
+                    maxPaginas,
+                    maxDepth,
+                    carpetaGuardado,
+                    cancellationToken).ConfigureAwait(false);
+
+                int totalDescargadas = crawlResult.Item1;
+                string primerError = crawlResult.Item2;
 
                 resultado.Exitoso = true;
                 resultado.PaginasDescargadas = totalDescargadas;
@@ -125,6 +155,12 @@ namespace rag_can_aspx.Services
                 else
                     resultado.Mensaje = $"Crawling completado: {totalDescargadas} páginas descargadas";
             }
+            catch (OperationCanceledException ex)
+            {
+                resultado.Exitoso = false;
+                resultado.Mensaje = "Crawling cancelado por el host.";
+                resultado.Excepcion = ex;
+            }
             catch (Exception ex)
             {
                 resultado.Exitoso = false;
@@ -135,10 +171,12 @@ namespace rag_can_aspx.Services
             return resultado;
         }
 
-        /// <summary>
-        /// Ejecuta el crawling en BFS
-        /// </summary>
-        private (int contador, string primerError) EjecutarCrawl(Uri startUri, int maxPaginas, int maxDepth, string carpetaBase)
+        private async Task<Tuple<int, string>> EjecutarCrawlAsync(
+            Uri startUri,
+            int maxPaginas,
+            int maxDepth,
+            string carpetaBase,
+            CancellationToken cancellationToken)
         {
             var visitadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var cola = new Queue<Tuple<Uri, int>>();
@@ -147,23 +185,25 @@ namespace rag_can_aspx.Services
             int contador = 0;
             string primerError = null;
 
-            var handler = new System.Net.Http.HttpClientHandler
+            var handler = new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => true
             };
+
             using (var client = new HttpClient(handler))
             {
-                client.Timeout = TimeSpan.FromSeconds(15);
+                client.Timeout = _httpTimeout;
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("TFG-Crawler/1.0");
 
                 while (cola.Count > 0 && contador < maxPaginas)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     var item = cola.Dequeue();
                     var currentUri = item.Item1;
                     int depth = item.Item2;
 
                     string currentUrl = NormalizarUrl(currentUri);
-
                     if (visitadas.Contains(currentUrl))
                         continue;
 
@@ -172,17 +212,17 @@ namespace rag_can_aspx.Services
                     string html;
                     try
                     {
-                        html = client.GetStringAsync(currentUri).ConfigureAwait(false).GetAwaiter().GetResult();
+                        html = await client.GetStringAsync(currentUri).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
                         if (primerError == null)
                             primerError = $"{currentUri}: {ex.GetBaseException().Message}";
-                        System.Threading.Thread.Sleep(300);
+
+                        await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
-                    // Encolar enlaces siempre, aunque la página no tenga contenido útil
                     if (depth < maxDepth)
                     {
                         var enlaces = ExtraerEnlacesInternos(html, currentUri, startUri.Host);
@@ -194,11 +234,10 @@ namespace rag_can_aspx.Services
                         }
                     }
 
-                    string textoLimpio = ExtraerTextoLimpio(html, currentUri.ToString());
-
+                    string textoLimpio = ExtraerTextoLimpio(html);
                     if (string.IsNullOrWhiteSpace(textoLimpio))
                     {
-                        System.Threading.Thread.Sleep(300);
+                        await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
@@ -208,11 +247,19 @@ namespace rag_can_aspx.Services
                     File.WriteAllText(rutaArchivo, textoLimpio, Encoding.UTF8);
                     contador++;
 
-                    System.Threading.Thread.Sleep(300);
+                    await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
 
-            return (contador, primerError);
+            return Tuple.Create(contador, primerError);
+        }
+
+        private Task EsperarEntrePeticionesAsync(CancellationToken cancellationToken)
+        {
+            if (_requestDelayMs <= 0)
+                return Task.CompletedTask;
+
+            return Task.Delay(_requestDelayMs, cancellationToken);
         }
 
         private List<Uri> ExtraerEnlacesInternos(string html, Uri baseUri, string hostObjetivo)
@@ -227,8 +274,7 @@ namespace rag_can_aspx.Services
 
             foreach (var link in links)
             {
-                var href = link.GetAttributeValue("href", "").Trim();
-
+                var href = link.GetAttributeValue("href", string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(href))
                     continue;
 
@@ -240,15 +286,14 @@ namespace rag_can_aspx.Services
                     continue;
                 }
 
-                if (Uri.TryCreate(baseUri, href, out Uri nuevaUri))
+                Uri nuevaUri;
+                if (Uri.TryCreate(baseUri, href, out nuevaUri))
                 {
                     if (!EsUrlRastreable(nuevaUri))
                         continue;
 
                     if (string.Equals(nuevaUri.Host, hostObjetivo, StringComparison.OrdinalIgnoreCase))
-                    {
                         resultado.Add(nuevaUri);
-                    }
                 }
             }
 
@@ -261,7 +306,6 @@ namespace rag_can_aspx.Services
                 return false;
 
             string path = uri.AbsolutePath.ToLowerInvariant();
-
             string[] extensionesNoDeseadas =
             {
                 ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
@@ -273,91 +317,135 @@ namespace rag_can_aspx.Services
             return !extensionesNoDeseadas.Any(ext => path.EndsWith(ext));
         }
 
-        /// <summary>
-        /// Extrae texto limpio del HTML con filtrado inteligente.
-        /// </summary>
-        /// <param name="html">HTML de la página</param>
-        /// <param name="debugUrl">Opcional: URL de la página, usada para nombrar el archivo de depuración</param>
         public string ExtraerTextoLimpio(string html, string debugUrl = null)
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            // 1. Eliminar nodos de ruido estructural
-            var xpathBasura = string.Join("|", _nodosBasura.Select(t => "//" + t));
-            var nodosBasura = doc.DocumentNode.SelectNodes(xpathBasura);
-            if (nodosBasura != null)
-            {
-                foreach (var nodo in nodosBasura.ToList())
-                    nodo.Remove();
-            }
-
-            var xpathInteractivos = string.Join("|", _nodosInteractivos.Select(t => "//" + t));
-            var nodosInteractivos = doc.DocumentNode.SelectNodes(xpathInteractivos);
-            if (nodosInteractivos != null)
-            {
-                foreach (var nodo in nodosInteractivos.ToList())
-                    nodo.Remove();
-            }
-
+            EliminarNodos(doc, _nodosBasura);
+            EliminarNodos(doc, _nodosInteractivos);
             EliminarNodosOcultosODecorativos(doc);
             EliminarNodosPorAtributosDeRuido(doc);
 
-            // 2. Detectar zona de contenido principal
             HtmlNode contenido = SeleccionarContenidoPrincipal(doc);
+            var bloques = ExtraerBloquesSemanticos(contenido);
 
-            // 3. Extraer nodos semánticamente útiles
-            var xpathUtiles = string.Join("|", _nodosUtiles.Select(t => "descendant::" + t));
-            var nodosUtiles = contenido.SelectNodes(xpathUtiles);
-
-            if (nodosUtiles == null || nodosUtiles.Count == 0)
-                nodosUtiles = new HtmlNodeCollection(contenido) { contenido };
-
-            // 4. Construir líneas de texto
-            var sb = new StringBuilder();
-            foreach (var nodo in nodosUtiles)
-            {
-                string texto = HtmlEntity.DeEntitize(nodo.InnerText);
-                texto = Regex.Replace(texto, @"\s+", " ").Trim();
-                if (!string.IsNullOrWhiteSpace(texto))
-                    sb.AppendLine(texto);
-            }
-
-            // DEBUG: activar solo si necesitas inspeccionar la extraccion.
-            // string host = debugUrl != null ? Regex.Replace(new Uri(debugUrl).Host, @"[^a-z0-9]", "_") : "unknown";
-            // File.WriteAllText($@"C:\temp\debug_{host}.txt", sb.ToString(), Encoding.UTF8);
-
-            // 5. Filtrar línea a línea (umbral 8 para incluir encabezados cortos)
-            var líneas = sb.ToString()
-                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(l => l.Trim())
-                .Where(l => l.Length >= 8)
-                .Where(l => !_patronesRuido.Any(p =>
-                    l.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0))
-                .ToList();
-
-            // 6. Fallback: si los nodos semánticos no dieron resultado,
-            //    extraer todo el texto del body dividido por puntos y saltos
-            if (líneas.Count == 0)
+            if (bloques.Count == 0)
             {
                 var body = doc.DocumentNode.SelectSingleNode("//body") ?? doc.DocumentNode;
-                string textoPlano = HtmlEntity.DeEntitize(body.InnerText);
-                textoPlano = Regex.Replace(textoPlano, @"\s+", " ").Trim();
-
-                // DEBUG fallback: descomenta para inspeccionar
-                // string host2 = debugUrl != null ? Regex.Replace(new Uri(debugUrl).Host, @"[^a-z0-9]", "_") : "unknown";
-                // File.WriteAllText($@"C:\temp\debug_{host2}_fallback.txt", textoPlano, Encoding.UTF8);
-
-                líneas = textoPlano
-                    .Split(new[] { '.', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(l => l.Trim())
-                    .Where(l => l.Length >= 8)
-                    .Where(l => !_patronesRuido.Any(p =>
-                        l.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0))
-                    .ToList();
+                bloques = ExtraerBloquesSemanticos(body);
             }
 
-            return string.Join(Environment.NewLine, líneas);
+            return string.Join(Environment.NewLine + Environment.NewLine, bloques);
+        }
+
+        private void EliminarNodos(HtmlDocument doc, IEnumerable<string> nodos)
+        {
+            var xpath = string.Join("|", nodos.Select(t => "//" + t));
+            var encontrados = doc.DocumentNode.SelectNodes(xpath);
+            if (encontrados == null)
+                return;
+
+            foreach (var nodo in encontrados.ToList())
+                nodo.Remove();
+        }
+
+        private List<string> ExtraerBloquesSemanticos(HtmlNode contenedor)
+        {
+            var bloques = new List<BloqueContenido>();
+            var nodosUtiles = contenedor.SelectNodes(
+                ".//h1|.//h2|.//h3|.//h4|.//h5|.//h6|.//p|.//li|.//blockquote|.//dt|.//dd");
+
+            if (nodosUtiles == null || nodosUtiles.Count == 0)
+            {
+                string textoPlano = NormalizarTexto(HtmlEntity.DeEntitize(contenedor.InnerText));
+                if (EsBloqueIndexable(textoPlano))
+                    return new List<string> { textoPlano };
+
+                return new List<string>();
+            }
+
+            BloqueContenido bloqueActual = null;
+
+            foreach (var nodo in nodosUtiles)
+            {
+                string texto = NormalizarTexto(HtmlEntity.DeEntitize(nodo.InnerText));
+                if (string.IsNullOrWhiteSpace(texto))
+                    continue;
+
+                if (EsEncabezado(nodo.Name))
+                {
+                    if (bloqueActual != null)
+                        bloques.Add(bloqueActual);
+
+                    bloqueActual = new BloqueContenido
+                    {
+                        Titulo = texto,
+                        NivelTitulo = ObtenerNivelTitulo(nodo.Name)
+                    };
+                    continue;
+                }
+
+                if (bloqueActual == null)
+                    bloqueActual = new BloqueContenido();
+
+                bloqueActual.Fragmentos.Add(texto);
+            }
+
+            if (bloqueActual != null)
+                bloques.Add(bloqueActual);
+
+            return bloques
+                .Select(RenderizarBloque)
+                .Where(EsBloqueIndexable)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private bool EsBloqueIndexable(string bloque)
+        {
+            if (string.IsNullOrWhiteSpace(bloque))
+                return false;
+
+            string normalizado = NormalizarTexto(bloque);
+            if (normalizado.Length < 40)
+                return false;
+
+            int coincidenciasRuido = _patronesRuido.Count(p =>
+                normalizado.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            return coincidenciasRuido < 2;
+        }
+
+        private string RenderizarBloque(BloqueContenido bloque)
+        {
+            var partes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(bloque.Titulo))
+                partes.Add(bloque.Titulo);
+
+            foreach (string fragmento in bloque.Fragmentos.Distinct(StringComparer.OrdinalIgnoreCase))
+                partes.Add(fragmento);
+
+            return string.Join(Environment.NewLine, partes);
+        }
+
+        private bool EsEncabezado(string nodeName)
+        {
+            return nodeName.Length == 2 &&
+                   nodeName[0] == 'h' &&
+                   char.IsDigit(nodeName[1]);
+        }
+
+        private int ObtenerNivelTitulo(string nodeName)
+        {
+            return EsEncabezado(nodeName) ? nodeName[1] - '0' : 0;
+        }
+
+        private string NormalizarTexto(string texto)
+        {
+            texto = texto ?? string.Empty;
+            texto = Regex.Replace(texto, @"\s+", " ").Trim();
+            return texto;
         }
 
         private HtmlNode SeleccionarContenidoPrincipal(HtmlDocument doc)
@@ -434,7 +522,7 @@ namespace rag_can_aspx.Services
 
         private bool EsNodoDeRuido(HtmlNode nodo)
         {
-            string role = (nodo.GetAttributeValue("role", "") ?? string.Empty).ToLowerInvariant();
+            string role = (nodo.GetAttributeValue("role", string.Empty) ?? string.Empty).ToLowerInvariant();
             if (role == "navigation" || role == "search" || role == "complementary" ||
                 role == "contentinfo" || role == "dialog" || role == "banner")
             {
@@ -446,9 +534,9 @@ namespace rag_can_aspx.Services
 
         private bool ContieneTokenAtributo(HtmlNode nodo, string token)
         {
-            string id = nodo.GetAttributeValue("id", "") ?? string.Empty;
-            string cssClass = nodo.GetAttributeValue("class", "") ?? string.Empty;
-            string ariaLabel = nodo.GetAttributeValue("aria-label", "") ?? string.Empty;
+            string id = nodo.GetAttributeValue("id", string.Empty) ?? string.Empty;
+            string cssClass = nodo.GetAttributeValue("class", string.Empty) ?? string.Empty;
+            string ariaLabel = nodo.GetAttributeValue("aria-label", string.Empty) ?? string.Empty;
 
             return id.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0 ||
                    cssClass.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -465,9 +553,7 @@ namespace rag_can_aspx.Services
             path = path.Replace("/", "_");
 
             foreach (char c in Path.GetInvalidFileNameChars())
-            {
                 path = path.Replace(c, '_');
-            }
 
             if (path.Length > 80)
                 path = path.Substring(0, 80);
@@ -479,22 +565,26 @@ namespace rag_can_aspx.Services
         {
             var builder = new UriBuilder(uri)
             {
-                Fragment = ""
+                Fragment = string.Empty
             };
 
-            string url = builder.Uri.ToString().TrimEnd('/');
-
-            return url;
+            return builder.Uri.ToString().TrimEnd('/');
         }
 
         public string GenerarNombreCarpetaDominio(Uri uri)
         {
             string nombre = uri.Host.Replace(".", "_");
             foreach (char c in Path.GetInvalidFileNameChars())
-            {
                 nombre = nombre.Replace(c, '_');
-            }
+
             return nombre;
+        }
+
+        private sealed class BloqueContenido
+        {
+            public string Titulo { get; set; }
+            public int NivelTitulo { get; set; }
+            public List<string> Fragmentos { get; } = new List<string>();
         }
     }
 }

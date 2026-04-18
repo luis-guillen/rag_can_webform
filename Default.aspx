@@ -3,7 +3,7 @@
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <div class="container">
         <h1 class="mb-4">Crawler RAG Canarias</h1>
-        <p class="lead">Procesa una URL o utiliza las webs semilla por defecto.</p>
+        <p class="lead">Procesa una URL o utiliza las webs semilla definidas en <code>App_Data/seeds.txt</code>.</p>
 
         <div class="card">
             <div class="card-body">
@@ -14,7 +14,7 @@
                     <asp:TextBox ID="txtUrl" runat="server" CssClass="form-control"
                         Placeholder="https://ejemplo.com" />
                     <small class="form-text text-muted d-block mt-2">
-                        Si está vacía, se usarán URLs de prueba por defecto.
+                        Si está vacía, se usarán las URLs del archivo de semillas configurado.
                     </small>
                 </div>
 

@@ -34,7 +34,7 @@
                 <code><asp:Literal ID="litCarpeta" runat="server"></asp:Literal></code>
             </div>
 
-            <h3 class="mt-4 mb-3">Dominios procesados:</h3>
+            <h3 class="mt-4 mb-3">Estado de dominios:</h3>
             <ul style="list-style: none; padding: 0; max-height: 500px; overflow-y: auto;">
                 <asp:Literal ID="litResultados" runat="server" Mode="PassThrough"></asp:Literal>
             </ul>

@@ -97,6 +97,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\seeds.txt" />
     <Content Include="About.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap-grid.css" />
@@ -208,7 +209,10 @@
       <DependentUpon>ViewSwitcher.ascx</DependentUpon>
     </Compile>
     <Compile Include="Services\CrawlerService.cs" />
+    <Compile Include="Services\CrawlerSettings.cs" />
+    <Compile Include="Services\CrawlJobManager.cs" />
     <Compile Include="Services\PathHelper.cs" />
+    <Compile Include="Services\SeedUrlProvider.cs" />
     <Compile Include="Resultados.aspx.cs">
       <DependentUpon>Resultados.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
