@@ -9,9 +9,41 @@
 
 namespace rag_can_aspx
 {
-
-
     public partial class _Default
     {
+        /// <summary>
+        /// txtUrl control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtUrl;
+
+        /// <summary>
+        /// txtCarpeta control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtCarpeta;
+
+        /// <summary>
+        /// txtMaxPages control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtMaxPages;
+
+        /// <summary>
+        /// txtMaxDepth control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtMaxDepth;
+
+        /// <summary>
+        /// chkFullCrawl control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.CheckBox chkFullCrawl;
+
+        /// <summary>
+        /// lblError control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Label lblError;
+
+        /// <summary>
+        /// btnCrawl control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnCrawl;
     }
 }
