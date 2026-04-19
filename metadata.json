@@ -1,0 +1,677 @@
+[
+  {
+    "job": "p14",
+    "domain": "canarias-azul_iatext_ulpgc_es",
+    "page_number": 1,
+    "file": "App_Data/p14/canarias-azul_iatext_ulpgc_es/01_home.txt",
+    "crawled_at": "2026-04-19T02:12:39.4997410Z",
+    "chars": 3211,
+    "sha256": "56dc533dddc0e48bbeb31d8a87646ce39b0e77baf11c3e72959583347b450626",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://canarias-azul.iatext.ulpgc.es/",
+      "title": "Descubre el patrimonio litoral de Canarias",
+      "description": "(auto) canarias-azul_iatext_ulpgc_es — página 1",
+      "topics": [
+        "(auto) universidad",
+        "(auto) investigación",
+        "(auto) atlas",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "canarias-azul_iatext_ulpgc_es",
+    "page_number": 2,
+    "file": "App_Data/p14/canarias-azul_iatext_ulpgc_es/02_Default.aspx.txt",
+    "crawled_at": "2026-04-19T02:12:40.1146885Z",
+    "chars": 3211,
+    "sha256": "56dc533dddc0e48bbeb31d8a87646ce39b0e77baf11c3e72959583347b450626",
+    "quality": "ok",
+    "duplicate_of": "App_Data/p14/canarias-azul_iatext_ulpgc_es/01_home.txt",
+    "manual": {
+      "url": "(auto) https://canarias-azul.iatext.ulpgc.es/Default.aspx",
+      "title": "Descubre el patrimonio litoral de Canarias",
+      "description": "(auto) canarias-azul_iatext_ulpgc_es — página 2",
+      "topics": [
+        "(auto) universidad",
+        "(auto) investigación",
+        "(auto) atlas",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "canarias-azul_iatext_ulpgc_es",
+    "page_number": 3,
+    "file": "App_Data/p14/canarias-azul_iatext_ulpgc_es/03_Catalogo.txt",
+    "crawled_at": "2026-04-19T02:12:40.7210922Z",
+    "chars": 320,
+    "sha256": "066bf4e0252ad1568a6cda8ed681658c9fa532c6434c18df5d1013396f71696c",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://canarias-azul.iatext.ulpgc.es/Catalogo",
+      "title": "Más datos",
+      "description": "(auto) canarias-azul_iatext_ulpgc_es — página 3",
+      "topics": [
+        "(auto) universidad",
+        "(auto) investigación",
+        "(auto) atlas",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "canarias-azul_iatext_ulpgc_es",
+    "page_number": 4,
+    "file": "App_Data/p14/canarias-azul_iatext_ulpgc_es/04_Catalogo.aspx.txt",
+    "crawled_at": "2026-04-19T02:12:41.3116452Z",
+    "chars": 320,
+    "sha256": "066bf4e0252ad1568a6cda8ed681658c9fa532c6434c18df5d1013396f71696c",
+    "quality": "ok",
+    "duplicate_of": "App_Data/p14/canarias-azul_iatext_ulpgc_es/03_Catalogo.txt",
+    "manual": {
+      "url": "(auto) https://canarias-azul.iatext.ulpgc.es/Catalogo.aspx",
+      "title": "Más datos",
+      "description": "(auto) canarias-azul_iatext_ulpgc_es — página 4",
+      "topics": [
+        "(auto) universidad",
+        "(auto) investigación",
+        "(auto) atlas",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "cultura_grancanaria_com",
+    "page_number": 1,
+    "file": "App_Data/p14/cultura_grancanaria_com/01_museos.txt",
+    "crawled_at": "2026-04-19T02:12:29.0514997Z",
+    "chars": 237,
+    "sha256": "c06aa1b845a1669e91ae1b3eeb093af261435417abffe8afdafee37f34d2cfc2",
+    "quality": "low_quality",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://cultura.grancanaria.com/museos",
+      "title": "Historia",
+      "description": "(auto) cultura_grancanaria_com — página 1",
+      "topics": [
+        "(auto) cultura",
+        "(auto) gran canaria",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "cultura_grancanaria_com",
+    "page_number": 2,
+    "file": "App_Data/p14/cultura_grancanaria_com/02_cultura.txt",
+    "crawled_at": "2026-04-19T02:12:30.5430793Z",
+    "chars": 495,
+    "sha256": "c3765e3af73548e3992c7294b31ada038999e0ba623e1f1c1f7a8347e925f071",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://cultura.grancanaria.com/cultura",
+      "title": "Libros y Bibliotecas",
+      "description": "(auto) cultura_grancanaria_com — página 2",
+      "topics": [
+        "(auto) cultura",
+        "(auto) gran canaria",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "cultura_grancanaria_com",
+    "page_number": 3,
+    "file": "App_Data/p14/cultura_grancanaria_com/03_agenda.txt",
+    "crawled_at": "2026-04-19T02:12:34.8964442Z",
+    "chars": 2307,
+    "sha256": "43a0072cb9fb8a59d5cae393adf81fa0b54504e0698dbfe6d3604eb02355f25a",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://cultura.grancanaria.com/agenda",
+      "title": "Convocatoria: XXII Maratón de cuentos",
+      "description": "(auto) cultura_grancanaria_com — página 3",
+      "topics": [
+        "(auto) cultura",
+        "(auto) gran canaria",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "cultura_grancanaria_com",
+    "page_number": 4,
+    "file": "App_Data/p14/cultura_grancanaria_com/04_noticias.txt",
+    "crawled_at": "2026-04-19T02:12:35.9534667Z",
+    "chars": 1473,
+    "sha256": "737fcc4a328cc09f7295dbe71c4455e96d58c24b60fee0e678baf42f8a5dbc21",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://cultura.grancanaria.com/noticias",
+      "title": "09 abril 2026 El circuito de arte ‘Itineraria’ traslada a Ingenio la propuesta plástica de Irene Hidalgo, ‘Distancia de ",
+      "description": "(auto) cultura_grancanaria_com — página 4",
+      "topics": [
+        "(auto) cultura",
+        "(auto) gran canaria",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "cultura_grancanaria_com",
+    "page_number": 5,
+    "file": "App_Data/p14/cultura_grancanaria_com/05_sala-de-prensa.txt",
+    "crawled_at": "2026-04-19T02:12:38.1199430Z",
+    "chars": 47,
+    "sha256": "29efef5cf59eb95740d0d97fe4f55e4f85e7574624b3bf75f97cbb823ca5f874",
+    "quality": "empty",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://cultura.grancanaria.com/sala-de-prensa",
+      "title": "Tweets by GranCanariaCult",
+      "description": "(auto) cultura_grancanaria_com — página 5",
+      "topics": [
+        "(auto) cultura",
+        "(auto) gran canaria",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "elmuseocanario_com",
+    "page_number": 1,
+    "file": "App_Data/p14/elmuseocanario_com/01_home.txt",
+    "crawled_at": "2026-04-19T02:12:29.3112168Z",
+    "chars": 55,
+    "sha256": "111c636821caba6c1854cf0a5956f4dd065559e9656171da07167552dda5060b",
+    "quality": "low_quality",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://elmuseocanario.com/",
+      "title": "El Museo canario – Sociedad Científica El Museo Canario",
+      "description": "(auto) elmuseocanario_com — página 1",
+      "topics": [
+        "(auto) museo",
+        "(auto) patrimonio"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "elmuseocanario_com",
+    "page_number": 2,
+    "file": "App_Data/p14/elmuseocanario_com/02_tienda-el-museo-canario.txt",
+    "crawled_at": "2026-04-19T02:12:31.9696959Z",
+    "chars": 48,
+    "sha256": "8cc784ce50ede64c8152e19c54380cbb6ab3c4ee9c7a808dfc816bb6184e20a3",
+    "quality": "empty",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://elmuseocanario.com/tienda-el-museo-canario",
+      "title": "La Tienda de El Museo Canario – El Museo canario",
+      "description": "(auto) elmuseocanario_com — página 2",
+      "topics": [
+        "(auto) museo",
+        "(auto) patrimonio"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "elmuseocanario_com",
+    "page_number": 3,
+    "file": "App_Data/p14/elmuseocanario_com/03_calendario-de-actividades-2026.txt",
+    "crawled_at": "2026-04-19T02:12:32.9410071Z",
+    "chars": 49,
+    "sha256": "bacb2c22ee3319d18173de23baa19426cce0e850dda7ab0092cca4281b609dc2",
+    "quality": "empty",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://elmuseocanario.com/calendario-de-actividades-2026",
+      "title": "Calendario de actividades 2026 – El Museo canario",
+      "description": "(auto) elmuseocanario_com — página 3",
+      "topics": [
+        "(auto) museo",
+        "(auto) patrimonio"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "elmuseocanario_com",
+    "page_number": 4,
+    "file": "App_Data/p14/elmuseocanario_com/04_proyecto-de-ampliacion.txt",
+    "crawled_at": "2026-04-19T02:12:34.7774894Z",
+    "chars": 41,
+    "sha256": "fa511759f745a07ff85733ef0254a340cf028c67ad9638be4d055ef36ff426a8",
+    "quality": "empty",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://elmuseocanario.com/proyecto-de-ampliacion",
+      "title": "Proyecto de ampliación – El Museo canario",
+      "description": "(auto) elmuseocanario_com — página 4",
+      "topics": [
+        "(auto) museo",
+        "(auto) patrimonio"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "elmuseocanario_com",
+    "page_number": 5,
+    "file": "App_Data/p14/elmuseocanario_com/05_cooperacion-internacional.txt",
+    "crawled_at": "2026-04-19T02:12:39.4176121Z",
+    "chars": 44,
+    "sha256": "efe9716c15e5ae79e2cf459b27610a1c40562bd18769aa505ffca2a079d768dc",
+    "quality": "empty",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://elmuseocanario.com/cooperacion-internacional",
+      "title": "COOPERACIÓN INTERNACIONAL – El Museo canario",
+      "description": "(auto) elmuseocanario_com — página 5",
+      "topics": [
+        "(auto) museo",
+        "(auto) patrimonio"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "izuran_blogspot_com",
+    "page_number": 1,
+    "file": "App_Data/p14/izuran_blogspot_com/01_home.txt",
+    "crawled_at": "2026-04-19T02:12:39.1232676Z",
+    "chars": 19733,
+    "sha256": "5520d005401c03b753d272682830126b9d68370740ae6d222187869108f71f76",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://izuran.blogspot.com/",
+      "title": "Inicio",
+      "description": "(auto) izuran_blogspot_com — página 1",
+      "topics": [
+        "(auto) blog",
+        "(auto) amazigh",
+        "(auto) cultura"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "izuran_blogspot_com",
+    "page_number": 2,
+    "file": "App_Data/p14/izuran_blogspot_com/02_p_amazigh.html.txt",
+    "crawled_at": "2026-04-19T02:12:39.6622801Z",
+    "chars": 99,
+    "sha256": "049201763f3ec3cd6ccffc259a93ee46596e09cc571fda5d0d8c5e706938bbd2",
+    "quality": "low_quality",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://izuran.blogspot.com/p/amazigh.html",
+      "title": "Inicio",
+      "description": "(auto) izuran_blogspot_com — página 2",
+      "topics": [
+        "(auto) blog",
+        "(auto) amazigh",
+        "(auto) cultura"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "izuran_blogspot_com",
+    "page_number": 3,
+    "file": "App_Data/p14/izuran_blogspot_com/03_p_izuran.html.txt",
+    "crawled_at": "2026-04-19T02:12:40.2639001Z",
+    "chars": 99,
+    "sha256": "049201763f3ec3cd6ccffc259a93ee46596e09cc571fda5d0d8c5e706938bbd2",
+    "quality": "low_quality",
+    "duplicate_of": "App_Data/p14/izuran_blogspot_com/02_p_amazigh.html.txt",
+    "manual": {
+      "url": "(auto) https://izuran.blogspot.com/p/izuran.html",
+      "title": "Inicio",
+      "description": "(auto) izuran_blogspot_com — página 3",
+      "topics": [
+        "(auto) blog",
+        "(auto) amazigh",
+        "(auto) cultura"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "izuran_blogspot_com",
+    "page_number": 4,
+    "file": "App_Data/p14/izuran_blogspot_com/04_p_lengua-amazigh.html.txt",
+    "crawled_at": "2026-04-19T02:12:40.8468482Z",
+    "chars": 99,
+    "sha256": "049201763f3ec3cd6ccffc259a93ee46596e09cc571fda5d0d8c5e706938bbd2",
+    "quality": "low_quality",
+    "duplicate_of": "App_Data/p14/izuran_blogspot_com/02_p_amazigh.html.txt",
+    "manual": {
+      "url": "(auto) https://izuran.blogspot.com/p/lengua-amazigh.html",
+      "title": "Inicio",
+      "description": "(auto) izuran_blogspot_com — página 4",
+      "topics": [
+        "(auto) blog",
+        "(auto) amazigh",
+        "(auto) cultura"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "izuran_blogspot_com",
+    "page_number": 5,
+    "file": "App_Data/p14/izuran_blogspot_com/05_p_libico-amazigh.html.txt",
+    "crawled_at": "2026-04-19T02:12:41.5249580Z",
+    "chars": 99,
+    "sha256": "049201763f3ec3cd6ccffc259a93ee46596e09cc571fda5d0d8c5e706938bbd2",
+    "quality": "low_quality",
+    "duplicate_of": "App_Data/p14/izuran_blogspot_com/02_p_amazigh.html.txt",
+    "manual": {
+      "url": "(auto) https://izuran.blogspot.com/p/libico-amazigh.html",
+      "title": "Inicio",
+      "description": "(auto) izuran_blogspot_com — página 5",
+      "topics": [
+        "(auto) blog",
+        "(auto) amazigh",
+        "(auto) cultura"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "memoriadelanzarote_com",
+    "page_number": 1,
+    "file": "App_Data/p14/memoriadelanzarote_com/01_home.txt",
+    "crawled_at": "2026-04-19T02:12:29.0535022Z",
+    "chars": 1328,
+    "sha256": "9f5a91aa22dfdbb79623a366a6c8b5ef49485a9dab25e8c0d7d34ca1c15e7c7b",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://memoriadelanzarote.com/",
+      "title": "Últimas imágenes incorporadas",
+      "description": "(auto) memoriadelanzarote_com — página 1",
+      "topics": [
+        "(auto) memoria histórica",
+        "(auto) lanzarote",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "memoriadelanzarote_com",
+    "page_number": 2,
+    "file": "App_Data/p14/memoriadelanzarote_com/02_imagenes.txt",
+    "crawled_at": "2026-04-19T02:12:31.4930091Z",
+    "chars": 1816,
+    "sha256": "54bcd717e8a36e686e33e0157076357823353a6b56216f8e1539069104caa69b",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://memoriadelanzarote.com/imagenes",
+      "title": "IMÁGENES",
+      "description": "(auto) memoriadelanzarote_com — página 2",
+      "topics": [
+        "(auto) memoria histórica",
+        "(auto) lanzarote",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "memoriadelanzarote_com",
+    "page_number": 3,
+    "file": "App_Data/p14/memoriadelanzarote_com/03_datos.txt",
+    "crawled_at": "2026-04-19T02:12:33.5761563Z",
+    "chars": 862,
+    "sha256": "528727b23b8fce956436e28c532d2b8b6fbeb138b76d46a8918fb2cfa86fba59",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://memoriadelanzarote.com/datos",
+      "title": "DATOS",
+      "description": "(auto) memoriadelanzarote_com — página 3",
+      "topics": [
+        "(auto) memoria histórica",
+        "(auto) lanzarote",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "memoriadelanzarote_com",
+    "page_number": 4,
+    "file": "App_Data/p14/memoriadelanzarote_com/04_documentos.txt",
+    "crawled_at": "2026-04-19T02:12:34.3503502Z",
+    "chars": 20403,
+    "sha256": "a5b8da48a67fe6fb92ec56251dba14a9666294077ac160db96260123ada47643",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://memoriadelanzarote.com/documentos",
+      "title": "DOCUMENTOS",
+      "description": "(auto) memoriadelanzarote_com — página 4",
+      "topics": [
+        "(auto) memoria histórica",
+        "(auto) lanzarote",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "memoriadelanzarote_com",
+    "page_number": 5,
+    "file": "App_Data/p14/memoriadelanzarote_com/05_colecciones.txt",
+    "crawled_at": "2026-04-19T02:12:34.9004757Z",
+    "chars": 1122,
+    "sha256": "2360051d2683ae58b0384b026a9a930d12a4629bb2ba17b7896cd34e4053f25c",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://memoriadelanzarote.com/colecciones",
+      "title": "COLECCIONES",
+      "description": "(auto) memoriadelanzarote_com — página 5",
+      "topics": [
+        "(auto) memoria histórica",
+        "(auto) lanzarote",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "www_academiacanarialengua_org",
+    "page_number": 1,
+    "file": "App_Data/p14/www_academiacanarialengua_org/01_diccionario.txt",
+    "crawled_at": "2026-04-19T02:12:40.2420433Z",
+    "chars": 51,
+    "sha256": "58cba4bfa47c025d17ca628912a71c9d3c7dc2b0a40dcb18a911696ab78c1225",
+    "quality": "low_quality",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://www.academiacanarialengua.org/diccionario",
+      "title": "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z",
+      "description": "(auto) www_academiacanarialengua_org — página 1",
+      "topics": [
+        "(auto) lengua",
+        "(auto) academia canaria",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "www_academiacanarialengua_org",
+    "page_number": 2,
+    "file": "App_Data/p14/www_academiacanarialengua_org/02_home.txt",
+    "crawled_at": "2026-04-19T02:12:48.7294627Z",
+    "chars": 52,
+    "sha256": "992b572497a634b4481feafeff4793f1a948bd45bad6aa445d488b94cfe6f6bd",
+    "quality": "low_quality",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://www.academiacanarialengua.org/",
+      "title": "Portal de Bienvenida - Academia Canaria de la Lengua",
+      "description": "(auto) www_academiacanarialengua_org — página 2",
+      "topics": [
+        "(auto) lengua",
+        "(auto) academia canaria",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "www_academiacanarialengua_org",
+    "page_number": 3,
+    "file": "App_Data/p14/www_academiacanarialengua_org/03_consultas_nueva.txt",
+    "crawled_at": "2026-04-19T02:12:49.2907720Z",
+    "chars": 2664,
+    "sha256": "36b8f9a3c7cf90ed0301350b00682b46f5e350ffec91190b01f430b3838d8075",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://www.academiacanarialengua.org/consultas/nueva",
+      "title": "Hacer una consulta",
+      "description": "(auto) www_academiacanarialengua_org — página 3",
+      "topics": [
+        "(auto) lengua",
+        "(auto) academia canaria",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "www_academiacanarialengua_org",
+    "page_number": 4,
+    "file": "App_Data/p14/www_academiacanarialengua_org/04_diccionario_presentacion.txt",
+    "crawled_at": "2026-04-19T02:12:49.7236852Z",
+    "chars": 4298,
+    "sha256": "578ef6f8f843e1b598cef32e2db141fe855c9223a7771ddcb071452df591ec40",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://www.academiacanarialengua.org/diccionario/presentacion",
+      "title": "Con la expresión lengua materna parece que se quisiera significar que la lengua es el alimento básico del espíritu y man",
+      "description": "(auto) www_academiacanarialengua_org — página 4",
+      "topics": [
+        "(auto) lengua",
+        "(auto) academia canaria",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  },
+  {
+    "job": "p14",
+    "domain": "www_academiacanarialengua_org",
+    "page_number": 5,
+    "file": "App_Data/p14/www_academiacanarialengua_org/05_diccionario_caracteristicas.txt",
+    "crawled_at": "2026-04-19T02:12:50.2441175Z",
+    "chars": 16226,
+    "sha256": "8a014df0d57731323fb06655b5918e942ab09b17b161abd0fdf645a6b28b33a4",
+    "quality": "ok",
+    "duplicate_of": null,
+    "manual": {
+      "url": "(auto) https://www.academiacanarialengua.org/diccionario/caracteristicas",
+      "title": "A continuación se exponen con brevedad algunas observaciones acerca de la naturaleza del Diccionario básico de canarismo",
+      "description": "(auto) www_academiacanarialengua_org — página 5",
+      "topics": [
+        "(auto) lengua",
+        "(auto) academia canaria",
+        "(auto) lingüística",
+        "(auto) canarias"
+      ],
+      "license": "(auto) desconocida",
+      "language": "es"
+    }
+  }
+]

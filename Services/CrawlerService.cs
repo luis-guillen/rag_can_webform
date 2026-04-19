@@ -19,6 +19,7 @@ namespace rag_can_aspx.Services
     {
         private readonly int _requestDelayMs;
         private readonly TimeSpan _httpTimeout;
+        private readonly MetadataService _metadataService;
 
         private static readonly string[] _nodosBasura =
         {
@@ -89,15 +90,17 @@ namespace rag_can_aspx.Services
         };
 
         public CrawlerService()
-            : this(CrawlerSettings.Load())
+            : this(CrawlerSettings.Load(), null)
         {
         }
 
-        public CrawlerService(CrawlerSettings settings)
+        public CrawlerService(CrawlerSettings settings, string projectRoot = null)
         {
             settings = settings ?? CrawlerSettings.Load();
             _requestDelayMs = settings.RequestDelayMs;
             _httpTimeout = TimeSpan.FromSeconds(settings.HttpTimeoutSeconds);
+            if (!string.IsNullOrWhiteSpace(projectRoot))
+                _metadataService = new MetadataService(projectRoot);
         }
 
         /// <summary>
@@ -212,6 +215,7 @@ namespace rag_can_aspx.Services
 
             int contador = 0;
             string primerError = null;
+            string jobName = InferirNombreJob(carpetaBase);
 
             var handler = new HttpClientHandler
             {
@@ -262,6 +266,7 @@ namespace rag_can_aspx.Services
                         }
                     }
 
+                    string titulo = ExtraerTitulo(html);
                     string textoLimpio = ExtraerTextoLimpio(html, currentUri.ToString());
                     if (string.IsNullOrWhiteSpace(textoLimpio))
                     {
@@ -272,8 +277,21 @@ namespace rag_can_aspx.Services
                     string nombreArchivo = GenerarNombreSeguro(currentUri, contador + 1);
                     string rutaArchivo = Path.Combine(carpetaBase, nombreArchivo);
 
-                    File.WriteAllText(rutaArchivo, textoLimpio, Encoding.UTF8);
+                    string textoBom = textoLimpio.TrimStart('\uFEFF');
+                    File.WriteAllText(rutaArchivo, textoBom, new UTF8Encoding(false));
                     contador++;
+
+                    if (_metadataService != null)
+                    {
+                        try
+                        {
+                            var meta = _metadataService.BuildForNewPage(
+                                rutaArchivo, currentUri.ToString(), titulo,
+                                jobName, contador, DateTime.UtcNow);
+                            _metadataService.UpsertAndSave(meta);
+                        }
+                        catch { }
+                    }
 
                     await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                 }
@@ -855,6 +873,27 @@ namespace rag_can_aspx.Services
                 nombre = nombre.Replace(c, '_');
 
             return nombre;
+        }
+
+        private static string ExtraerTitulo(string html)
+        {
+            try
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+                var titleNode = doc.DocumentNode.SelectSingleNode("//title");
+                return titleNode?.InnerText?.Trim() ?? string.Empty;
+            }
+            catch { return string.Empty; }
+        }
+
+        private static string InferirNombreJob(string carpetaBase)
+        {
+            // carpetaBase: "C:\...\App_Data\p13\izuran_blogspot_com\"
+            // job = grandparent dir name = "p13"
+            string ruta = carpetaBase.TrimEnd('\\', '/');
+            string parent = Path.GetDirectoryName(ruta) ?? ruta;
+            return Path.GetFileName(parent) ?? "unknown";
         }
 
         private sealed class BloqueContenido

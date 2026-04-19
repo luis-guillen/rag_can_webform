@@ -21,7 +21,7 @@ namespace rag_can_aspx.Services
 
             PurgarTrabajosAntiguos(request.Settings.JobStatusRetentionMinutes);
 
-            var crawler = new CrawlerService(request.Settings);
+            var crawler = new CrawlerService(request.Settings, applicationRootPath);
             var job = new CrawlJobInfo
             {
                 JobId = Guid.NewGuid().ToString("N"),

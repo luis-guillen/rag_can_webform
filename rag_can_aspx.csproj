@@ -118,6 +118,8 @@
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\Site.css" />
     <Content Include="Default.aspx" />
+    <Content Include="Indexar.aspx" />
+    <Content Include="metadata.json" Condition="Exists('metadata.json')" />
     <Content Include="Resultados.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
@@ -211,8 +213,18 @@
     <Compile Include="Services\CrawlerService.cs" />
     <Compile Include="Services\CrawlerSettings.cs" />
     <Compile Include="Services\CrawlJobManager.cs" />
+    <Compile Include="Services\DuplicateDetector.cs" />
+    <Compile Include="Services\MetadataService.cs" />
     <Compile Include="Services\PathHelper.cs" />
+    <Compile Include="Services\QualityScorer.cs" />
     <Compile Include="Services\SeedUrlProvider.cs" />
+    <Compile Include="Indexar.aspx.cs">
+      <DependentUpon>Indexar.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Indexar.aspx.designer.cs">
+      <DependentUpon>Indexar.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Resultados.aspx.cs">
       <DependentUpon>Resultados.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
