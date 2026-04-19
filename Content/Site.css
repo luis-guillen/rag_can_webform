@@ -72,6 +72,10 @@ html.dark-mode .form-control:focus {
     color: var(--text-muted);
 }
 
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
 /* Cards */
 .card {
     background-color: var(--card-bg);
@@ -211,23 +215,34 @@ footer {
     padding-top: 20px;
 }
 
-/* Dark Mode Toggle Button */
+/* Dark Mode Toggle Button - always visible on dark navbar */
 #dark-mode-toggle {
     background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    color: rgba(255, 255, 255, 0.87);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.9);
     border-radius: 6px;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 #dark-mode-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: #ffffff;
 }
 
 #dm-icon {
     font-size: 16px;
-    transition: transform 0.15s ease;
+}
+
+/* Force dark cards */
+html.dark-mode .card {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+html.dark-mode .card-body {
+    color: var(--text) !important;
 }
 
 /* Responsive */

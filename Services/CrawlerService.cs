@@ -44,6 +44,22 @@ namespace rag_can_aspx.Services
             "sidebar", "popup", "modal", "banner"
         };
 
+        private static readonly string[] _patronesBoilerplate =
+        {
+            "nuestra oficina se encuentra en la primera planta de",
+            "la casa amarilla",
+            "memoria@cabildodelanzarote.com",
+            "e-mail:",
+            "email:",
+            "islas canarias, españa"
+        };
+
+        private static readonly string[] _tokensRutasBajoValor =
+        {
+            "politica-privacidad", "politica-cookies", "cookies", "privacidad",
+            "busqueda-avanzada", "contacto", "nosotros"
+        };
+
         private static readonly string[] _patronesRuido =
         {
             "aviso legal", "política de privacidad", "política de cookies", "uso de cookies",
@@ -234,7 +250,7 @@ namespace rag_can_aspx.Services
                         }
                     }
 
-                    string textoLimpio = ExtraerTextoLimpio(html);
+                    string textoLimpio = ExtraerTextoLimpio(html, currentUri.ToString());
                     if (string.IsNullOrWhiteSpace(textoLimpio))
                     {
                         await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
@@ -319,6 +335,9 @@ namespace rag_can_aspx.Services
 
         public string ExtraerTextoLimpio(string html, string debugUrl = null)
         {
+            if (EsPaginaDeBajoValor(debugUrl))
+                return string.Empty;
+
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
@@ -336,6 +355,7 @@ namespace rag_can_aspx.Services
                 bloques = ExtraerBloquesSemanticos(body);
             }
 
+            bloques = DepurarBloquesParaRag(bloques);
             return string.Join(Environment.NewLine + Environment.NewLine, bloques);
         }
 
@@ -402,6 +422,41 @@ namespace rag_can_aspx.Services
                 .ToList();
         }
 
+        private List<string> DepurarBloquesParaRag(List<string> bloques)
+        {
+            var resultado = new List<string>();
+
+            foreach (string original in bloques)
+            {
+                string bloque = NormalizarTexto(original);
+                if (string.IsNullOrWhiteSpace(bloque))
+                    continue;
+
+                bloque = RepararPuntuacionPegada(bloque);
+                if (EsTeaserTruncado(bloque))
+                    continue;
+
+                if (_patronesBoilerplate.Any(p => bloque.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0))
+                    continue;
+
+                if (resultado.Any(r => SonBloquesEquivalentes(r, bloque)))
+                    continue;
+
+                int indiceDuplicado = resultado.FindIndex(r => ContieneBloqueConEtiquetaDuplicada(r, bloque));
+                if (indiceDuplicado >= 0)
+                {
+                    resultado[indiceDuplicado] = ElegirMejorBloque(resultado[indiceDuplicado], bloque);
+                    continue;
+                }
+
+                resultado.Add(bloque);
+            }
+
+            return resultado
+                .Where(EsBloqueIndexable)
+                .ToList();
+        }
+
         private bool EsBloqueIndexable(string bloque)
         {
             if (string.IsNullOrWhiteSpace(bloque))
@@ -411,10 +466,16 @@ namespace rag_can_aspx.Services
             if (normalizado.Length < 40)
                 return false;
 
+            if (EsTeaserTruncado(normalizado))
+                return false;
+
             int coincidenciasRuido = _patronesRuido.Count(p =>
                 normalizado.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0);
 
-            return coincidenciasRuido < 2;
+            int coincidenciasBoilerplate = _patronesBoilerplate.Count(p =>
+                normalizado.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            return coincidenciasRuido < 2 && coincidenciasBoilerplate == 0;
         }
 
         private string RenderizarBloque(BloqueContenido bloque)
@@ -446,6 +507,89 @@ namespace rag_can_aspx.Services
             texto = texto ?? string.Empty;
             texto = Regex.Replace(texto, @"\s+", " ").Trim();
             return texto;
+        }
+
+        private string RepararPuntuacionPegada(string texto)
+        {
+            texto = Regex.Replace(texto, @"([a-záéíóúñ])\.([A-ZÁÉÍÓÚÑ])", "$1. $2");
+            texto = Regex.Replace(texto, @"([a-záéíóúñ])\:([A-ZÁÉÍÓÚÑ])", "$1: $2");
+            return texto;
+        }
+
+        private bool EsTeaserTruncado(string texto)
+        {
+            texto = NormalizarTexto(texto);
+            if (string.IsNullOrWhiteSpace(texto))
+                return false;
+
+            return texto.EndsWith("...", StringComparison.Ordinal) ||
+                   texto.EndsWith("…", StringComparison.Ordinal) ||
+                   Regex.IsMatch(texto, @"\b\w+\.\.\.$");
+        }
+
+        private bool SonBloquesEquivalentes(string a, string b)
+        {
+            string na = NormalizarComparacion(a);
+            string nb = NormalizarComparacion(b);
+            return string.Equals(na, nb, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool ContieneBloqueConEtiquetaDuplicada(string existente, string candidato)
+        {
+            string existenteSinEtiqueta = QuitarEtiquetaInicial(existente);
+            string candidatoSinEtiqueta = QuitarEtiquetaInicial(candidato);
+
+            if (string.IsNullOrWhiteSpace(existenteSinEtiqueta) || string.IsNullOrWhiteSpace(candidatoSinEtiqueta))
+                return false;
+
+            string ne = NormalizarComparacion(existenteSinEtiqueta);
+            string nc = NormalizarComparacion(candidatoSinEtiqueta);
+
+            return ne.Contains(nc) || nc.Contains(ne);
+        }
+
+        private string ElegirMejorBloque(string actual, string candidato)
+        {
+            bool actualTieneEtiqueta = TieneEtiquetaInicial(actual);
+            bool candidatoTieneEtiqueta = TieneEtiquetaInicial(candidato);
+
+            if (actualTieneEtiqueta && !candidatoTieneEtiqueta)
+                return actual;
+
+            if (!actualTieneEtiqueta && candidatoTieneEtiqueta)
+                return candidato;
+
+            return actual.Length >= candidato.Length ? actual : candidato;
+        }
+
+        private bool TieneEtiquetaInicial(string texto)
+        {
+            return Regex.IsMatch(texto ?? string.Empty, @"^[A-ZÁÉÍÓÚÑ][^:\r\n]{1,40}\:\s+");
+        }
+
+        private string QuitarEtiquetaInicial(string texto)
+        {
+            return Regex.Replace(texto ?? string.Empty, @"^[A-ZÁÉÍÓÚÑ][^:\r\n]{1,40}\:\s+", string.Empty).Trim();
+        }
+
+        private string NormalizarComparacion(string texto)
+        {
+            texto = QuitarEtiquetaInicial(texto);
+            texto = NormalizarTexto(texto).ToLowerInvariant();
+            return texto;
+        }
+
+        private bool EsPaginaDeBajoValor(string debugUrl)
+        {
+            if (string.IsNullOrWhiteSpace(debugUrl))
+                return false;
+
+            Uri uri;
+            if (!Uri.TryCreate(debugUrl, UriKind.Absolute, out uri))
+                return false;
+
+            string url = uri.AbsoluteUri.ToLowerInvariant();
+            return _tokensRutasBajoValor.Any(token => url.Contains(token));
         }
 
         private HtmlNode SeleccionarContenidoPrincipal(HtmlDocument doc)

@@ -68,17 +68,19 @@ namespace rag_can_aspx
                     : $"<div>{HttpUtility.HtmlEncode(domain.Message)}</div>";
 
                 sb.AppendLine(
-                    $"<li style=\"padding: 12px; margin-bottom: 10px; background-color: #f5f5f5; border-left: 4px solid {borderColor}; border-radius: 2px;\">" +
+                    $"<li class=\"card mb-2\" style=\"border-left: 5px solid {borderColor};\">" +
+                    $"<div class=\"card-body\">" +
                     $"<div><strong>{HttpUtility.HtmlEncode(domain.Host)}</strong> · {HttpUtility.HtmlEncode(TraducirEstado(domain.Status))}</div>" +
-                    $"<div style=\"margin-top: 6px;\"><small>{HttpUtility.HtmlEncode(domain.SeedUrl)}</small></div>" +
-                    $"{paginas}{ruta}{mensaje}</li>");
+                    $"<div style=\"margin-top: 6px;\"><small class=\"text-muted\">{HttpUtility.HtmlEncode(domain.SeedUrl)}</small></div>" +
+                    $"{paginas}{ruta}{mensaje}</div></li>");
             }
 
             if (!string.IsNullOrWhiteSpace(job.ErrorMessage))
             {
                 sb.AppendLine(
-                    $"<li style=\"padding: 12px; margin-bottom: 10px; background-color: #fff3cd; border-left: 4px solid #d39e00; border-radius: 2px;\">" +
-                    $"<strong>Error del job:</strong> {HttpUtility.HtmlEncode(job.ErrorMessage)}</li>");
+                    $"<li class=\"card mb-2 border-danger bg-danger bg-opacity-10\">" +
+                    $"<div class=\"card-body\">" +
+                    $"<strong>Error del job:</strong> {HttpUtility.HtmlEncode(job.ErrorMessage)}</div></li>");
             }
 
             return sb.ToString();
