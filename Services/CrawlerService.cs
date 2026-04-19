@@ -60,6 +60,18 @@ namespace rag_can_aspx.Services
             "busqueda-avanzada", "contacto", "nosotros"
         };
 
+        private static readonly string[] _camposMetadataPrioritarios =
+        {
+            "descripción", "autor", "propietario", "periodo", "fecha",
+            "tipo de fotografía", "ámbito geográfico", "soporte",
+            "medidas", "referencia"
+        };
+
+        private static readonly string[] _camposMetadataDescartables =
+        {
+            "aviso legal"
+        };
+
         private static readonly string[] _patronesRuido =
         {
             "aviso legal", "política de privacidad", "política de cookies", "uso de cookies",
@@ -428,11 +440,11 @@ namespace rag_can_aspx.Services
 
             foreach (string original in bloques)
             {
-                string bloque = NormalizarTexto(original);
+                string bloque = original ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(bloque))
                     continue;
 
-                bloque = RepararPuntuacionPegada(bloque);
+                bloque = NormalizarBloqueMultilinea(bloque);
                 if (EsTeaserTruncado(bloque))
                     continue;
 
@@ -462,7 +474,7 @@ namespace rag_can_aspx.Services
             if (string.IsNullOrWhiteSpace(bloque))
                 return false;
 
-            string normalizado = NormalizarTexto(bloque);
+            string normalizado = NormalizarTextoParaIndice(bloque);
             if (normalizado.Length < 40)
                 return false;
 
@@ -480,14 +492,62 @@ namespace rag_can_aspx.Services
 
         private string RenderizarBloque(BloqueContenido bloque)
         {
+            string titulo = NormalizarTexto(bloque.Titulo);
+            var descripcion = new List<string>();
+            var metadata = new List<string>();
+
+            foreach (string fragmentoOriginal in bloque.Fragmentos.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                string fragmento = NormalizarTexto(fragmentoOriginal);
+                if (string.IsNullOrWhiteSpace(fragmento))
+                    continue;
+
+                fragmento = RepararPuntuacionPegada(fragmento);
+
+                string claveMetadata;
+                if (EsLineaMetadata(fragmento, out claveMetadata))
+                {
+                    if (DebeDescartarMetadata(claveMetadata, fragmento))
+                        continue;
+
+                    if (EsDescripcionMetadata(claveMetadata))
+                    {
+                        string textoDescripcion = ExtraerValorMetadata(fragmento);
+                        if (!string.IsNullOrWhiteSpace(textoDescripcion))
+                            descripcion.Add(textoDescripcion);
+                        continue;
+                    }
+
+                    metadata.Add(FormatearMetadata(fragmento));
+                    continue;
+                }
+
+                descripcion.Add(fragmento);
+            }
+
+            descripcion = descripcion
+                .Select(NormalizarTexto)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            metadata = metadata
+                .Select(NormalizarTexto)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
             var partes = new List<string>();
-            if (!string.IsNullOrWhiteSpace(bloque.Titulo))
-                partes.Add(bloque.Titulo);
+            if (!string.IsNullOrWhiteSpace(titulo))
+                partes.Add(titulo);
 
-            foreach (string fragmento in bloque.Fragmentos.Distinct(StringComparer.OrdinalIgnoreCase))
-                partes.Add(fragmento);
+            if (descripcion.Count > 0)
+                partes.Add(string.Join(Environment.NewLine, descripcion));
 
-            return string.Join(Environment.NewLine, partes);
+            if (metadata.Count > 0)
+                partes.Add(string.Join(Environment.NewLine, metadata));
+
+            return string.Join(Environment.NewLine + Environment.NewLine, partes);
         }
 
         private bool EsEncabezado(string nodeName)
@@ -509,6 +569,24 @@ namespace rag_can_aspx.Services
             return texto;
         }
 
+        private string NormalizarBloqueMultilinea(string texto)
+        {
+            var lineas = (texto ?? string.Empty)
+                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .Select(l => RepararPuntuacionPegada(NormalizarTexto(l)))
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .ToList();
+
+            return string.Join(Environment.NewLine, lineas);
+        }
+
+        private string NormalizarTextoParaIndice(string texto)
+        {
+            return NormalizarTexto((texto ?? string.Empty)
+                .Replace("\r", " ")
+                .Replace("\n", " "));
+        }
+
         private string RepararPuntuacionPegada(string texto)
         {
             texto = Regex.Replace(texto, @"([a-záéíóúñ])\.([A-ZÁÉÍÓÚÑ])", "$1. $2");
@@ -518,7 +596,7 @@ namespace rag_can_aspx.Services
 
         private bool EsTeaserTruncado(string texto)
         {
-            texto = NormalizarTexto(texto);
+            texto = NormalizarTextoParaIndice(texto);
             if (string.IsNullOrWhiteSpace(texto))
                 return false;
 
@@ -575,8 +653,63 @@ namespace rag_can_aspx.Services
         private string NormalizarComparacion(string texto)
         {
             texto = QuitarEtiquetaInicial(texto);
-            texto = NormalizarTexto(texto).ToLowerInvariant();
+            texto = NormalizarTextoParaIndice(texto).ToLowerInvariant();
             return texto;
+        }
+
+        private bool EsLineaMetadata(string texto, out string clave)
+        {
+            var match = Regex.Match(texto ?? string.Empty, @"^(?<clave>[A-ZÁÉÍÓÚÑa-záéíóúñ][^:\r\n]{1,40})\:\s+(?<valor>.+)$");
+            if (!match.Success)
+            {
+                clave = null;
+                return false;
+            }
+
+            clave = NormalizarTexto(match.Groups["clave"].Value).ToLowerInvariant();
+            return true;
+        }
+
+        private string ExtraerValorMetadata(string texto)
+        {
+            var match = Regex.Match(texto ?? string.Empty, @"^[^:\r\n]{1,40}\:\s+(?<valor>.+)$");
+            return match.Success ? NormalizarTexto(match.Groups["valor"].Value) : string.Empty;
+        }
+
+        private bool EsDescripcionMetadata(string clave)
+        {
+            return string.Equals(clave, "descripción", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(clave, "descripcion", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool DebeDescartarMetadata(string clave, string linea)
+        {
+            if (_camposMetadataDescartables.Any(c => string.Equals(c, clave, StringComparison.OrdinalIgnoreCase)))
+                return true;
+
+            string valor = ExtraerValorMetadata(linea);
+            if (string.IsNullOrWhiteSpace(valor))
+                return true;
+
+            string valorNormalizado = valor.ToLowerInvariant();
+            if (valorNormalizado == "desconocido" || valorNormalizado == "undefined")
+                return false;
+
+            if (!_camposMetadataPrioritarios.Any(c => string.Equals(c, clave, StringComparison.OrdinalIgnoreCase)))
+                return true;
+
+            return false;
+        }
+
+        private string FormatearMetadata(string linea)
+        {
+            var match = Regex.Match(linea ?? string.Empty, @"^(?<clave>[^:\r\n]{1,40})\:\s+(?<valor>.+)$");
+            if (!match.Success)
+                return NormalizarTexto(linea);
+
+            string clave = NormalizarTexto(match.Groups["clave"].Value);
+            string valor = NormalizarTexto(match.Groups["valor"].Value);
+            return $"{clave}: {valor}";
         }
 
         private bool EsPaginaDeBajoValor(string debugUrl)

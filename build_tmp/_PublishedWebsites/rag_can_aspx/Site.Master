@@ -1,0 +1,114 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="rag_can_aspx.SiteMaster" %>
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> - RAG Canarias</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <script>
+        (function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true' ||
+                           (new RegExp("darkMode=true").test(document.cookie));
+            if (darkMode) {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+            }
+        })();
+    </script>
+
+    <asp:PlaceHolder runat="server">
+        <%: Scripts.Render("~/bundles/modernizr") %>
+    </asp:PlaceHolder>
+
+    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+</head>
+<body>
+    <form runat="server">
+        <asp:ScriptManager runat="server">
+            <Scripts>
+                <%--To learn more about bundling scripts in ScriptManager see https://go.microsoft.com/fwlink/?LinkID=301884 --%>
+                <%--Framework Scripts--%>
+                <asp:ScriptReference Name="MsAjaxBundle" />
+                <asp:ScriptReference Name="jquery" />
+                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
+                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
+                <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
+                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
+                <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
+                <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
+                <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
+                <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
+                <asp:ScriptReference Name="WebFormsBundle" />
+                <%--Site Scripts--%>
+            </Scripts>
+        </asp:ScriptManager>
+
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" runat="server" href="~/Default.aspx">
+                    <i class="fas fa-spider"></i> RAG Canarias
+                </a>
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Alternar navegación" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Default.aspx">Crawler</a></li>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">Acerca de</a></li>
+                    </ul>
+                </div>
+                <button id="dark-mode-toggle" type="button" class="btn ms-2"
+                    style="width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.4); background-color: #343a40;"
+                    title="Alternar modo oscuro" aria-pressed="false">
+                    <i id="dm-icon" class="fas fa-moon" style="font-size:16px; color: inherit;"></i>
+                </button>            </div>
+        </nav>
+        <div class="container body-content">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server">
+            </asp:ContentPlaceHolder>
+            <hr />
+            <footer>
+                <p>&copy; <%: DateTime.Now.Year %> - RAG Canarias</p>
+            </footer>
+        </div>
+
+        <asp:ContentPlaceHolder ID="PageScripts" runat="server">
+        </asp:ContentPlaceHolder>
+    </form>
+
+    <asp:PlaceHolder runat="server">
+        <%: Scripts.Render("~/Scripts/bootstrap.bundle.js") %>
+    </asp:PlaceHolder>
+
+    <script>
+        document.getElementById('dark-mode-toggle').addEventListener('click', function() {
+            const isDark = document.documentElement.classList.toggle('dark-mode');
+            document.body.classList.toggle('dark-mode', isDark);
+
+            const icon = document.getElementById('dm-icon');
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+
+            localStorage.setItem('darkMode', isDark);
+
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
+            document.cookie = `darkMode=${isDark}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+        });
+
+        const isDark = document.documentElement.classList.contains('dark-mode');
+        if (isDark) {
+            document.getElementById('dm-icon').className = 'fas fa-sun';
+            document.getElementById('dark-mode-toggle').setAttribute('aria-pressed', 'true');
+        }
+    </script>
+</body>
+</html>
