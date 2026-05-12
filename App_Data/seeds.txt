@@ -1,0 +1,7 @@
+# Una URL por línea. Se permiten comentarios con #.
+https://elmuseocanario.com/
+https://cultura.grancanaria.com/museos
+https://memoriadelanzarote.com/
+https://canarias-azul.iatext.ulpgc.es/
+https://izuran.blogspot.com/
+https://www.academiacanarialengua.org/diccionario/
