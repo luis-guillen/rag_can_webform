@@ -6,6 +6,9 @@
 # Ignorar archivos .txt EXCEPTO archivos de configuración críticos
 *.txt
 !App_Data/seeds.txt
+
+# Sidecars de metadatos generados por el crawler
+*.metadata.json
 # User-specific files
 *.rsuser
 *.suo

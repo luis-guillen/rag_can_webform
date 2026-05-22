@@ -64,6 +64,7 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Default.aspx">Crawler</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Indexar.aspx">Indexar</a></li>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Chat.aspx">Chat</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">Acerca de</a></li>
                     </ul>
                 </div>

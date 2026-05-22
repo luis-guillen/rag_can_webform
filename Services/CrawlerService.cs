@@ -287,7 +287,7 @@ namespace rag_can_aspx.Services
                         {
                             var meta = _metadataService.BuildForNewPage(
                                 rutaArchivo, currentUri.ToString(), titulo,
-                                jobName, contador, DateTime.UtcNow);
+                                jobName, contador, DateTime.UtcNow, depth);
                             _metadataService.UpsertAndSave(meta);
                         }
                         catch { }

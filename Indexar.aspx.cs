@@ -76,7 +76,7 @@ namespace rag_can_aspx
             string[] archivos = Directory.GetFiles(carpetaAbs, "*.txt", opcion);
 
             int total = 0, lowQuality = 0, empty = 0, bomLimpiados = 0;
-            var nuevasEntradas = new List<PageMetadata>();
+            var nuevasEntradas = new List<PageMetadataDocument>();
 
             foreach (string archivo in archivos.OrderBy(f => f))
             {
@@ -92,23 +92,24 @@ namespace rag_can_aspx
                 }
                 catch { }
 
-                PageMetadata meta = svc.BuildForExistingPage(archivo, jobName);
+                PageMetadataDocument meta = svc.BuildForExistingPage(archivo, jobName);
                 nuevasEntradas.Add(meta);
 
-                if (meta.Quality == "empty") empty++;
-                else if (meta.Quality == "low_quality") lowQuality++;
+                if (meta.PageMetadata.Quality == "empty") empty++;
+                else if (meta.PageMetadata.Quality == "low_quality") lowQuality++;
                 total++;
             }
 
             // Resolver duplicados dentro del lote + contra entradas existentes
             var todas = svc.LoadAll();
             // Quitar entradas previas de este job para reemplazarlas
-            todas.RemoveAll(e2 => string.Equals(e2.Job, jobName, StringComparison.OrdinalIgnoreCase));
+            todas.RemoveAll(e2 => e2.PageMetadata != null &&
+                                  string.Equals(e2.PageMetadata.Job, jobName, StringComparison.OrdinalIgnoreCase));
             todas.AddRange(nuevasEntradas);
             svc.ResolveDuplicates(todas);
             svc.SaveAll(todas);
 
-            int duplicados = nuevasEntradas.Count(m => m.DuplicateOf != null);
+            int duplicados = nuevasEntradas.Count(m => m.PageMetadata.DuplicateOf != null);
 
             MostrarResumen(jobName, total, lowQuality, empty, bomLimpiados, duplicados);
             CargarDropdown();
@@ -138,7 +139,7 @@ namespace rag_can_aspx
                 sb.Append($"<li class=\"list-group-item\"><strong>BOM eliminados:</strong> {bomLimpiados}</li>");
             sb.Append("</ul>");
             sb.Append("<div class=\"mt-3\">");
-            sb.Append("<p class=\"text-success\"><i class=\"fas fa-check-circle\"></i> <code>metadata.json</code> actualizado correctamente.</p>");
+            sb.Append("<p class=\"text-success\"><i class=\"fas fa-check-circle\"></i> <code>metadata.json</code> y sidecars <code>.metadata.json</code> actualizados correctamente.</p>");
             sb.Append("</div>");
 
             litResumen.Text = sb.ToString();

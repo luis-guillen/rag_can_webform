@@ -117,6 +117,7 @@
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="Chat.aspx" />
     <Content Include="Default.aspx" />
     <Content Include="Indexar.aspx" />
     <Content Include="metadata.json" Condition="Exists('metadata.json')" />
@@ -216,8 +217,16 @@
     <Compile Include="Services\DuplicateDetector.cs" />
     <Compile Include="Services\MetadataService.cs" />
     <Compile Include="Services\PathHelper.cs" />
+    <Compile Include="Services\RagQueryService.cs" />
     <Compile Include="Services\QualityScorer.cs" />
     <Compile Include="Services\SeedUrlProvider.cs" />
+    <Compile Include="Chat.aspx.cs">
+      <DependentUpon>Chat.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Chat.aspx.designer.cs">
+      <DependentUpon>Chat.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Indexar.aspx.cs">
       <DependentUpon>Indexar.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
