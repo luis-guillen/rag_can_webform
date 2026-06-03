@@ -26,6 +26,11 @@ namespace rag_can_aspx.Services
             "script", "style", "noscript", "nav", "header", "footer", "aside"
         };
 
+        private static readonly string[] _nodosBasuraFallback =
+        {
+            "script", "style", "noscript", "nav", "header", "footer", "aside", "form"
+        };
+
         private static readonly string[] _nodosInteractivos =
         {
             "input", "button", "select", "textarea", "option"
@@ -33,7 +38,7 @@ namespace rag_can_aspx.Services
 
         private static readonly string[] _nodosUtiles =
         {
-            "h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "dt", "dd"
+            "h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "figcaption", "td", "th", "dt", "dd"
         };
 
         private static readonly string[] _tokensRuidoAtributos =
@@ -267,9 +272,15 @@ namespace rag_can_aspx.Services
                     }
 
                     string titulo = ExtraerTitulo(html);
-                    string textoLimpio = ExtraerTextoLimpio(html, currentUri.ToString());
-                    if (string.IsNullOrWhiteSpace(textoLimpio))
+                    Tuple<string, string> extraccion = ExtraerTextoLimpioConDebug(html, currentUri.ToString());
+                    string textoLimpio = extraccion.Item1;
+                    string textoPreFiltros = extraccion.Item2;
+                    Quality calidad = QualityScorer.Score(textoLimpio);
+
+                    if (calidad != Quality.Ok)
                     {
+                        if (!EsPaginaDeBajoValor(currentUri.ToString()))
+                            GuardarDebugExtraccion(carpetaBase, currentUri, html, textoPreFiltros, textoLimpio, calidad);
                         await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                         continue;
                     }
@@ -365,8 +376,13 @@ namespace rag_can_aspx.Services
 
         public string ExtraerTextoLimpio(string html, string debugUrl = null)
         {
+            return ExtraerTextoLimpioConDebug(html, debugUrl).Item1;
+        }
+
+        private Tuple<string, string> ExtraerTextoLimpioConDebug(string html, string debugUrl = null)
+        {
             if (EsPaginaDeBajoValor(debugUrl))
-                return string.Empty;
+                return Tuple.Create(string.Empty, string.Empty);
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -377,16 +393,29 @@ namespace rag_can_aspx.Services
             EliminarNodosPorAtributosDeRuido(doc);
 
             HtmlNode contenido = SeleccionarContenidoPrincipal(doc);
-            var bloques = ExtraerBloquesSemanticos(contenido);
+            var bloques = ExtraerBloquesSemanticos(contenido, false);
 
-            if (bloques.Count == 0)
+            string textoAntesFiltros = string.Join(Environment.NewLine + Environment.NewLine, bloques);
+            if (bloques.Count == 0 || textoAntesFiltros.Length < 300)
             {
-                var body = doc.DocumentNode.SelectSingleNode("//body") ?? doc.DocumentNode;
-                bloques = ExtraerBloquesSemanticos(body);
+                var docLigero = new HtmlDocument();
+                docLigero.LoadHtml(html);
+
+                EliminarNodos(docLigero, _nodosBasuraFallback);
+
+                HtmlNode mejorContenedor = SeleccionarContenidoPrincipal(docLigero);
+                if (mejorContenedor != null)
+                {
+                    string textoRespaldo = NormalizarTexto(HtmlEntity.DeEntitize(mejorContenedor.InnerText));
+                    if (!string.IsNullOrWhiteSpace(textoRespaldo))
+                        bloques = new List<string> { textoRespaldo };
+                }
             }
 
+            textoAntesFiltros = string.Join(Environment.NewLine + Environment.NewLine, bloques);
             bloques = DepurarBloquesParaRag(bloques);
-            return string.Join(Environment.NewLine + Environment.NewLine, bloques);
+            string textoFinal = string.Join(Environment.NewLine + Environment.NewLine, bloques);
+            return Tuple.Create(textoFinal, textoAntesFiltros);
         }
 
         private void EliminarNodos(HtmlDocument doc, IEnumerable<string> nodos)
@@ -400,15 +429,21 @@ namespace rag_can_aspx.Services
                 nodo.Remove();
         }
 
-        private List<string> ExtraerBloquesSemanticos(HtmlNode contenedor)
+        private List<string> ExtraerBloquesSemanticos(HtmlNode contenedor, bool aplicarFiltros = true)
         {
+            if (contenedor == null)
+                return new List<string>();
+
             var bloques = new List<BloqueContenido>();
             var nodosUtiles = contenedor.SelectNodes(
-                ".//h1|.//h2|.//h3|.//h4|.//h5|.//h6|.//p|.//li|.//blockquote|.//dt|.//dd");
+                ".//h1|.//h2|.//h3|.//h4|.//h5|.//h6|.//p|.//li|.//blockquote|.//figcaption|.//td|.//th|.//dt|.//dd");
 
             if (nodosUtiles == null || nodosUtiles.Count == 0)
             {
                 string textoPlano = NormalizarTexto(HtmlEntity.DeEntitize(contenedor.InnerText));
+                if (!aplicarFiltros)
+                    return string.IsNullOrWhiteSpace(textoPlano) ? new List<string>() : new List<string> { textoPlano };
+
                 if (EsBloqueIndexable(textoPlano))
                     return new List<string> { textoPlano };
 
@@ -445,10 +480,16 @@ namespace rag_can_aspx.Services
             if (bloqueActual != null)
                 bloques.Add(bloqueActual);
 
-            return bloques
+            var renderizados = bloques
                 .Select(RenderizarBloque)
-                .Where(EsBloqueIndexable)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!aplicarFiltros)
+                return renderizados;
+
+            return renderizados
+                .Where(EsBloqueIndexable)
                 .ToList();
         }
 
@@ -749,6 +790,13 @@ namespace rag_can_aspx.Services
             {
                 doc.DocumentNode.SelectSingleNode("//main"),
                 doc.DocumentNode.SelectSingleNode("//article"),
+                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'entry-content')]"),
+                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'page-content')]"),
+                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'post-content')]"),
+                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'site-main')]"),
+                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'elementor-widget-container')]"),
+                doc.DocumentNode.SelectSingleNode("//*[@id='content']"),
+                doc.DocumentNode.SelectSingleNode("//*[@id='main']"),
                 doc.DocumentNode.SelectSingleNode("//div[@id='content']"),
                 doc.DocumentNode.SelectSingleNode("//div[@id='main']"),
                 doc.DocumentNode.SelectSingleNode("//div[contains(@class,'content')]")
@@ -759,14 +807,14 @@ namespace rag_can_aspx.Services
 
             var candidatos = doc.DocumentNode.SelectNodes("//body|//form|//section|//article|//main|//div");
             if (candidatos == null || candidatos.Count == 0)
-                return doc.DocumentNode;
+                return doc.DocumentNode.SelectSingleNode("//body");
 
             var mejor = candidatos
                 .Where(TieneTextoVisibleSuficiente)
                 .OrderByDescending(CalcularPuntuacionContenido)
                 .FirstOrDefault();
 
-            return mejor ?? doc.DocumentNode.SelectSingleNode("//body") ?? doc.DocumentNode;
+            return mejor ?? doc.DocumentNode.SelectSingleNode("//body");
         }
 
         private bool TieneTextoVisibleSuficiente(HtmlNode nodo)
@@ -778,7 +826,7 @@ namespace rag_can_aspx.Services
 
         private int CalcularPuntuacionContenido(HtmlNode nodo)
         {
-            var nodosUtiles = nodo.SelectNodes(".//h1|.//h2|.//h3|.//h4|.//h5|.//h6|.//p|.//li|.//blockquote|.//dt|.//dd");
+            var nodosUtiles = nodo.SelectNodes(".//h1|.//h2|.//h3|.//h4|.//h5|.//h6|.//p|.//li|.//blockquote|.//figcaption|.//td|.//th|.//dt|.//dd");
             int cuentaUtiles = nodosUtiles?.Count ?? 0;
 
             string texto = HtmlEntity.DeEntitize(nodo.InnerText ?? string.Empty);
@@ -901,6 +949,35 @@ namespace rag_can_aspx.Services
             public string Titulo { get; set; }
             public int NivelTitulo { get; set; }
             public List<string> Fragmentos { get; } = new List<string>();
+        }
+
+        private void GuardarDebugExtraccion(
+            string carpetaBase,
+            Uri uri,
+            string htmlCrudo,
+            string textoPreFiltros,
+            string textoFinal,
+            Quality calidad)
+        {
+            try
+            {
+                string debugFolder = Path.Combine(carpetaBase, "debug_raw_html");
+                Directory.CreateDirectory(debugFolder);
+
+                string baseName = GenerarNombreSeguro(uri, 0).Replace(".txt", string.Empty);
+                string qualityTag = QualityScorer.ToLabel(calidad);
+
+                string htmlPath = Path.Combine(debugFolder, $"{baseName}.{qualityTag}.html");
+                string prePath = Path.Combine(debugFolder, $"{baseName}.{qualityTag}.pre.txt");
+                string finalPath = Path.Combine(debugFolder, $"{baseName}.{qualityTag}.final.txt");
+
+                File.WriteAllText(htmlPath, htmlCrudo ?? string.Empty, new UTF8Encoding(false));
+                File.WriteAllText(prePath, (textoPreFiltros ?? string.Empty).TrimStart('\uFEFF'), new UTF8Encoding(false));
+                File.WriteAllText(finalPath, (textoFinal ?? string.Empty).TrimStart('\uFEFF'), new UTF8Encoding(false));
+            }
+            catch
+            {
+            }
         }
     }
 }
