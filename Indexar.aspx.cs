@@ -73,7 +73,9 @@ namespace rag_can_aspx
                 ? SearchOption.AllDirectories
                 : SearchOption.TopDirectoryOnly;
 
-            string[] archivos = Directory.GetFiles(carpetaAbs, "*.txt", opcion);
+            string[] archivos = Directory.GetFiles(carpetaAbs, "*.txt", opcion)
+                .Where(EsArchivoIndexablePrimario)
+                .ToArray();
 
             int total = 0, lowQuality = 0, empty = 0, bomLimpiados = 0;
             var nuevasEntradas = new List<PageMetadataDocument>();
@@ -109,9 +111,25 @@ namespace rag_can_aspx
             svc.ResolveDuplicates(todas);
             svc.SaveAll(todas);
 
-            int duplicados = nuevasEntradas.Count(m => m.PageMetadata.DuplicateOf != null);
+            var archivosDelJob = new HashSet<string>(
+                nuevasEntradas
+                    .Where(m => m != null && m.PageMetadata != null && !string.IsNullOrWhiteSpace(m.PageMetadata.File))
+                    .Select(m => m.PageMetadata.File),
+                StringComparer.OrdinalIgnoreCase);
 
-            MostrarResumen(jobName, total, lowQuality, empty, bomLimpiados, duplicados);
+            int duplicadosInternos = nuevasEntradas.Count(m =>
+                m != null &&
+                m.PageMetadata != null &&
+                !string.IsNullOrWhiteSpace(m.PageMetadata.DuplicateOf) &&
+                archivosDelJob.Contains(m.PageMetadata.DuplicateOf));
+
+            int duplicadosHistoricos = nuevasEntradas.Count(m =>
+                m != null &&
+                m.PageMetadata != null &&
+                !string.IsNullOrWhiteSpace(m.PageMetadata.DuplicateOf) &&
+                !archivosDelJob.Contains(m.PageMetadata.DuplicateOf));
+
+            MostrarResumen(jobName, total, lowQuality, empty, bomLimpiados, duplicadosInternos, duplicadosHistoricos);
             CargarDropdown();
         }
 
@@ -121,7 +139,24 @@ namespace rag_can_aspx
             lblError.Visible = true;
         }
 
-        private void MostrarResumen(string job, int total, int lowQuality, int empty, int bomLimpiados, int duplicados)
+        private static bool EsArchivoIndexablePrimario(string rutaArchivo)
+        {
+            if (string.IsNullOrWhiteSpace(rutaArchivo))
+                return false;
+
+            string normalizada = rutaArchivo.Replace('\\', '/');
+            if (normalizada.IndexOf("/debug_raw_html/", StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+
+            string nombre = Path.GetFileName(normalizada);
+            if (nombre.IndexOf(".pre.", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                nombre.IndexOf(".final.", StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+
+            return true;
+        }
+
+        private void MostrarResumen(string job, int total, int lowQuality, int empty, int bomLimpiados, int duplicadosInternos, int duplicadosHistoricos)
         {
             int ok = total - lowQuality - empty;
             var sb = new StringBuilder();
@@ -133,8 +168,10 @@ namespace rag_can_aspx
                 sb.Append($"<li class=\"list-group-item text-warning\"><strong>Calidad baja (&lt;300 chars):</strong> {lowQuality}</li>");
             if (empty > 0)
                 sb.Append($"<li class=\"list-group-item text-danger\"><strong>Vacíos (&lt;50 chars):</strong> {empty}</li>");
-            if (duplicados > 0)
-                sb.Append($"<li class=\"list-group-item text-secondary\"><strong>Duplicados detectados:</strong> {duplicados}</li>");
+            if (duplicadosInternos > 0)
+                sb.Append($"<li class=\"list-group-item text-secondary\"><strong>Duplicados internos del job:</strong> {duplicadosInternos}</li>");
+            if (duplicadosHistoricos > 0)
+                sb.Append($"<li class=\"list-group-item text-secondary\"><strong>Duplicados contra histórico:</strong> {duplicadosHistoricos}</li>");
             if (bomLimpiados > 0)
                 sb.Append($"<li class=\"list-group-item\"><strong>BOM eliminados:</strong> {bomLimpiados}</li>");
             sb.Append("</ul>");

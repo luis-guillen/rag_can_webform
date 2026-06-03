@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -93,6 +94,9 @@ namespace rag_can_aspx.Services
             "google analytics", "configuracion de cookies",
             "aceptar cookies", "rechazar cookies"
         };
+
+        private const string HostCanariasAzul = "canarias-azul.iatext.ulpgc.es";
+        private const string EventTargetCerrarDetalleCanariasAzul = "ctl00$MainContent$BotonCerrarDatosElemento";
 
         public CrawlerService()
             : this(CrawlerSettings.Load(), null)
@@ -215,8 +219,10 @@ namespace rag_can_aspx.Services
             CancellationToken cancellationToken)
         {
             var visitadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var enCola = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var cola = new Queue<Tuple<Uri, int>>();
             cola.Enqueue(Tuple.Create(startUri, 0));
+            enCola.Add(NormalizarUrl(startUri));
 
             int contador = 0;
             string primerError = null;
@@ -232,6 +238,9 @@ namespace rag_can_aspx.Services
                 client.Timeout = _httpTimeout;
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("TFG-Crawler/1.0");
 
+                if (EsCrawlerCanariasAzul(startUri))
+                    return await EjecutarCrawlCanariasAzulAsync(client, startUri, maxPaginas, carpetaBase, jobName, cancellationToken).ConfigureAwait(false);
+
                 while (cola.Count > 0 && contador < maxPaginas)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -241,15 +250,22 @@ namespace rag_can_aspx.Services
                     int depth = item.Item2;
 
                     string currentUrl = NormalizarUrl(currentUri);
+                    enCola.Remove(currentUrl);
                     if (visitadas.Contains(currentUrl))
                         continue;
 
                     visitadas.Add(currentUrl);
 
                     string html;
+                    Uri effectiveUri = currentUri;
                     try
                     {
-                        html = await client.GetStringAsync(currentUri).ConfigureAwait(false);
+                        using (var response = await client.GetAsync(currentUri).ConfigureAwait(false))
+                        {
+                            response.EnsureSuccessStatusCode();
+                            effectiveUri = response.RequestMessage?.RequestUri ?? currentUri;
+                            html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -260,52 +276,175 @@ namespace rag_can_aspx.Services
                         continue;
                     }
 
+                    string effectiveUrl = NormalizarUrl(effectiveUri);
+                    if (!string.Equals(effectiveUrl, currentUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (visitadas.Contains(effectiveUrl))
+                        {
+                            await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
+                            continue;
+                        }
+
+                        visitadas.Add(effectiveUrl);
+                    }
+
                     if (depth < maxDepth)
                     {
-                        var enlaces = ExtraerEnlacesInternos(html, currentUri, startUri.Host);
+                        var enlaces = ExtraerEnlacesInternos(html, effectiveUri, startUri.Host);
                         foreach (var enlace in enlaces)
                         {
                             string enlaceNormalizado = NormalizarUrl(enlace);
-                            if (!visitadas.Contains(enlaceNormalizado))
+                            if (!visitadas.Contains(enlaceNormalizado) && !enCola.Contains(enlaceNormalizado))
+                            {
                                 cola.Enqueue(Tuple.Create(enlace, depth + 1));
+                                enCola.Add(enlaceNormalizado);
+                            }
                         }
                     }
 
                     string titulo = ExtraerTitulo(html);
-                    Tuple<string, string> extraccion = ExtraerTextoLimpioConDebug(html, currentUri.ToString());
+                    Tuple<string, string> extraccion = ExtraerTextoLimpioConDebug(html, effectiveUri.ToString());
                     string textoLimpio = extraccion.Item1;
                     string textoPreFiltros = extraccion.Item2;
                     Quality calidad = QualityScorer.Score(textoLimpio);
 
                     if (calidad != Quality.Ok)
                     {
-                        if (!EsPaginaDeBajoValor(currentUri.ToString()))
-                            GuardarDebugExtraccion(carpetaBase, currentUri, html, textoPreFiltros, textoLimpio, calidad);
+                        if (!EsPaginaDeBajoValor(effectiveUri.ToString()))
+                            GuardarDebugExtraccion(carpetaBase, effectiveUri, html, textoPreFiltros, textoLimpio, calidad);
                         await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
-                    string nombreArchivo = GenerarNombreSeguro(currentUri, contador + 1);
-                    string rutaArchivo = Path.Combine(carpetaBase, nombreArchivo);
-
-                    string textoBom = textoLimpio.TrimStart('\uFEFF');
-                    File.WriteAllText(rutaArchivo, textoBom, new UTF8Encoding(false));
-                    contador++;
-
-                    if (_metadataService != null)
-                    {
-                        try
-                        {
-                            var meta = _metadataService.BuildForNewPage(
-                                rutaArchivo, currentUri.ToString(), titulo,
-                                jobName, contador, DateTime.UtcNow, depth);
-                            _metadataService.UpsertAndSave(meta);
-                        }
-                        catch { }
-                    }
+                    string nombreArchivo = GenerarNombreSeguro(effectiveUri, contador + 1);
+                    PersistirDocumento(carpetaBase, nombreArchivo, textoLimpio, effectiveUri.ToString(), titulo, jobName, depth, ref contador);
 
                     await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
                 }
+            }
+
+            return Tuple.Create(contador, primerError);
+        }
+
+        private async Task<Tuple<int, string>> EjecutarCrawlCanariasAzulAsync(
+            HttpClient client,
+            Uri startUri,
+            int maxPaginas,
+            string carpetaBase,
+            string jobName,
+            CancellationToken cancellationToken)
+        {
+            int contador = 0;
+            string primerError = null;
+            var slugsProcesados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var paginasVistas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Uri catalogoUri = new Uri(startUri, "Catalogo");
+
+            try
+            {
+                string htmlHome = await DescargarHtmlAsync(client, startUri, cancellationToken).ConfigureAwait(false);
+                string tituloHome = ExtraerTitulo(htmlHome);
+                Tuple<string, string> extraccionHome = ExtraerTextoLimpioConDebug(htmlHome, startUri.ToString());
+                string nombreHome = GenerarNombreSeguro(startUri, contador + 1);
+                if (!TryPersistirDocumentoIndexable(carpetaBase, startUri, nombreHome, extraccionHome, tituloHome, jobName, 0, ref contador))
+                    GuardarDebugExtraccion(carpetaBase, startUri, htmlHome, extraccionHome.Item2, extraccionHome.Item1, QualityScorer.Score(extraccionHome.Item1));
+            }
+            catch (Exception ex)
+            {
+                primerError = $"{startUri}: {ex.GetBaseException().Message}";
+            }
+
+            if (contador >= maxPaginas)
+                return Tuple.Create(contador, primerError);
+
+            await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
+
+            WebFormsPageState estadoListado;
+            try
+            {
+                string htmlCatalogo = await DescargarHtmlAsync(client, catalogoUri, cancellationToken).ConfigureAwait(false);
+                estadoListado = CrearEstadoWebForms(catalogoUri, htmlCatalogo);
+            }
+            catch (Exception ex)
+            {
+                if (primerError == null)
+                    primerError = $"{catalogoUri}: {ex.GetBaseException().Message}";
+                return Tuple.Create(contador, primerError);
+            }
+
+            while (estadoListado != null && contador < maxPaginas)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string firmaPagina = CrearFirmaPaginaCatalogo(estadoListado.Html);
+                if (!paginasVistas.Add(firmaPagina))
+                    break;
+
+                foreach (CatalogoListadoItem item in ExtraerItemsCatalogo(estadoListado.Html))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (contador >= maxPaginas)
+                        break;
+
+                    string slug = CrearSlug(item.Title);
+                    if (string.IsNullOrWhiteSpace(slug) || !slugsProcesados.Add(slug))
+                        continue;
+
+                    WebFormsPageState estadoDetalle;
+                    try
+                    {
+                        estadoDetalle = await HacerPostbackWebFormsAsync(
+                            client,
+                            estadoListado,
+                            item.EventTarget,
+                            string.Empty,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (primerError == null)
+                            primerError = $"{catalogoUri}#{slug}: {ex.GetBaseException().Message}";
+                        continue;
+                    }
+
+                    string tituloDetalle;
+                    string textoDetalle = ExtraerTextoDetalleCanariasAzul(estadoDetalle.Html, out tituloDetalle);
+                    tituloDetalle = string.IsNullOrWhiteSpace(tituloDetalle) ? item.Title : tituloDetalle;
+                    string urlDetalle = ConstruirUrlDetalleCanariasAzul(catalogoUri, slug);
+                    string nombreArchivo = GenerarNombreCatalogoItem(contador + 1, slug);
+                    var extraccionDetalle = Tuple.Create(textoDetalle, textoDetalle);
+
+                    if (!TryPersistirDocumentoIndexable(carpetaBase, new Uri(urlDetalle), nombreArchivo, extraccionDetalle, tituloDetalle, jobName, 1, ref contador, urlDetalle))
+                        GuardarDebugExtraccion(carpetaBase, new Uri(catalogoUri, "item-" + slug), estadoDetalle.Html, textoDetalle, textoDetalle, QualityScorer.Score(textoDetalle));
+
+                    estadoListado = await RestaurarEstadoListadoCanariasAzulAsync(client, estadoDetalle, cancellationToken).ConfigureAwait(false);
+                    await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                if (contador >= maxPaginas)
+                    break;
+
+                string siguienteEventTarget = ExtraerEventTargetSiguientePagina(estadoListado.Html);
+                if (string.IsNullOrWhiteSpace(siguienteEventTarget))
+                    break;
+
+                try
+                {
+                    estadoListado = await HacerPostbackWebFormsAsync(
+                        client,
+                        estadoListado,
+                        siguienteEventTarget,
+                        string.Empty,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    if (primerError == null)
+                        primerError = $"{catalogoUri}: {ex.GetBaseException().Message}";
+                    break;
+                }
+
+                await EsperarEntrePeticionesAsync(cancellationToken).ConfigureAwait(false);
             }
 
             return Tuple.Create(contador, primerError);
@@ -396,7 +535,7 @@ namespace rag_can_aspx.Services
             var bloques = ExtraerBloquesSemanticos(contenido, false);
 
             string textoAntesFiltros = string.Join(Environment.NewLine + Environment.NewLine, bloques);
-            if (bloques.Count == 0 || textoAntesFiltros.Length < 300)
+            if (ExtraccionInsuficiente(bloques))
             {
                 var docLigero = new HtmlDocument();
                 docLigero.LoadHtml(html);
@@ -406,9 +545,16 @@ namespace rag_can_aspx.Services
                 HtmlNode mejorContenedor = SeleccionarContenidoPrincipal(docLigero);
                 if (mejorContenedor != null)
                 {
-                    string textoRespaldo = NormalizarTexto(HtmlEntity.DeEntitize(mejorContenedor.InnerText));
-                    if (!string.IsNullOrWhiteSpace(textoRespaldo))
-                        bloques = new List<string> { textoRespaldo };
+                    var bloquesRespaldo = ExtraerBloquesSemanticos(mejorContenedor, false);
+                    if (TieneMasContenido(bloquesRespaldo, bloques))
+                        bloques = bloquesRespaldo;
+
+                    if (ExtraccionInsuficiente(bloques))
+                    {
+                        string textoRespaldo = NormalizarTexto(HtmlEntity.DeEntitize(mejorContenedor.InnerText));
+                        if (!string.IsNullOrWhiteSpace(textoRespaldo))
+                            bloques = new List<string> { textoRespaldo };
+                    }
                 }
             }
 
@@ -416,6 +562,371 @@ namespace rag_can_aspx.Services
             bloques = DepurarBloquesParaRag(bloques);
             string textoFinal = string.Join(Environment.NewLine + Environment.NewLine, bloques);
             return Tuple.Create(textoFinal, textoAntesFiltros);
+        }
+
+        private bool TryPersistirDocumentoIndexable(
+            string carpetaBase,
+            Uri debugUri,
+            string nombreArchivo,
+            Tuple<string, string> extraccion,
+            string titulo,
+            string jobName,
+            int depth,
+            ref int contador,
+            string urlMetadata = null)
+        {
+            string textoLimpio = extraccion?.Item1 ?? string.Empty;
+            Quality calidad = QualityScorer.Score(textoLimpio);
+            if (calidad != Quality.Ok)
+                return false;
+
+            PersistirDocumento(
+                carpetaBase,
+                nombreArchivo,
+                textoLimpio,
+                urlMetadata ?? debugUri.ToString(),
+                titulo,
+                jobName,
+                depth,
+                ref contador);
+
+            return true;
+        }
+
+        private void PersistirDocumento(
+            string carpetaBase,
+            string nombreArchivo,
+            string textoLimpio,
+            string url,
+            string titulo,
+            string jobName,
+            int depth,
+            ref int contador)
+        {
+            string rutaArchivo = Path.Combine(carpetaBase, nombreArchivo);
+            File.WriteAllText(rutaArchivo, (textoLimpio ?? string.Empty).TrimStart('\uFEFF'), new UTF8Encoding(false));
+            contador++;
+
+            if (_metadataService != null)
+            {
+                try
+                {
+                    var meta = _metadataService.BuildForNewPage(
+                        rutaArchivo,
+                        url,
+                        titulo,
+                        jobName,
+                        contador,
+                        DateTime.UtcNow,
+                        depth);
+                    _metadataService.UpsertAndSave(meta);
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private async Task<string> DescargarHtmlAsync(HttpClient client, Uri uri, CancellationToken cancellationToken)
+        {
+            using (var response = await client.GetAsync(uri, cancellationToken).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            }
+        }
+
+        private async Task<WebFormsPageState> HacerPostbackWebFormsAsync(
+            HttpClient client,
+            WebFormsPageState state,
+            string eventTarget,
+            string eventArgument,
+            CancellationToken cancellationToken)
+        {
+            var payload = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in state.HiddenFields)
+                payload[item.Key] = item.Value ?? string.Empty;
+
+            payload["__EVENTTARGET"] = eventTarget ?? string.Empty;
+            payload["__EVENTARGUMENT"] = eventArgument ?? string.Empty;
+            payload["__LASTFOCUS"] = string.Empty;
+
+            using (var request = new HttpRequestMessage(HttpMethod.Post, state.FormAction))
+            {
+                request.Headers.Referrer = state.FormAction;
+                request.Content = new FormUrlEncodedContent(payload);
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+
+                using (var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false))
+                {
+                    response.EnsureSuccessStatusCode();
+                    string html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    Uri effectiveUri = response.RequestMessage?.RequestUri ?? state.FormAction;
+                    return CrearEstadoWebForms(effectiveUri, html);
+                }
+            }
+        }
+
+        private async Task<WebFormsPageState> RestaurarEstadoListadoCanariasAzulAsync(
+            HttpClient client,
+            WebFormsPageState estadoActual,
+            CancellationToken cancellationToken)
+        {
+            if (estadoActual == null || !TieneEventTarget(estadoActual.Html, EventTargetCerrarDetalleCanariasAzul))
+                return estadoActual;
+
+            try
+            {
+                return await HacerPostbackWebFormsAsync(
+                    client,
+                    estadoActual,
+                    EventTargetCerrarDetalleCanariasAzul,
+                    string.Empty,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                return estadoActual;
+            }
+        }
+
+        private static WebFormsPageState CrearEstadoWebForms(Uri pageUri, string html)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html ?? string.Empty);
+
+            HtmlNode formNode = doc.DocumentNode.SelectSingleNode("//form[@method='post']") ??
+                                doc.DocumentNode.SelectSingleNode("//form");
+
+            string action = formNode?.GetAttributeValue("action", null);
+            Uri formAction = string.IsNullOrWhiteSpace(action) ? pageUri : new Uri(pageUri, action);
+            var hiddenFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            HtmlNodeCollection inputs = doc.DocumentNode.SelectNodes("//form//input[@name]");
+            if (inputs != null)
+            {
+                foreach (var input in inputs)
+                {
+                    string type = (input.GetAttributeValue("type", string.Empty) ?? string.Empty).ToLowerInvariant();
+                    if (type != "hidden")
+                        continue;
+
+                    string name = input.GetAttributeValue("name", string.Empty);
+                    if (string.IsNullOrWhiteSpace(name))
+                        continue;
+
+                    hiddenFields[name] = input.GetAttributeValue("value", string.Empty) ?? string.Empty;
+                }
+            }
+
+            return new WebFormsPageState
+            {
+                Html = html ?? string.Empty,
+                PageUri = pageUri,
+                FormAction = formAction,
+                HiddenFields = hiddenFields
+            };
+        }
+
+        private List<CatalogoListadoItem> ExtraerItemsCatalogo(string html)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html ?? string.Empty);
+            var resultado = new List<CatalogoListadoItem>();
+
+            HtmlNodeCollection links = doc.DocumentNode.SelectNodes("//a[contains(@id,'ListadoElementos') and contains(@id,'BotonDetallesItem')]");
+            if (links == null)
+                return resultado;
+
+            foreach (var link in links)
+            {
+                string eventTarget = DecodificarEventTargetDesdeHref(link.GetAttributeValue("href", string.Empty));
+                string titulo = NormalizarTexto(HtmlEntity.DeEntitize(link.SelectSingleNode(".//h4")?.InnerText ?? string.Empty));
+                if (string.IsNullOrWhiteSpace(eventTarget) || string.IsNullOrWhiteSpace(titulo))
+                    continue;
+
+                resultado.Add(new CatalogoListadoItem
+                {
+                    Title = titulo,
+                    EventTarget = eventTarget
+                });
+            }
+
+            return resultado;
+        }
+
+        private string ExtraerEventTargetSiguientePagina(string html)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html ?? string.Empty);
+            HtmlNode nextLink = doc.DocumentNode.SelectSingleNode("//span[contains(@id,'PaginadorResultados')]//a[contains(@class,'pagina-siguiente')]");
+            return nextLink == null ? null : DecodificarEventTargetDesdeHref(nextLink.GetAttributeValue("href", string.Empty));
+        }
+
+        private static string DecodificarEventTargetDesdeHref(string href)
+        {
+            if (string.IsNullOrWhiteSpace(href))
+                return null;
+
+            string decoded = HtmlEntity.DeEntitize(href);
+            var match = Regex.Match(decoded, @"__doPostBack\('(?<target>[^']+)'(?:,'[^']*')?\)");
+            return match.Success ? match.Groups["target"].Value : null;
+        }
+
+        private string ExtraerTextoDetalleCanariasAzul(string html, out string titulo)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html ?? string.Empty);
+            HtmlNode panel = doc.DocumentNode.SelectSingleNode("//div[@id='ctl00_MainContent_DatosElementoPatrimonial']") ??
+                             doc.DocumentNode.SelectSingleNode("//div[contains(@id,'DatosElementoPatrimonial')]");
+
+            titulo = string.Empty;
+            if (panel == null)
+                return string.Empty;
+
+            titulo = NormalizarTexto(HtmlEntity.DeEntitize(
+                panel.SelectSingleNode(".//div[contains(@class,'section-title')]//h2")?.InnerText ?? string.Empty));
+
+            var bloques = new List<string>();
+            if (!string.IsNullOrWhiteSpace(titulo))
+                bloques.Add(titulo);
+
+            string categoria = ExtraerCampoDetalleCanariasAzul(panel.SelectSingleNode(".//div[contains(@class,'categorias-item')]"));
+            if (!string.IsNullOrWhiteSpace(categoria))
+                bloques.Add(categoria);
+
+            string descripcion = ExtraerTextoNodoComoParrafos(panel.SelectSingleNode(".//div[contains(@class,'descripcion-item')]"));
+            if (!string.IsNullOrWhiteSpace(descripcion))
+                bloques.Add(descripcion);
+
+            HtmlNodeCollection campos = panel.SelectNodes(".//section[contains(@class,'datos-adicionales-item')]//li/div");
+            if (campos != null)
+            {
+                foreach (var campo in campos)
+                {
+                    string valor = ExtraerCampoDetalleCanariasAzul(campo);
+                    if (!string.IsNullOrWhiteSpace(valor))
+                        bloques.Add(valor);
+                }
+            }
+
+            string pieImagen = ExtraerTextoNodoComoParrafos(panel.SelectSingleNode(".//div[contains(@class,'pie_imagen_principal')]"));
+            if (!string.IsNullOrWhiteSpace(pieImagen))
+                bloques.Add(pieImagen);
+
+            return string.Join(Environment.NewLine + Environment.NewLine, bloques
+                .Select(NormalizarBloqueMultilinea)
+                .Where(EsBloqueIndexable)
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+        }
+
+        private string ExtraerCampoDetalleCanariasAzul(HtmlNode nodo)
+        {
+            if (nodo == null)
+                return string.Empty;
+
+            string etiqueta = NormalizarTexto(HtmlEntity.DeEntitize(
+                nodo.SelectSingleNode(".//*[contains(@class,'cabecera')]//span")?.InnerText ??
+                nodo.SelectSingleNode(".//*[contains(@class,'cabecera')]")?.InnerText ??
+                string.Empty));
+
+            var clone = HtmlNode.CreateNode(nodo.OuterHtml);
+            foreach (var basura in clone.SelectNodes(".//i|.//*[contains(@class,'cabecera')]") ?? Enumerable.Empty<HtmlNode>())
+                basura.Remove();
+
+            string texto = ExtraerTextoNodoComoParrafos(clone);
+            string enlace = clone.SelectSingleNode(".//a[@href]")?.GetAttributeValue("href", string.Empty) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(enlace) && !string.Equals(enlace, "#", StringComparison.OrdinalIgnoreCase))
+                texto = string.IsNullOrWhiteSpace(texto) ? enlace : $"{texto} {enlace}".Trim();
+
+            texto = NormalizarTexto(texto);
+            if (string.IsNullOrWhiteSpace(texto))
+                return string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(etiqueta) && texto.StartsWith(etiqueta, StringComparison.OrdinalIgnoreCase))
+                texto = texto.Substring(etiqueta.Length).TrimStart(':', ' ');
+
+            return string.IsNullOrWhiteSpace(etiqueta) ? texto : $"{etiqueta}: {texto}";
+        }
+
+        private string ExtraerTextoNodoComoParrafos(HtmlNode nodo)
+        {
+            if (nodo == null)
+                return string.Empty;
+
+            HtmlNodeCollection textNodes = nodo.SelectNodes(".//p|.//li|.//h3|.//h4|.//a");
+            if (textNodes == null || textNodes.Count == 0)
+                return NormalizarTexto(HtmlEntity.DeEntitize(nodo.InnerText));
+
+            var piezas = new List<string>();
+            foreach (var child in textNodes)
+            {
+                string texto = NormalizarTexto(HtmlEntity.DeEntitize(child.InnerText));
+                if (!string.IsNullOrWhiteSpace(texto))
+                    piezas.Add(texto);
+            }
+
+            return string.Join(Environment.NewLine, piezas.Distinct(StringComparer.OrdinalIgnoreCase));
+        }
+
+        private static bool TieneEventTarget(string html, string eventTarget)
+        {
+            return !string.IsNullOrWhiteSpace(html) &&
+                   !string.IsNullOrWhiteSpace(eventTarget) &&
+                   html.IndexOf(eventTarget, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private string CrearFirmaPaginaCatalogo(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return string.Empty;
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            string paginador = HtmlEntity.DeEntitize(doc.DocumentNode.SelectSingleNode("//span[contains(@id,'PaginadorResultados')]")?.InnerText ?? string.Empty);
+            string primerTitulo = HtmlEntity.DeEntitize(doc.DocumentNode.SelectSingleNode("//a[contains(@id,'ListadoElementos') and contains(@id,'BotonDetallesItem')]//h4")?.InnerText ?? string.Empty);
+            return NormalizarTexto(paginador + "|" + primerTitulo);
+        }
+
+        private static string ConstruirUrlDetalleCanariasAzul(Uri catalogoUri, string slug)
+        {
+            return catalogoUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + "#item-" + slug;
+        }
+
+        private string GenerarNombreCatalogoItem(int numero, string slug)
+        {
+            string baseSlug = string.IsNullOrWhiteSpace(slug) ? "item" : slug;
+            if (baseSlug.Length > 60)
+                baseSlug = baseSlug.Substring(0, 60);
+
+            return $"{numero:D2}_item_{baseSlug}.txt";
+        }
+
+        private static bool EsCrawlerCanariasAzul(Uri uri)
+        {
+            return uri != null &&
+                   string.Equals(uri.Host, HostCanariasAzul, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string CrearSlug(string text)
+        {
+            string normalized = (text ?? string.Empty).ToLowerInvariant().Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder(normalized.Length);
+
+            foreach (char c in normalized)
+            {
+                var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+                if (category == System.Globalization.UnicodeCategory.NonSpacingMark)
+                    continue;
+
+                if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+                    sb.Append(c);
+                else if (sb.Length > 0 && sb[sb.Length - 1] != '-')
+                    sb.Append('-');
+            }
+
+            string slug = sb.ToString().Trim('-');
+            return string.IsNullOrWhiteSpace(slug) ? "item" : slug;
         }
 
         private void EliminarNodos(HtmlDocument doc, IEnumerable<string> nodos)
@@ -491,6 +1002,19 @@ namespace rag_can_aspx.Services
             return renderizados
                 .Where(EsBloqueIndexable)
                 .ToList();
+        }
+
+        private bool ExtraccionInsuficiente(List<string> bloques)
+        {
+            string texto = string.Join(Environment.NewLine + Environment.NewLine, bloques ?? new List<string>());
+            return bloques == null || bloques.Count == 0 || texto.Length < 300;
+        }
+
+        private bool TieneMasContenido(List<string> candidato, List<string> actual)
+        {
+            int longitudActual = string.Join(Environment.NewLine + Environment.NewLine, actual ?? new List<string>()).Length;
+            int longitudCandidata = string.Join(Environment.NewLine + Environment.NewLine, candidato ?? new List<string>()).Length;
+            return longitudCandidata > longitudActual;
         }
 
         private List<string> DepurarBloquesParaRag(List<string> bloques)
@@ -786,24 +1310,39 @@ namespace rag_can_aspx.Services
 
         private HtmlNode SeleccionarContenidoPrincipal(HtmlDocument doc)
         {
-            var candidatosDirectos = new[]
+            string[] xpathsDirectos =
             {
-                doc.DocumentNode.SelectSingleNode("//main"),
-                doc.DocumentNode.SelectSingleNode("//article"),
-                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'entry-content')]"),
-                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'page-content')]"),
-                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'post-content')]"),
-                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'site-main')]"),
-                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'elementor-widget-container')]"),
-                doc.DocumentNode.SelectSingleNode("//*[@id='content']"),
-                doc.DocumentNode.SelectSingleNode("//*[@id='main']"),
-                doc.DocumentNode.SelectSingleNode("//div[@id='content']"),
-                doc.DocumentNode.SelectSingleNode("//div[@id='main']"),
-                doc.DocumentNode.SelectSingleNode("//div[contains(@class,'content')]")
-            }.Where(n => n != null).ToList();
+                "//main",
+                "//*[@role='main']",
+                "//article",
+                "//section",
+                "//div[contains(@class,'entry-content')]",
+                "//div[contains(@class,'page-content')]",
+                "//div[contains(@class,'post-content')]",
+                "//div[contains(@class,'post-body')]",
+                "//div[contains(@class,'post__content')]",
+                "//div[contains(@class,'site-main')]",
+                "//div[contains(@class,'elementor-widget-theme-post-content')]",
+                "//div[contains(@class,'elementor-location-single')]",
+                "//div[contains(@class,'elementor-widget-container')]",
+                "//*[@id='content']",
+                "//*[@id='main']",
+                "//div[@id='content']",
+                "//div[@id='main']",
+                "//div[contains(@class,'content')]"
+            };
+
+            var candidatosDirectos = xpathsDirectos
+                .SelectMany(xpath => doc.DocumentNode.SelectNodes(xpath) ?? Enumerable.Empty<HtmlNode>())
+                .Where(n => n != null)
+                .Distinct(new HtmlNodeReferenceComparer())
+                .ToList();
 
             if (candidatosDirectos.Any())
-                return candidatosDirectos.OrderByDescending(CalcularPuntuacionContenido).First();
+                return candidatosDirectos
+                    .Where(TieneTextoVisibleSuficiente)
+                    .OrderByDescending(CalcularPuntuacionContenido)
+                    .FirstOrDefault() ?? candidatosDirectos.OrderByDescending(CalcularPuntuacionContenido).First();
 
             var candidatos = doc.DocumentNode.SelectNodes("//body|//form|//section|//article|//main|//div");
             if (candidatos == null || candidatos.Count == 0)
@@ -815,6 +1354,19 @@ namespace rag_can_aspx.Services
                 .FirstOrDefault();
 
             return mejor ?? doc.DocumentNode.SelectSingleNode("//body");
+        }
+
+        private sealed class HtmlNodeReferenceComparer : IEqualityComparer<HtmlNode>
+        {
+            public bool Equals(HtmlNode x, HtmlNode y)
+            {
+                return object.ReferenceEquals(x, y);
+            }
+
+            public int GetHashCode(HtmlNode obj)
+            {
+                return obj == null ? 0 : obj.GetHashCode();
+            }
         }
 
         private bool TieneTextoVisibleSuficiente(HtmlNode nodo)
@@ -858,7 +1410,7 @@ namespace rag_can_aspx.Services
 
             foreach (var nodo in candidatos.ToList())
             {
-                if (EsNodoDeRuido(nodo))
+                if (EsNodoDeRuido(nodo) && DebeEliminarNodoDeRuido(nodo))
                     nodo.Remove();
             }
         }
@@ -886,6 +1438,22 @@ namespace rag_can_aspx.Services
                    ariaLabel.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        private bool DebeEliminarNodoDeRuido(HtmlNode nodo)
+        {
+            if (nodo == null)
+                return false;
+
+            if (nodo.Name == "main" || nodo.Name == "article" || nodo.Name == "section")
+                return false;
+
+            var nodosUtiles = nodo.SelectNodes(".//h1|.//h2|.//h3|.//h4|.//h5|.//h6|.//p|.//li|.//blockquote|.//figcaption|.//td|.//th|.//dt|.//dd");
+            if ((nodosUtiles?.Count ?? 0) >= 3)
+                return false;
+
+            string texto = NormalizarTexto(HtmlEntity.DeEntitize(nodo.InnerText));
+            return texto.Length < 400;
+        }
+
         private string GenerarNombreSeguro(Uri uri, int numero)
         {
             string path = uri.AbsolutePath.Trim('/');
@@ -911,7 +1479,41 @@ namespace rag_can_aspx.Services
                 Fragment = string.Empty
             };
 
+            builder.Path = NormalizarPathCanonico(builder.Path);
+
             return builder.Uri.ToString().TrimEnd('/');
+        }
+
+        private static string NormalizarPathCanonico(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return "/";
+
+            string normalizado = path.Replace('\\', '/');
+
+            string[] documentosPorDefecto =
+            {
+                "/index.php",
+                "/index.html",
+                "/index.htm",
+                "/default.aspx",
+                "/default.html",
+                "/default.htm"
+            };
+
+            foreach (string documento in documentosPorDefecto)
+            {
+                if (normalizado.EndsWith(documento, StringComparison.OrdinalIgnoreCase))
+                {
+                    normalizado = normalizado.Substring(0, normalizado.Length - documento.Length);
+                    break;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizado))
+                return "/";
+
+            return normalizado;
         }
 
         public string GenerarNombreCarpetaDominio(Uri uri)
@@ -949,6 +1551,20 @@ namespace rag_can_aspx.Services
             public string Titulo { get; set; }
             public int NivelTitulo { get; set; }
             public List<string> Fragmentos { get; } = new List<string>();
+        }
+
+        private sealed class WebFormsPageState
+        {
+            public string Html { get; set; }
+            public Uri PageUri { get; set; }
+            public Uri FormAction { get; set; }
+            public Dictionary<string, string> HiddenFields { get; set; }
+        }
+
+        private sealed class CatalogoListadoItem
+        {
+            public string Title { get; set; }
+            public string EventTarget { get; set; }
         }
 
         private void GuardarDebugExtraccion(

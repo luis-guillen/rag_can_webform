@@ -3,12 +3,14 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# Ignorar archivos .txt EXCEPTO archivos de configuración críticos
-*.txt
-!App_Data/seeds.txt
+# Excluir completamente App_Data (datos generados por crawling/indexación)
+/App_Data/
 
 # Sidecars de metadatos generados por el crawler
 *.metadata.json
+
+# Artefactos de probes locales
+/build_tmp/CrawlerProbe.exe
 # User-specific files
 *.rsuser
 *.suo

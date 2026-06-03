@@ -396,6 +396,9 @@ namespace rag_can_aspx.Services
             {
                 foreach (string path in Directory.GetFiles(appData, "*.metadata.json", SearchOption.AllDirectories).OrderBy(p => p))
                 {
+                    if (!EsSidecarIndexable(path))
+                        continue;
+
                     PageMetadataDocument doc = LoadPageMetadata(path);
                     if (doc != null && doc.PageMetadata != null)
                         result.Add(doc);
@@ -615,6 +618,36 @@ namespace rag_can_aspx.Services
                 System.IO.File.Replace(tmp, path, null);
             else
                 System.IO.File.Move(tmp, path);
+        }
+
+        private bool EsSidecarIndexable(string metadataPath)
+        {
+            if (string.IsNullOrWhiteSpace(metadataPath))
+                return false;
+
+            string normalizada = metadataPath.Replace('\\', '/');
+            if (normalizada.IndexOf("/debug_raw_html/", StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+
+            string textPath = GetTextPathFromSidecar(metadataPath);
+            if (string.IsNullOrWhiteSpace(textPath))
+                return false;
+
+            string nombre = Path.GetFileName(textPath);
+            if (nombre.IndexOf(".pre.", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                nombre.IndexOf(".final.", StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+
+            return System.IO.File.Exists(textPath);
+        }
+
+        private static string GetTextPathFromSidecar(string metadataPath)
+        {
+            if (string.IsNullOrWhiteSpace(metadataPath) ||
+                !metadataPath.EndsWith(".metadata.json", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            return metadataPath.Substring(0, metadataPath.Length - ".metadata.json".Length) + ".txt";
         }
 
         private static bool SameFile(PageMetadataDocument a, PageMetadataDocument b)

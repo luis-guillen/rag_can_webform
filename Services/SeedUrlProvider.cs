@@ -59,7 +59,7 @@ namespace rag_can_aspx.Services
         private string ResolverRutaSemillas(string rutaConfigurada)
         {
             if (string.IsNullOrWhiteSpace(rutaConfigurada))
-                return HostingEnvironment.MapPath("~/App_Data/seeds.txt");
+                return HostingEnvironment.MapPath("~/Config/seeds.txt");
 
             if (Path.IsPathRooted(rutaConfigurada))
                 return rutaConfigurada;
