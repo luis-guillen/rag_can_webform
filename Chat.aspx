@@ -261,6 +261,46 @@
             margin-left: 0.5rem;
         }
 
+        .chat-answer-mode {
+            color: #8aa4c7;
+            font-size: 12px;
+            font-family: 'Geist Mono', monospace;
+            margin-left: 0.25rem;
+        }
+
+        .chat-health {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .health-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #b7c5d8;
+            font-family: 'Geist Mono', monospace;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .health-ok {
+            color: #86efac;
+            border-color: rgba(34, 197, 94, 0.25);
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .health-warn {
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.25);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
         .chat-empty {
             display: flex;
             flex-direction: column;
@@ -455,6 +495,9 @@
                     <div class="chat-footer-info">
                         <span>Endpoint:</span>
                         <code><asp:Literal ID="litEndpoint" runat="server"></asp:Literal></code>
+                    </div>
+                    <div class="chat-health">
+                        <asp:Literal ID="litHealth" runat="server" Mode="PassThrough"></asp:Literal>
                     </div>
                 </div>
             </div>

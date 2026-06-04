@@ -15,6 +15,7 @@ namespace rag_can_aspx
         {
             public string Question { get; set; }
             public string Answer { get; set; }
+            public string AnswerMode { get; set; }
             public List<RagSource> Sources { get; set; } = new List<RagSource>();
         }
 
@@ -39,6 +40,8 @@ namespace rag_can_aspx
             string endpoint = WebConfigurationManager.AppSettings["Rag:QueryEndpoint"];
             litEndpoint.Text = HttpUtility.HtmlEncode(
                 string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:8000/query" : endpoint.Trim());
+
+            RenderHealth();
 
             if (!IsPostBack)
                 RenderConversacion();
@@ -65,6 +68,7 @@ namespace rag_can_aspx
                 {
                     Question = pregunta,
                     Answer = resp.Answer,
+                    AnswerMode = resp.AnswerMode,
                     Sources = resp.Sources ?? new List<RagSource>()
                 });
                 Session[HistoryKey] = History;
@@ -120,6 +124,11 @@ namespace rag_can_aspx
                     : Enc(turn.Answer));
                 sb.Append("</div>");
 
+                if (!string.IsNullOrWhiteSpace(turn.AnswerMode))
+                    sb.Append("<div class=\"chat-answer-mode\">modo: ")
+                      .Append(Enc(turn.AnswerMode))
+                      .Append("</div>");
+
                 if (turn.Sources != null && turn.Sources.Count > 0)
                     AppendSources(sb, turn.Sources);
 
@@ -169,6 +178,34 @@ namespace rag_can_aspx
             }
 
             sb.Append("</ul></div>");
+        }
+
+        private void RenderHealth()
+        {
+            try
+            {
+                var svc = new RagQueryService();
+                RagHealth health = svc.GetHealth();
+                var sb = new StringBuilder();
+                sb.Append("<span class=\"health-pill health-ok\">API ")
+                  .Append(Enc(string.IsNullOrWhiteSpace(health.Status) ? "ok" : health.Status))
+                  .Append("</span>");
+                sb.Append("<span class=\"health-pill\">coleccion ")
+                  .Append(Enc(health.Collection ?? "-"))
+                  .Append("</span>");
+                sb.Append("<span class=\"health-pill\">puntos ")
+                  .Append(health.QdrantPoints.HasValue ? health.QdrantPoints.Value.ToString() : "-")
+                  .Append("</span>");
+                sb.Append("<span class=\"health-pill\">modo ")
+                  .Append(Enc(health.AnswerMode ?? "extractive"))
+                  .Append("</span>");
+                litHealth.Text = sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                litHealth.Text = "<span class=\"health-pill health-warn\">API sin health</span>" +
+                                 "<span class=\"health-pill\">" + Enc(ex.Message) + "</span>";
+            }
         }
 
         private void MostrarError(string mensaje)

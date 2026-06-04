@@ -12,5 +12,6 @@ namespace rag_can_aspx {
         protected global::System.Web.UI.WebControls.Button btnEnviar;
         protected global::System.Web.UI.WebControls.Button btnLimpiar;
         protected global::System.Web.UI.WebControls.Literal litEndpoint;
+        protected global::System.Web.UI.WebControls.Literal litHealth;
     }
 }
