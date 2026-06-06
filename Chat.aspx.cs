@@ -5,34 +5,18 @@ using System.Text;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.UI;
+using System.Web.UI.WebControls;
 
 namespace rag_can_aspx
 {
     public partial class Chat : Page
     {
-        [Serializable]
-        private class ChatTurn
-        {
-            public string Question { get; set; }
-            public string Answer { get; set; }
-            public string AnswerMode { get; set; }
-            public List<RagSource> Sources { get; set; } = new List<RagSource>();
-        }
+        private const string ConversationIdKey = "Chat:ConversationId";
 
-        private const string HistoryKey = "Chat:History";
-
-        private List<ChatTurn> History
+        private string ActiveConversationId
         {
-            get
-            {
-                var h = Session[HistoryKey] as List<ChatTurn>;
-                if (h == null)
-                {
-                    h = new List<ChatTurn>();
-                    Session[HistoryKey] = h;
-                }
-                return h;
-            }
+            get { return Session[ConversationIdKey] as string; }
+            set { Session[ConversationIdKey] = string.IsNullOrWhiteSpace(value) ? null : value; }
         }
 
         protected void Page_Load(object sender, EventArgs e)
@@ -41,10 +25,14 @@ namespace rag_can_aspx
             litEndpoint.Text = HttpUtility.HtmlEncode(
                 string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:8000/query" : endpoint.Trim());
 
-            RenderHealth();
+            lblError.Visible = false;
 
             if (!IsPostBack)
-                RenderConversacion();
+                LoadRequestedConversation();
+
+            RenderHistorySidebar();
+            RenderHealth();
+            RenderConversacion();
         }
 
         protected void BtnEnviar_Click(object sender, EventArgs e)
@@ -64,14 +52,22 @@ namespace rag_can_aspx
                 var svc = new RagQueryService();
                 RagQueryResponse resp = svc.Ask(pregunta);
 
-                History.Add(new ChatTurn
+                var history = new ChatHistoryService();
+                ChatConversation conversation = LoadActiveConversation(history);
+                if (conversation == null)
+                    conversation = history.Create(pregunta);
+
+                conversation.Turns.Add(new ChatHistoryTurn
                 {
+                    CreatedUtc = DateTime.UtcNow,
                     Question = pregunta,
                     Answer = resp.Answer,
                     AnswerMode = resp.AnswerMode,
                     Sources = resp.Sources ?? new List<RagSource>()
                 });
-                Session[HistoryKey] = History;
+
+                history.Save(conversation);
+                ActiveConversationId = conversation.Id;
 
                 txtPregunta.Text = string.Empty;
             }
@@ -80,20 +76,130 @@ namespace rag_can_aspx
                 MostrarError("No se pudo obtener respuesta: " + ex.Message);
             }
 
+            RenderHistorySidebar();
             RenderConversacion();
         }
 
         protected void BtnLimpiar_Click(object sender, EventArgs e)
         {
-            Session[HistoryKey] = new List<ChatTurn>();
             txtPregunta.Text = string.Empty;
             lblError.Visible = false;
+
+            try
+            {
+                var history = new ChatHistoryService();
+                ChatConversation conversation = LoadActiveConversation(history);
+                if (conversation != null)
+                {
+                    conversation.Turns = new List<ChatHistoryTurn>();
+                    conversation.Title = "Chat sin titulo";
+                    history.Save(conversation);
+                }
+                else
+                {
+                    ActiveConversationId = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                MostrarError("No se pudo limpiar la conversacion: " + ex.Message);
+            }
+
+            RenderHistorySidebar();
             RenderConversacion();
+        }
+
+        protected void BtnNuevoChat_Click(object sender, EventArgs e)
+        {
+            ActiveConversationId = null;
+            txtPregunta.Text = string.Empty;
+            lblError.Visible = false;
+            RenderHistorySidebar();
+            RenderConversacion();
+        }
+
+        protected void History_Command(object sender, CommandEventArgs e)
+        {
+            string id = e.CommandArgument == null ? null : e.CommandArgument.ToString();
+            try
+            {
+                var history = new ChatHistoryService();
+                if (e.CommandName == "OpenHistory")
+                {
+                    ChatConversation conversation = history.Load(id);
+                    if (conversation == null)
+                    {
+                        MostrarError("La conversacion seleccionada ya no existe.");
+                        ActiveConversationId = null;
+                    }
+                    else
+                    {
+                        ActiveConversationId = conversation.Id;
+                    }
+                }
+                else if (e.CommandName == "DeleteHistory")
+                {
+                    history.Delete(id);
+                    if (string.Equals(ActiveConversationId, id, StringComparison.OrdinalIgnoreCase))
+                        ActiveConversationId = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                MostrarError("No se pudo procesar el historial: " + ex.Message);
+            }
+
+            RenderHistorySidebar();
+            RenderConversacion();
+        }
+
+        private void LoadRequestedConversation()
+        {
+            string requestedId = Request.QueryString["chat"];
+            if (string.IsNullOrWhiteSpace(requestedId))
+                return;
+
+            try
+            {
+                ChatConversation conversation = new ChatHistoryService().Load(requestedId);
+                if (conversation == null)
+                    MostrarError("La conversacion solicitada no existe.");
+                else
+                    ActiveConversationId = conversation.Id;
+            }
+            catch (Exception ex)
+            {
+                MostrarError("No se pudo abrir la conversacion solicitada: " + ex.Message);
+            }
+        }
+
+        private ChatConversation LoadActiveConversation(ChatHistoryService history = null)
+        {
+            string id = ActiveConversationId;
+            if (string.IsNullOrWhiteSpace(id))
+                return null;
+
+            history = history ?? new ChatHistoryService();
+            return history.Load(id);
         }
 
         private void RenderConversacion()
         {
-            var turns = History;
+            ChatConversation conversation = null;
+            try
+            {
+                conversation = LoadActiveConversation();
+            }
+            catch (Exception ex)
+            {
+                MostrarError("No se pudo cargar la conversacion activa: " + ex.Message);
+                ActiveConversationId = null;
+            }
+
+            var turns = conversation == null || conversation.Turns == null
+                ? new List<ChatHistoryTurn>()
+                : conversation.Turns;
+
             if (turns.Count == 0)
             {
                 litConversacion.Text =
@@ -104,7 +210,7 @@ namespace rag_can_aspx
             }
 
             var sb = new StringBuilder();
-            foreach (ChatTurn turn in turns)
+            foreach (ChatHistoryTurn turn in turns)
             {
                 // User message
                 sb.Append("<div class=\"chat-message user\">");
@@ -136,6 +242,69 @@ namespace rag_can_aspx
             }
 
             litConversacion.Text = sb.ToString();
+        }
+
+        private void RenderHistorySidebar()
+        {
+            phHistory.Controls.Clear();
+
+            IList<ChatHistorySummary> conversations;
+            try
+            {
+                conversations = new ChatHistoryService().ListRecent();
+            }
+            catch (Exception ex)
+            {
+                phHistory.Controls.Add(new LiteralControl(
+                    "<div class=\"history-empty\">No se pudo cargar el historial: " + Enc(ex.Message) + "</div>"));
+                return;
+            }
+
+            if (conversations.Count == 0)
+            {
+                phHistory.Controls.Add(new LiteralControl(
+                    "<div class=\"history-empty\">Aun no hay conversaciones guardadas</div>"));
+                return;
+            }
+
+            phHistory.Controls.Add(new LiteralControl("<div class=\"history-list\">"));
+            foreach (ChatHistorySummary conversation in conversations)
+            {
+                bool active = string.Equals(conversation.Id, ActiveConversationId, StringComparison.OrdinalIgnoreCase);
+                phHistory.Controls.Add(new LiteralControl("<div class=\"history-item" + (active ? " active" : "") + "\">"));
+
+                var open = new LinkButton
+                {
+                    ID = "open_" + conversation.Id,
+                    Text = Enc(conversation.Title),
+                    CssClass = "history-open",
+                    CommandName = "OpenHistory",
+                    CommandArgument = conversation.Id,
+                    CausesValidation = false
+                };
+                open.Command += History_Command;
+                phHistory.Controls.Add(open);
+
+                phHistory.Controls.Add(new LiteralControl(
+                    "<div class=\"history-meta\">" + Enc(FormatDate(conversation.UpdatedUtc)) +
+                    " · " + conversation.TurnCount.ToString() + " turnos</div>"));
+
+                var delete = new LinkButton
+                {
+                    ID = "delete_" + conversation.Id,
+                    Text = "Eliminar",
+                    CssClass = "history-delete",
+                    CommandName = "DeleteHistory",
+                    CommandArgument = conversation.Id,
+                    CausesValidation = false,
+                    OnClientClick = "return confirm('¿Eliminar esta conversación?');"
+                };
+                delete.Command += History_Command;
+                phHistory.Controls.Add(delete);
+
+                phHistory.Controls.Add(new LiteralControl("</div>"));
+            }
+            phHistory.Controls.Add(new LiteralControl("</div>"));
         }
 
         private void AppendSources(StringBuilder sb, List<RagSource> sources)
@@ -217,6 +386,12 @@ namespace rag_can_aspx
         private static string Enc(string s)
         {
             return HttpUtility.HtmlEncode(s ?? string.Empty);
+        }
+
+        private static string FormatDate(DateTime utc)
+        {
+            DateTime local = utc.Kind == DateTimeKind.Local ? utc : DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime();
+            return local.ToString("dd/MM/yyyy HH:mm");
         }
     }
 }

@@ -6,6 +6,8 @@
 
 namespace rag_can_aspx {
     public partial class Chat {
+        protected global::System.Web.UI.WebControls.Button btnNuevoChat;
+        protected global::System.Web.UI.WebControls.PlaceHolder phHistory;
         protected global::System.Web.UI.WebControls.Literal litConversacion;
         protected global::System.Web.UI.WebControls.Label lblError;
         protected global::System.Web.UI.WebControls.TextBox txtPregunta;

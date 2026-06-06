@@ -212,6 +212,7 @@
       <DependentUpon>ViewSwitcher.ascx</DependentUpon>
     </Compile>
     <Compile Include="Services\CrawlerService.cs" />
+    <Compile Include="Services\ChatHistoryService.cs" />
     <Compile Include="Services\CrawlerSettings.cs" />
     <Compile Include="Services\CrawlJobManager.cs" />
     <Compile Include="Services\DuplicateDetector.cs" />

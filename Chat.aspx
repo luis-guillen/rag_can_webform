@@ -67,6 +67,94 @@
             letter-spacing: -0.3px;
         }
 
+        .history-new {
+            width: 100%;
+            padding: 0.75rem 0.9rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            background: rgba(59, 130, 246, 0.12);
+            color: #dbeafe;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .history-new:hover {
+            background: rgba(59, 130, 246, 0.18);
+            border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .history-item {
+            position: relative;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover,
+        .history-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(96, 165, 250, 0.25);
+        }
+
+        .history-open {
+            display: block;
+            color: #e5edf8;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+            text-decoration: none;
+            overflow-wrap: anywhere;
+            padding-right: 3.4rem;
+        }
+
+        .history-open:hover {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        .history-meta {
+            margin-top: 0.35rem;
+            color: #7c8ba1;
+            font-family: 'Geist Mono', monospace;
+            font-size: 11px;
+        }
+
+        .history-delete {
+            position: absolute;
+            top: 0.72rem;
+            right: 0.65rem;
+            color: #fca5a5;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .history-delete:hover {
+            color: #fecaca;
+            text-decoration: underline;
+        }
+
+        .history-empty {
+            color: #707b8f;
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: center;
+            padding: 2rem 0.5rem;
+        }
+
         .chat-main {
             flex: 1;
             display: flex;
@@ -458,9 +546,10 @@
                 <div class="sidebar-header-icon">RAG</div>
                 <h2>Canarias</h2>
             </div>
-            <div style="color: #666; font-size: 12px; text-align: center; padding: 2rem 0;">
-                Historial de conversaciones próximamente
-            </div>
+            <asp:Button ID="btnNuevoChat" runat="server" Text="Nuevo chat"
+                CssClass="history-new" OnClick="BtnNuevoChat_Click"
+                CausesValidation="false" />
+            <asp:PlaceHolder ID="phHistory" runat="server"></asp:PlaceHolder>
         </div>
 
         <div class="chat-main">
