@@ -430,22 +430,26 @@
         }
 
         .chat-footer-content {
-            max-width: 900px;
-            margin: 0 auto;
+            max-width: none;
+            margin: 0;
             width: 100%;
         }
 
         .input-group-wrapper {
             display: flex;
-            gap: 1rem;
+            gap: 0.6rem;
             margin-bottom: 0.75rem;
-            flex-wrap: wrap;
-            align-items: flex-start;
+            align-items: flex-end;
+            width: 100%;
         }
 
-        .input-group-wrapper input {
+        .input-group-wrapper .chat-prompt {
             flex: 1;
-            min-width: 200px;
+            width: 100%;
+            max-width: none;
+            min-width: 0;
+            min-height: 56px;
+            max-height: 220px;
             padding: 0.875rem 1.25rem;
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 10px;
@@ -453,31 +457,36 @@
             color: #fff;
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 15px;
+            line-height: 1.5;
             transition: all 0.2s ease;
+            resize: none;
+            overflow-y: auto;
         }
 
-        .input-group-wrapper input:focus {
+        .input-group-wrapper .chat-prompt:focus {
             outline: none;
             border-color: #3b82f6;
             background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .input-group-wrapper input::placeholder {
+        .input-group-wrapper .chat-prompt::placeholder {
             color: #666;
         }
 
         .btn-group {
             display: flex;
-            gap: 0.75rem;
+            flex: 0 0 auto;
+            align-self: stretch;
         }
 
         .btn {
-            padding: 0.875rem 1.5rem;
+            height: 56px;
+            padding: 0 1.15rem;
             border: none;
             border-radius: 10px;
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -488,7 +497,7 @@
         .btn-send {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: #fff;
-            min-width: 90px;
+            min-width: 84px;
         }
 
         .btn-send:hover {
@@ -498,18 +507,6 @@
 
         .btn-send:active {
             transform: translateY(0);
-        }
-
-        .btn-clear {
-            background: rgba(255, 255, 255, 0.08);
-            color: #e0e0e0;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            min-width: 90px;
-        }
-
-        .btn-clear:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .chat-footer-info {
@@ -539,9 +536,8 @@
             .chat-messages { padding: 1rem; gap: 1rem; max-width: 100%; }
             .chat-footer { padding: 1rem; }
             .chat-footer-content { max-width: 100%; }
-            .input-group-wrapper { flex-direction: column; }
-            .btn-group { width: 100%; }
-            .btn-group .btn { flex: 1; }
+            .input-group-wrapper { gap: 0.75rem; }
+            .input-group-wrapper .chat-prompt { min-height: 52px; }
         }
     </style>
 
@@ -578,13 +574,14 @@
 
                     <div class="input-group-wrapper">
                         <asp:TextBox ID="txtPregunta" runat="server"
+                            CssClass="chat-prompt"
+                            TextMode="MultiLine" Rows="1"
+                            onkeydown="return handlePromptKey(event);"
                             Placeholder="Escribe tu pregunta..." autocomplete="off" />
                         <div class="btn-group">
                             <asp:Button ID="btnEnviar" runat="server" Text="Enviar"
-                                CssClass="btn btn-send" OnClick="BtnEnviar_Click" />
-                            <asp:Button ID="btnLimpiar" runat="server" Text="Limpiar"
-                                CssClass="btn btn-clear" OnClick="BtnLimpiar_Click"
-                                CausesValidation="false" />
+                                CssClass="btn btn-send" OnClick="BtnEnviar_Click"
+                                UseSubmitBehavior="false" />
                         </div>
                     </div>
 
@@ -599,6 +596,16 @@
 
 <asp:Content ID="ChatScripts" ContentPlaceHolderID="PageScripts" runat="server">
     <script>
+        function handlePromptKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                __doPostBack('<%= btnEnviar.UniqueID %>', '');
+                return false;
+            }
+
+            return true;
+        }
+
         (function () {
             function scrollToBottom() {
                 var w = document.getElementById('chatWindow');
@@ -614,8 +621,25 @@
                 if (box) box.focus();
             }
 
+            function autoResizeInput() {
+                var box = document.getElementById('<%= txtPregunta.ClientID %>');
+                if (!box) return;
+                box.style.height = 'auto';
+                box.style.height = Math.min(box.scrollHeight, 220) + 'px';
+            }
+
+            function wirePromptSubmit() {
+                var box = document.getElementById('<%= txtPregunta.ClientID %>');
+                if (!box) return;
+
+                autoResizeInput();
+
+                box.addEventListener('input', autoResizeInput);
+            }
+
             scrollToBottom();
             focusInput();
+            wirePromptSubmit();
 
             // Re-render sources with proper HTML structure
             var sourceItems = document.querySelectorAll('.chat-sources');
