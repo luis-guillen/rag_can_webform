@@ -14,6 +14,11 @@ namespace rag_can_aspx
         {
             RegisterJQueryScriptManager();
 
+            // CSS bundle referenced by Site.Master.
+            bundles.Add(new StyleBundle("~/Content/css").Include(
+                            "~/Content/bootstrap.css",
+                            "~/Content/Site.css"));
+
             bundles.Add(new ScriptBundle("~/bundles/WebFormsJs").Include(
                             "~/Scripts/WebForms/WebForms.js",
                             "~/Scripts/WebForms/WebUIValidation.js",

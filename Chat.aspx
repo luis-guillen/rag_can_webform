@@ -47,23 +47,24 @@
         }
 
         .sidebar-header-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            display: flex;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: -0.5px;
+            flex-shrink: 0;
+            border: 1px solid rgba(96, 165, 250, 0.22);
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.18), rgba(255, 255, 255, 0.03));
+            color: #dbeafe;
+            font-size: 1rem;
         }
 
         .sidebar-header h2 {
             margin: 0;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 17px;
+            font-weight: 800;
             letter-spacing: -0.3px;
         }
 
@@ -175,7 +176,7 @@
 
         .chat-header h1 {
             margin: 0 0 0.5rem 0;
-            font-size: 28px;
+            font-size: clamp(2rem, 3vw, 3.15rem);
             font-weight: 700;
             background: linear-gradient(135deg, #fff 0%, #c0c0c0 100%);
             -webkit-background-clip: text;
@@ -186,7 +187,7 @@
         .chat-header p {
             margin: 0;
             color: #888;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .chat-messages {
@@ -529,7 +530,6 @@
         @media (max-width: 768px) {
             .chat-sidebar { display: none; }
             .chat-container { flex-direction: column; }
-            .chat-header h1 { font-size: 22px; }
             .chat-header { padding: 1rem; }
             .chat-messages { padding: 1rem; gap: 1rem; max-width: 100%; }
             .chat-footer { padding: 1rem; }
@@ -543,8 +543,10 @@
     <div class="chat-container">
         <div class="chat-sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-header-icon">RAG</div>
-                <h2>Canarias</h2>
+                <div class="sidebar-header-icon" aria-hidden="true">
+                    <i class="fas fa-clock-rotate-left"></i>
+                </div>
+                <h2>Historial</h2>
             </div>
             <asp:Button ID="btnNuevoChat" runat="server" Text="Nuevo chat"
                 CssClass="history-new" OnClick="BtnNuevoChat_Click"
@@ -552,13 +554,13 @@
             <asp:PlaceHolder ID="phHistory" runat="server"></asp:PlaceHolder>
         </div>
 
-        <div class="chat-main">
-            <div class="chat-header">
-                <div class="chat-header-content">
-                    <h1>Chat RAG Canarias</h1>
-                    <p>Haz preguntas al corpus indexado. Las respuestas incluyen las fuentes utilizadas.</p>
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div class="chat-header-content">
+                    <h1>Agente de Consulta del Patrimonio de Canarias</h1>
+                    <p>Haz preguntas sobre el corpus indexado y recibe respuestas con contexto y fuentes.</p>
+                    </div>
                 </div>
-            </div>
 
             <div class="chat-messages" id="chatWindow">
                 <asp:Literal ID="litConversacion" runat="server" Mode="PassThrough"></asp:Literal>
@@ -581,10 +583,6 @@
                         </div>
                     </div>
 
-                    <div class="chat-footer-info">
-                        <span>Endpoint:</span>
-                        <code><asp:Literal ID="litEndpoint" runat="server"></asp:Literal></code>
-                    </div>
                     <div class="chat-health">
                         <asp:Literal ID="litHealth" runat="server" Mode="PassThrough"></asp:Literal>
                     </div>

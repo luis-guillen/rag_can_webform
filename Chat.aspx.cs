@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Web;
-using System.Web.Configuration;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -21,10 +20,6 @@ namespace rag_can_aspx
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            string endpoint = WebConfigurationManager.AppSettings["Rag:QueryEndpoint"];
-            litEndpoint.Text = HttpUtility.HtmlEncode(
-                string.IsNullOrWhiteSpace(endpoint) ? "http://localhost:8000/query" : endpoint.Trim());
-
             lblError.Visible = false;
 
             if (!IsPostBack)
