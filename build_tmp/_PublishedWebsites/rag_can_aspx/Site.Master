@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%: Page.Title %> - RAG Canarias</title>
+    <title><%: Page.Title %> - RAGCAN</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -55,12 +55,11 @@
             <div class="container">
                 <a class="navbar-brand brand-link" runat="server" href="~/Landing.aspx">
                     <span class="brand-icon">
-                        <img src="<%= ResolveUrl("~/Content/brand/logo_rag3.png") %>" alt="RAG Canarias" class="brand-mark" />
+                        <img src="<%= ResolveUrl("~/Content/brand/logo_rag3.png") %>" alt="RAGCAN" class="brand-mark" />
                     </span>
                     <span class="brand-text">
                         <span class="brand-title">
-                            <span class="brand-title-rag">RAG</span>
-                            <span class="brand-title-canarias">Canarias</span>
+                            <span class="title-rag">RAG</span><span class="title-dark">CAN</span>
                         </span>
                     </span>
                 </a>
@@ -88,7 +87,7 @@
             </asp:ContentPlaceHolder>
             <hr />
             <footer>
-                <p>&copy; <%: DateTime.Now.Year %> - RAG Canarias</p>
+                <p>&copy; <%: DateTime.Now.Year %> - RAGCAN</p>
             </footer>
         </div>
 

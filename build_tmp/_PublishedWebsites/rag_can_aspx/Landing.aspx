@@ -1,4 +1,4 @@
-<%@ Page Title="Inicio" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" %>
+<%@ Page Title="Inicio RAGCAN" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" %>
 
 <asp:Content ID="LandingContent" ContentPlaceHolderID="MainContent" runat="server">
     <div class="landing-page">
@@ -7,7 +7,8 @@
                 <div class="landing-copy-block">
                     <div class="landing-kicker">Patrimonio, contexto y consulta</div>
                     <h1 class="landing-title">
-                        Agente de Consulta del <span class="landing-title-accent">Patrimonio de Canarias</span>
+                        <span class="title-badge">RAG</span>
+                        Agente de Consulta del Patrimonio de Canarias
                     </h1>
                     <p class="landing-copy">
                         Una entrada clara al ecosistema RAG de Canarias: consulta el conocimiento indexado,

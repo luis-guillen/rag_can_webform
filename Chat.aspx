@@ -178,10 +178,15 @@
             margin: 0 0 0.5rem 0;
             font-size: clamp(2rem, 3vw, 3.15rem);
             font-weight: 700;
-            background: linear-gradient(135deg, #fff 0%, #c0c0c0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #f5f7fb;
+        }
+
+        .chat-header h1 .title-rag {
+            color: #60a5fa;
+        }
+
+        .chat-header h1 .title-dark {
+            color: #f5f7fb;
         }
 
         .chat-header p {
@@ -557,7 +562,7 @@
             <div class="chat-main">
                 <div class="chat-header">
                     <div class="chat-header-content">
-                    <h1>Agente de Consulta del Patrimonio de Canarias</h1>
+                    <h1><span class="title-rag">RAG</span> Chat</h1>
                     <p>Haz preguntas sobre el corpus indexado y recibe respuestas con contexto y fuentes.</p>
                     </div>
                 </div>

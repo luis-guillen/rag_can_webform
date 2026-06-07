@@ -1,4 +1,4 @@
-# RAG Canarias
+# RAGCAN
 
 > **Proyecto ASP.NET Web Forms para crawling web y limpieza de contenido HTML**  
 > Trabajo de Fin de Grado — Aplicación para descargar y procesar páginas web de un dominio de forma automática.
@@ -25,7 +25,7 @@
 
 ## Descripción
 
-**RAG Canarias** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) que implementa un **crawler web con control de profundidad** para descargar y procesar automáticamente páginas de uno o varios dominios.
+**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) que implementa un **crawler web con control de profundidad** para descargar y procesar automáticamente páginas de uno o varios dominios.
 
 El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.txt` individuales por página, listos para su uso como corpus en sistemas RAG (Retrieval-Augmented Generation).
 

@@ -1,8 +1,8 @@
-﻿<%@ Page Title="Crawler Web" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="rag_can_aspx._Default" %>
+﻿<%@ Page Title="Crawler RAGCAN" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="rag_can_aspx._Default" %>
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <div class="container">
-        <h1 class="mb-4">Crawler RAG Canarias</h1>
+        <h1 class="mb-4">Crawler <span class="title-rag">RAG</span><span class="title-dark">CAN</span></h1>
         <p class="lead">Procesa una URL o utiliza las webs semilla definidas en <code>App_Data/seeds.txt</code>.</p>
 
         <div class="card">
