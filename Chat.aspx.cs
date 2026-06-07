@@ -198,7 +198,7 @@ namespace rag_can_aspx
             if (turns.Count == 0)
             {
                 litConversacion.Text =
-                    "<div class=\"chat-empty\"><div class=\"chat-empty-icon\">💬</div>" +
+                    "<div class=\"chat-empty\"><div class=\"chat-empty-icon\"><i class=\"fas fa-comment-dots\"></i></div>" +
                     "<div><strong>Aún no hay mensajes</strong></div>" +
                     "<div style=\"font-size: 13px; color: #555;\">Haz tu primera pregunta para comenzar</div></div>";
                 return;
@@ -209,7 +209,7 @@ namespace rag_can_aspx
             {
                 // User message
                 sb.Append("<div class=\"chat-message user\">");
-                sb.Append("<div class=\"chat-message-avatar\">👤</div>");
+                sb.Append("<div class=\"chat-message-avatar\" aria-hidden=\"true\"><i class=\"fas fa-user\"></i></div>");
                 sb.Append("<div class=\"chat-message-content\">");
                 sb.Append("<div class=\"chat-bubble\">");
                 sb.Append(Enc(turn.Question));
@@ -217,7 +217,7 @@ namespace rag_can_aspx
 
                 // Bot message
                 sb.Append("<div class=\"chat-message bot\">");
-                sb.Append("<div class=\"chat-message-avatar\">🤖</div>");
+                sb.Append("<div class=\"chat-message-avatar\" aria-hidden=\"true\"><i class=\"fas fa-robot\"></i></div>");
                 sb.Append("<div class=\"chat-message-content\">");
                 sb.Append("<div class=\"chat-bubble\">");
                 sb.Append(string.IsNullOrWhiteSpace(turn.Answer)

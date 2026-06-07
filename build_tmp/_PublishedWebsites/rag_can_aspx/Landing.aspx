@@ -7,7 +7,6 @@
                 <div class="landing-copy-block">
                     <div class="landing-kicker">Patrimonio, contexto y consulta</div>
                     <h1 class="landing-title">
-                        <span class="title-badge">RAG</span>
                         Agente de Consulta del Patrimonio de Canarias
                     </h1>
                     <p class="landing-copy">

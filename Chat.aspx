@@ -230,6 +230,23 @@
             animation: slideIn 0.3s ease-out;
         }
 
+        .chat-message.is-thinking {
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease, margin 0.2s ease;
+            margin: 0;
+        }
+
+        .chat-message.is-thinking.visible {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 220px;
+            margin-top: 0.25rem;
+        }
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -248,6 +265,11 @@
             justify-content: center;
             font-size: 16px;
             flex-shrink: 0;
+        }
+
+        .chat-message-avatar i {
+            font-size: 14px;
+            line-height: 1;
         }
 
         .chat-message.bot .chat-message-avatar {
@@ -282,6 +304,12 @@
             color: #e0e0e0;
         }
 
+        .chat-message.is-thinking .chat-bubble {
+            background: linear-gradient(180deg, rgba(18, 25, 58, 0.92) 0%, rgba(14, 20, 46, 0.92) 100%);
+            border: 1px solid rgba(96, 165, 250, 0.18);
+            box-shadow: 0 12px 30px rgba(5, 10, 30, 0.28);
+        }
+
         .chat-message.user .chat-bubble {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: #fff;
@@ -290,6 +318,65 @@
         .chat-bubble em {
             color: #888;
             font-style: italic;
+        }
+
+        .thinking-bubble {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .thinking-pulse {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .thinking-pulse span {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #93c5fd 0%, #3b82f6 100%);
+            box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.08);
+            animation: thinkingPulse 1s ease-in-out infinite;
+        }
+
+        .thinking-pulse span:nth-child(2) {
+            animation-delay: 0.16s;
+        }
+
+        .thinking-pulse span:nth-child(3) {
+            animation-delay: 0.32s;
+        }
+
+        .thinking-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .thinking-title {
+            color: #eef4ff;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .thinking-subtitle {
+            color: #8fa5c8;
+            font-size: 12px;
+        }
+
+        @keyframes thinkingPulse {
+            0%, 80%, 100% {
+                transform: translateY(0) scale(0.92);
+                opacity: 0.45;
+            }
+
+            40% {
+                transform: translateY(-2px) scale(1);
+                opacity: 1;
+            }
         }
 
         .chat-sources {
@@ -410,6 +497,12 @@
         .chat-empty-icon {
             font-size: 48px;
             opacity: 0.5;
+            color: #7fa8ff;
+        }
+
+        .chat-empty-icon i {
+            font-size: 44px;
+            line-height: 1;
         }
 
         .chat-error {
@@ -565,6 +658,24 @@
 
             <div class="chat-messages" id="chatWindow">
                 <asp:Literal ID="litConversacion" runat="server" Mode="PassThrough"></asp:Literal>
+                <div class="chat-message bot is-thinking" id="chatThinking" aria-live="polite" aria-hidden="true">
+                    <div class="chat-message-avatar" aria-hidden="true">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="chat-message-content">
+                        <div class="chat-bubble thinking-bubble">
+                            <div class="thinking-pulse" aria-hidden="true">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <div class="thinking-copy">
+                                <div class="thinking-title">Pensando</div>
+                                <div class="thinking-subtitle">Preparando la respuesta y revisando el contexto.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="chat-footer">
@@ -599,7 +710,7 @@
         function handlePromptKey(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                __doPostBack('<%= btnEnviar.UniqueID %>', '');
+                submitPrompt();
                 return false;
             }
 
@@ -607,6 +718,8 @@
         }
 
         (function () {
+            var isSubmitting = false;
+
             function scrollToBottom() {
                 var w = document.getElementById('chatWindow');
                 if (w) {
@@ -630,11 +743,49 @@
 
             function wirePromptSubmit() {
                 var box = document.getElementById('<%= txtPregunta.ClientID %>');
-                if (!box) return;
+                var send = document.getElementById('<%= btnEnviar.ClientID %>');
+                if (!box || !send) return;
 
                 autoResizeInput();
 
                 box.addEventListener('input', autoResizeInput);
+                send.addEventListener('click', function () {
+                    if (!showThinkingState()) {
+                        return false;
+                    }
+
+                    return true;
+                });
+            }
+
+            function showThinkingState() {
+                var box = document.getElementById('<%= txtPregunta.ClientID %>');
+                var send = document.getElementById('<%= btnEnviar.ClientID %>');
+                var thinking = document.getElementById('chatThinking');
+                var prompt = box ? box.value.trim() : '';
+
+                if (!prompt || isSubmitting) {
+                    return false;
+                }
+
+                isSubmitting = true;
+
+                if (box) {
+                    box.setAttribute('readonly', 'readonly');
+                }
+
+                if (send) {
+                    send.disabled = true;
+                    send.textContent = '...';
+                }
+
+                if (thinking) {
+                    thinking.classList.add('visible');
+                    thinking.setAttribute('aria-hidden', 'false');
+                }
+
+                scrollToBottom();
+                return true;
             }
 
             scrollToBottom();
@@ -648,5 +799,27 @@
                 // Parse and rebuild sources if needed
             });
         })();
+
+        function submitPrompt() {
+            if (typeof __doPostBack !== 'function') {
+                return;
+            }
+
+            var box = document.getElementById('<%= txtPregunta.ClientID %>');
+            var thinking = document.getElementById('chatThinking');
+
+            if (!box || !box.value.trim()) {
+                return;
+            }
+
+            if (thinking) {
+                thinking.classList.add('visible');
+                thinking.setAttribute('aria-hidden', 'false');
+            }
+
+            setTimeout(function () {
+                __doPostBack('<%= btnEnviar.UniqueID %>', '');
+            }, 40);
+        }
     </script>
 </asp:Content>

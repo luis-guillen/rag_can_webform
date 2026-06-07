@@ -202,21 +202,6 @@ a:hover {
     letter-spacing: 0.01em;
 }
 
-.title-badge {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 0.55rem;
-    padding: 0.24rem 0.55rem;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    border: 1px solid rgba(96, 165, 250, 0.18);
-    color: var(--link);
-    font-size: 0.82rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
 .navbar-dark .nav-link {
     color: var(--text-muted) !important;
     transition: color 0.15s ease;
