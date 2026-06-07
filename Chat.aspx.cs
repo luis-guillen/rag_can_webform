@@ -23,7 +23,7 @@ namespace rag_can_aspx
             lblError.Visible = false;
 
             if (!IsPostBack)
-                LoadRequestedConversation();
+                StartNewChat();
 
             RenderHistorySidebar();
             RenderHealth();
@@ -106,9 +106,7 @@ namespace rag_can_aspx
 
         protected void BtnNuevoChat_Click(object sender, EventArgs e)
         {
-            ActiveConversationId = null;
-            txtPregunta.Text = string.Empty;
-            lblError.Visible = false;
+            StartNewChat();
             RenderHistorySidebar();
             RenderConversacion();
         }
@@ -148,26 +146,6 @@ namespace rag_can_aspx
             RenderConversacion();
         }
 
-        private void LoadRequestedConversation()
-        {
-            string requestedId = Request.QueryString["chat"];
-            if (string.IsNullOrWhiteSpace(requestedId))
-                return;
-
-            try
-            {
-                ChatConversation conversation = new ChatHistoryService().Load(requestedId);
-                if (conversation == null)
-                    MostrarError("La conversacion solicitada no existe.");
-                else
-                    ActiveConversationId = conversation.Id;
-            }
-            catch (Exception ex)
-            {
-                MostrarError("No se pudo abrir la conversacion solicitada: " + ex.Message);
-            }
-        }
-
         private ChatConversation LoadActiveConversation(ChatHistoryService history = null)
         {
             string id = ActiveConversationId;
@@ -176,6 +154,13 @@ namespace rag_can_aspx
 
             history = history ?? new ChatHistoryService();
             return history.Load(id);
+        }
+
+        private void StartNewChat()
+        {
+            ActiveConversationId = null;
+            txtPregunta.Text = string.Empty;
+            lblError.Visible = false;
         }
 
         private void RenderConversacion()

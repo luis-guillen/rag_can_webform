@@ -9,8 +9,8 @@
 # Sidecars de metadatos generados por el crawler
 *.metadata.json
 
-# Artefactos de probes locales
-/build_tmp/CrawlerProbe.exe
+# Artefactos de builds/probes locales
+/build_tmp/
 # User-specific files
 *.rsuser
 *.suo

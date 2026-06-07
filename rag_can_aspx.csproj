@@ -116,17 +116,12 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
-    <Content Include="Content\brand\rag-canarias-icon.svg" />
-    <Content Include="Content\brand\rag-canarias-logo.svg" />
-    <Content Include="Content\brand\logo_rag2.png" />
     <Content Include="Content\Site.css" />
     <Content Include="Chat.aspx" />
     <Content Include="Default.aspx" />
     <Content Include="Indexar.aspx" />
     <Content Include="metadata.json" Condition="Exists('metadata.json')" />
     <Content Include="Resultados.aspx" />
-    <Content Include="favicon.ico" />
-    <Content Include="favicon.svg" />
     <Content Include="Global.asax" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />

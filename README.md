@@ -1,7 +1,7 @@
 # RAGCAN
 
-> **Proyecto ASP.NET Web Forms para crawling web y limpieza de contenido HTML**  
-> Trabajo de Fin de Grado — Aplicación para descargar y procesar páginas web de un dominio de forma automática.
+> **Plataforma ASP.NET Web Forms para crawling, indexación y chat RAG sobre patrimonio de Canarias**  
+> Aplicación web con landing, historial de conversaciones y crawler orientado a generar corpus reutilizable.
 
 [![.NET Framework](https://img.shields.io/badge/.NET-Framework%204.8.1-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-7.3-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
@@ -25,7 +25,14 @@
 
 ## Descripción
 
-**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) que implementa un **crawler web con control de profundidad** para descargar y procesar automáticamente páginas de uno o varios dominios.
+**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) pensada para explorar y consultar un corpus de conocimiento sobre Canarias.
+
+La app combina:
+
+- una **landing page** descriptiva como entrada principal
+- una **página de chat RAG** con historial persistente
+- un **crawler** para descargar y limpiar contenido web
+- una capa de **indexación** para preparar el corpus
 
 El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.txt` individuales por página, listos para su uso como corpus en sistemas RAG (Retrieval-Augmented Generation).
 
@@ -37,7 +44,10 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 - **Control de profundidad**: limita el número de niveles de navegación
 - **Indexación de metadatos**: genera `metadata.json` a partir del corpus ya crawleado
 - **Interfaz web**: formulario Bootstrap 5 para configurar y lanzar rastreos
+- **Chat RAG**: entrada directa al chat, `Enter` para enviar, estado `Pensando` animado y respuestas con fuentes
+- **Landing moderna**: portada descriptiva con branding, hero y accesos directos
 - **Tema oscuro**: con Font Awesome 6.4.0 y persistencia en localStorage
+- **Favicon con el logo** de la aplicación
 
 ---
 
@@ -93,20 +103,49 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
         [App_Data/crawlings/.../metadata.json]
 ```
 
+### Flujo de Ejecución — Chat RAG
+
+```
+[Usuario] → [Landing.aspx - Entrada principal]
+                    ↓
+        [Chat.aspx - Chat RAG]
+                    ↓
+        [Chat.aspx.cs - Nuevo chat limpio al cargar]
+                    ↓
+        [RagQueryService - consulta al corpus indexado]
+                    ↓
+        [Historial de conversaciones + fuentes]
+```
+
 ### Capa de Servicios (`Services/`)
 
 | Clase | Responsabilidad |
 |-------|----------------|
+| `ChatHistoryService` | Persistencia, carga y listado del historial de conversaciones |
 | `CrawlerService` | Motor BFS: descarga, extrae texto, sigue enlaces |
 | `CrawlerSettings` | Validación y encapsulación de parámetros del formulario |
 | `CrawlJobManager` | Gestión del estado del trabajo de crawling |
 | `DuplicateDetector` | Evita procesar URLs duplicadas o ya visitadas |
 | `MetadataService` | Genera y actualiza `metadata.json` desde el corpus |
 | `QualityScorer` | Puntúa documentos por calidad de texto |
+| `RagQueryService` | Consulta al servicio RAG y exposición del estado de salud |
 | `SeedUrlProvider` | Lee y provee las URLs semilla desde `App_Data/seeds.txt` |
 | `PathHelper` | Centraliza la construcción de rutas dentro de `App_Data/` |
 
 ### Páginas
+
+#### `Landing.aspx` — Portada principal
+- Hero descriptivo con branding de RAGCAN
+- Accesos directos a chat y crawler
+- Estética oscura alineada con el resto de la app
+
+#### `Chat.aspx` — Chat RAG
+- `RAG Chat` como cabecera principal
+- `RAG` en azul y navegación coherente con la marca
+- El formulario de entrada usa un `textarea` que acepta `Enter` para enviar
+- Al entrar a la página se inicia un chat nuevo
+- Estado `Pensando` animado mientras se prepara la respuesta
+- Respuestas con iconos en lugar de emojis y fuentes visibles
 
 #### `Default.aspx` — Formulario de crawling
 Controles ASP.NET:
@@ -131,6 +170,7 @@ Controles ASP.NET:
 - Navbar con navegación y toggle dark mode
 - Script pre-paint en `<head>` para evitar parpadeo al cargar
 - CSS con custom properties (`--bg-color`, `--text-color`, etc.) en `Content/Site.css`
+- Favicon apuntando al logo de la aplicación
 
 ---
 
@@ -272,6 +312,11 @@ html.dark-mode {
 
 ```
 rag_can_webform/
+├── Landing.aspx                   # Portada principal
+├── Landing.aspx.cs                # Code-behind de la landing
+├── Chat.aspx                      # Chat RAG
+├── Chat.aspx.cs                   # Code-behind del chat
+├── Chat.aspx.designer.cs
 ├── Default.aspx                    # Formulario principal de crawling
 ├── Default.aspx.cs                 # Code-behind: BtnCrawl_Click, lógica de inicio
 ├── Default.aspx.designer.cs        # Diseñador (autogenerado)
@@ -292,6 +337,7 @@ rag_can_webform/
 ├── ViewSwitcher.ascx               # Control de cambio de vista (desktop/móvil)
 ├── ViewSwitcher.ascx.cs
 ├── Services/
+│   ├── ChatHistoryService.cs      # Historial persistente de conversaciones
 │   ├── CrawlerService.cs           # Motor BFS: descarga y extracción de texto
 │   ├── CrawlerSettings.cs          # Validación y encapsulación de parámetros
 │   ├── CrawlJobManager.cs          # Gestión del estado del trabajo
@@ -299,6 +345,7 @@ rag_can_webform/
 │   ├── MetadataService.cs          # Generación de metadata.json
 │   ├── PathHelper.cs               # Construcción de rutas en App_Data
 │   ├── QualityScorer.cs            # Puntuación de calidad de documentos
+│   ├── RagQueryService.cs          # Consulta al backend RAG y health check
 │   └── SeedUrlProvider.cs          # Proveedor de URLs semilla
 ├── App_Data/
 │   ├── seeds.txt                   # URLs semilla (una por línea)
@@ -318,7 +365,7 @@ rag_can_webform/
 │       └── MSAjax/                 # Microsoft AJAX
 ├── App_Start/
 │   ├── BundleConfig.cs             # Bundling de CSS/JS
-│   └── RouteConfig.cs              # Rutas amigables (FriendlyUrls)
+│   └── RouteConfig.cs              # Rutas amigables (home → Landing.aspx)
 ├── Properties/
 │   └── AssemblyInfo.cs
 ├── Global.asax                     # Configuración global de la aplicación
@@ -356,4 +403,4 @@ Este proyecto está bajo licencia **MIT**. Consulta `LICENSE` para más detalles
 
 ---
 
-**Última actualización:** 2026 | **Versión:** 1.0 | **Estado:** En desarrollo
+**Última actualización:** 2026-06-07 | **Versión:** 1.0 | **Estado:** En desarrollo
