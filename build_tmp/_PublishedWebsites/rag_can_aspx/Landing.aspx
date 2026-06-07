@@ -18,28 +18,6 @@
                         <a class="btn btn-outline-light btn-lg" runat="server" href="~/Crawler">Ver crawler</a>
                     </div>
                 </div>
-
-                <div class="landing-panel">
-                    <div class="landing-panel-title">Qué encontrarás</div>
-                    <div class="landing-stat-grid">
-                        <div class="landing-stat">
-                            <span class="landing-stat-value">Respuestas trazables</span>
-                            <div class="landing-stat-label">Cada respuesta puede mostrar las fuentes usadas para construirla.</div>
-                        </div>
-                        <div class="landing-stat">
-                            <span class="landing-stat-value">Historial persistente</span>
-                            <div class="landing-stat-label">Recupera conversaciones anteriores y continúa desde donde lo dejaste.</div>
-                        </div>
-                        <div class="landing-stat">
-                            <span class="landing-stat-value">Diseño enfocado</span>
-                            <div class="landing-stat-label">Una interfaz sobria, rápida y pensada para consultas largas.</div>
-                        </div>
-                        <div class="landing-stat">
-                            <span class="landing-stat-value">Acceso directo</span>
-                            <div class="landing-stat-label">Entra al chat principal o revisa el crawler cuando lo necesites.</div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div class="landing-features">

@@ -352,14 +352,31 @@ footer {
     pointer-events: none;
 }
 
+.landing-shell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(90deg, rgba(8, 11, 28, 0.95) 0%, rgba(8, 11, 28, 0.72) 34%, rgba(8, 11, 28, 0.2) 62%, rgba(8, 11, 28, 0.05) 100%),
+        url('brand/logo_rag3.png');
+    background-repeat: no-repeat, no-repeat;
+    background-position: 0 0, right -2rem center;
+    background-size: 100% 100%, min(44vw, 760px) auto;
+    opacity: 0.48;
+    filter: saturate(1) contrast(1.08) brightness(0.95);
+    pointer-events: none;
+    mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.95) 48%, rgba(0, 0, 0, 0.3) 78%, transparent 100%);
+}
+
 .landing-hero {
     position: relative;
     z-index: 1;
     padding: 4.5rem 3rem 3rem;
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr);
-    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
     align-items: center;
+    max-width: 760px;
 }
 
 .landing-kicker {
@@ -430,50 +447,6 @@ footer {
     color: #ffffff;
 }
 
-.landing-panel {
-    padding: 1.25rem;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(8, 12, 34, 0.72);
-    backdrop-filter: blur(10px);
-}
-
-.landing-panel-title {
-    margin: 0 0 0.75rem;
-    color: #f8fbff;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.landing-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem;
-}
-
-.landing-stat {
-    padding: 1rem;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.landing-stat-value {
-    display: block;
-    margin-bottom: 0.35rem;
-    color: #f8fbff;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-.landing-stat-label {
-    color: var(--text-muted);
-    font-size: 0.88rem;
-    line-height: 1.45;
-}
-
 .landing-features {
     position: relative;
     z-index: 1;
@@ -519,13 +492,24 @@ footer {
 
 @media (max-width: 991.98px) {
     .landing-hero {
-        grid-template-columns: 1fr;
         padding: 3.2rem 1.5rem 2rem;
+        max-width: none;
     }
 
     .landing-features {
         grid-template-columns: 1fr;
         padding: 0 1.5rem 1.75rem;
+    }
+
+    .landing-shell::after {
+        background-image:
+            linear-gradient(180deg, rgba(8, 11, 28, 0.92) 0%, rgba(8, 11, 28, 0.62) 38%, rgba(8, 11, 28, 0.18) 100%),
+            url('brand/logo_rag3.png');
+        background-repeat: no-repeat, no-repeat;
+        background-position: 0 0, center 1rem;
+        background-size: 100% 100%, min(78vw, 620px) auto;
+        opacity: 0.36;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.82) 55%, transparent 100%);
     }
 }
 
@@ -547,8 +531,14 @@ footer {
         min-width: 0;
     }
 
-    .landing-stat-grid {
-        grid-template-columns: 1fr;
+    .landing-shell::after {
+        background-image:
+            linear-gradient(180deg, rgba(8, 11, 28, 0.94) 0%, rgba(8, 11, 28, 0.68) 42%, rgba(8, 11, 28, 0.2) 100%),
+            url('brand/logo_rag3.png');
+        background-repeat: no-repeat, no-repeat;
+        background-position: 0 0, center 0.5rem;
+        background-size: 100% 100%, 92vw auto;
+        opacity: 0.3;
     }
 }
 
