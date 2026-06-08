@@ -46,6 +46,7 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 - **Interfaz web**: formulario Bootstrap 5 para configurar y lanzar rastreos
 - **Chat RAG**: entrada directa al chat, `Enter` para enviar, estado `Pensando` animado y respuestas con fuentes
 - **Landing moderna**: portada descriptiva con branding, hero y accesos directos
+- **UI responsive unificada**: crawler, chat y master pages usan Bootstrap 5 en escritorio, tablet y móvil
 - **Tema oscuro**: con Font Awesome 6.4.0 y persistencia en localStorage
 - **Favicon con el logo** de la aplicación
 
@@ -74,9 +75,11 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 ### Flujo de Ejecución — Crawling
 
 ```
-[Usuario] → [Default.aspx - Formulario]
+[Usuario] → [Landing.aspx - Entrada principal]
                     ↓
-        [Default.aspx.cs - BtnCrawl_Click()]
+        [Crawler.aspx - Control + estado + logs]
+                    ↓
+        [Crawler.aspx.cs - BtnIniciar_Click()]
                     ↓
         [CrawlerSettings — validación de parámetros]
                     ↓
@@ -138,6 +141,7 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 - Hero descriptivo con branding de RAGCAN
 - Accesos directos a chat y crawler
 - Estética oscura alineada con el resto de la app
+- Es el documento por defecto de IIS (`Web.config`) y la ruta raíz (`RouteConfig`)
 
 #### `Chat.aspx` — Chat RAG
 - `RAG Chat` como cabecera principal
@@ -146,15 +150,18 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 - Al entrar a la página se inicia un chat nuevo
 - Estado `Pensando` animado mientras se prepara la respuesta
 - Respuestas con iconos en lugar de emojis y fuentes visibles
+- Usa `PageScripts`; tanto `Site.Master` como `Site.Mobile.Master` exponen ese placeholder
 
-#### `Default.aspx` — Formulario de crawling
-Controles ASP.NET:
-- `txtUrl` — URL a rastrear (opcional; si vacía usa `seeds.txt`)
-- `txtCarpeta` — Subcarpeta de salida dentro de `App_Data/` (defecto: `crawlings/`)
-- `txtMaxPages` — Límite de páginas (1–10000, defecto: 50)
-- `txtMaxDepth` — Profundidad máxima (0–10, defecto: 2)
-- `chkFullCrawl` — Permite hasta 1000 páginas
-- `btnCrawl` — Inicia el crawling (PostBack)
+#### `Crawler.aspx` — Control del crawler
+- Formulario de URL única o archivo `.txt` de semillas
+- Selector de archivo a ancho completo para evitar recortes en móvil
+- Botones de acción en fila en escritorio y apilados en móvil
+- Estado vivo, tabla de fuentes y logs con scroll interno sin romper el ancho de página
+- Scheduler integrado para crawl/index programado
+
+#### `Default.aspx` — Compatibilidad antigua
+- Conservado por compatibilidad con enlaces previos
+- Redirige a `Crawler.aspx`, donde vive la UI actual del crawler
 
 #### `Indexar.aspx` — Generación de metadatos
 - `ddlCarpeta` — Dropdown con subcarpetas detectadas automáticamente en `App_Data/`
@@ -166,11 +173,19 @@ Controles ASP.NET:
 - Muestra resumen por dominio: páginas descargadas y ruta de guardado
 - Enlace de vuelta al formulario
 
+#### `Contact.aspx` — Página no usada
+- Redirige a `Landing.aspx` para evitar caer en la plantilla de contacto por defecto
+
 #### Master Page y Tema Oscuro (`Site.Master`)
 - Navbar con navegación y toggle dark mode
 - Script pre-paint en `<head>` para evitar parpadeo al cargar
 - CSS con custom properties (`--bg-color`, `--text-color`, etc.) en `Content/Site.css`
 - Favicon apuntando al logo de la aplicación
+
+#### Master móvil (`Site.Mobile.Master`)
+- Replica la estructura responsive de `Site.Master`
+- Incluye bundles, `ScriptManager`, navbar, dark mode y `PageScripts`
+- Evita errores en páginas que cargan scripts al final, como `Chat.aspx`
 
 ---
 
@@ -305,6 +320,8 @@ html.dark-mode {
 - Tema oscuro persistente (localStorage + cookie fallback)
 - Sin parpadeo al cargar (script pre-paint en `<head>`)
 - Resumen visual de resultados por dominio
+- `Content/Site.css` evita límites globales de `280px` en controles Bootstrap y añade reglas responsive específicas para `Crawler.aspx`
+- Tablas y logs del crawler usan scroll interno para no generar overflow horizontal de página
 
 ---
 
@@ -317,8 +334,11 @@ rag_can_webform/
 ├── Chat.aspx                      # Chat RAG
 ├── Chat.aspx.cs                   # Code-behind del chat
 ├── Chat.aspx.designer.cs
-├── Default.aspx                    # Formulario principal de crawling
-├── Default.aspx.cs                 # Code-behind: BtnCrawl_Click, lógica de inicio
+├── Crawler.aspx                    # UI unificada de crawling: control, estado, logs y scheduler
+├── Crawler.aspx.cs                 # Code-behind: iniciar/parar crawl, render de estado, fuentes y logs
+├── Crawler.aspx.designer.cs
+├── Default.aspx                    # Compatibilidad antigua; redirige a Crawler.aspx
+├── Default.aspx.cs                 # Code-behind heredado
 ├── Default.aspx.designer.cs        # Diseñador (autogenerado)
 ├── Indexar.aspx                    # Formulario para generar metadatos del corpus
 ├── Indexar.aspx.cs                 # Code-behind: BtnIndexar_Click
@@ -327,11 +347,11 @@ rag_can_webform/
 ├── Resultados.aspx.cs
 ├── Resultados.aspx.designer.cs
 ├── About.aspx                      # Página informativa
-├── Contact.aspx                    # Página de contacto
+├── Contact.aspx                    # Página no usada; redirige a Landing.aspx
 ├── Site.Master                     # Master page (layout + navbar + dark mode toggle)
 ├── Site.Master.cs
 ├── Site.Master.designer.cs
-├── Site.Mobile.Master              # Master page para dispositivos móviles
+├── Site.Mobile.Master              # Master móvil alineada con Site.Master + PageScripts
 ├── Site.Mobile.Master.cs
 ├── Site.Mobile.Master.designer.cs
 ├── ViewSwitcher.ascx               # Control de cambio de vista (desktop/móvil)
@@ -365,7 +385,7 @@ rag_can_webform/
 │       └── MSAjax/                 # Microsoft AJAX
 ├── App_Start/
 │   ├── BundleConfig.cs             # Bundling de CSS/JS
-│   └── RouteConfig.cs              # Rutas amigables (home → Landing.aspx)
+│   └── RouteConfig.cs              # Rutas amigables (home → Landing.aspx, /Crawler → Crawler.aspx)
 ├── Properties/
 │   └── AssemblyInfo.cs
 ├── Global.asax                     # Configuración global de la aplicación

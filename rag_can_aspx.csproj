@@ -100,6 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\seeds.txt" />
+    <Content Include="DemoApi.ashx" />
     <Content Include="About.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap-grid.css" />
@@ -122,6 +123,7 @@
     <Content Include="Chat.aspx" />
     <Content Include="Crawler.aspx" />
     <Content Include="Default.aspx" />
+    <Content Include="Evaluacion.aspx" />
     <Content Include="Indexar.aspx" />
     <Content Include="Services\Wcf\CrawlerIndexerService.svc" />
     <Content Include="metadata.json" Condition="Exists('metadata.json')" />
@@ -173,6 +175,13 @@
     </Compile>
     <Compile Include="About.aspx.designer.cs">
       <DependentUpon>About.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Evaluacion.aspx.cs">
+      <DependentUpon>Evaluacion.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Evaluacion.aspx.designer.cs">
+      <DependentUpon>Evaluacion.aspx</DependentUpon>
     </Compile>
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Contact.aspx.cs">

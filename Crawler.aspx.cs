@@ -272,7 +272,7 @@ namespace rag_can_aspx
                 return "<p class=\"text-muted\">Sin logs todavia.</p>";
 
             var sb = new StringBuilder();
-            sb.Append("<pre style=\"max-height:280px; overflow:auto; background:#1e1e1e; color:#d4d4d4; padding:12px; border-radius:6px;\">");
+            sb.Append("<pre class=\"crawler-log\">");
             foreach (string line in lines)
                 sb.Append(HttpUtility.HtmlEncode(line) + "\n");
             sb.Append("</pre>");

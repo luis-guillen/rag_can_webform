@@ -14,6 +14,12 @@ namespace rag_can_aspx {
         protected global::System.Web.UI.Timer tmrIndex;
         protected global::System.Web.UI.WebControls.Literal litIndexEstado;
         protected global::System.Web.UI.WebControls.Literal litIndexLogs;
+        protected global::System.Web.UI.UpdatePanel updVectorizarControl;
+        protected global::System.Web.UI.WebControls.Label lblVectorizarMsg;
+        protected global::System.Web.UI.WebControls.Button btnVectorizar;
+        protected global::System.Web.UI.UpdatePanel updVectorizarEstado;
+        protected global::System.Web.UI.Timer tmrVectorizar;
+        protected global::System.Web.UI.WebControls.PlaceHolder phVectorizarProgress;
         protected global::System.Web.UI.WebControls.DropDownList ddlCarpeta;
         protected global::System.Web.UI.WebControls.TextBox txtCarpetaCustom;
         protected global::System.Web.UI.WebControls.CheckBox chkRecursivo;

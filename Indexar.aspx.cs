@@ -2,9 +2,11 @@ using rag_can_aspx.Services;
 using rag_can_aspx.Services.Jobs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Web;
 using System.Web.UI;
 
@@ -13,6 +15,12 @@ namespace rag_can_aspx
     public partial class Indexar : Page
     {
         private readonly CrawlerIndexerFacade _facade = new CrawlerIndexerFacade();
+
+        private static readonly object _vectLock = new object();
+        private const string VectKey = "Vectorizar:Running";
+
+        private string PythonDir      => Path.Combine(Server.MapPath("~"), "python");
+        private string VectLogPath    => Path.Combine(PythonDir, "vectorizar.log");
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -238,6 +246,156 @@ namespace rag_can_aspx
             lblError.Text = System.Web.HttpUtility.HtmlEncode(mensaje);
             lblError.Visible = true;
         }
+
+        // ── Vectorizar en Qdrant ───────────────────────────────────────────────
+
+        protected void BtnVectorizar_Click(object sender, EventArgs e)
+        {
+            lock (_vectLock)
+            {
+                if (Application[VectKey] is true)
+                {
+                    MostrarVectMsg("Ya hay una vectorización en curso. Espera a que termine.", false);
+                    return;
+                }
+                Application[VectKey] = true;
+            }
+
+            string pythonDir = PythonDir;
+            string pythonExe = ResolvePythonExe(pythonDir);
+            string logPath   = VectLogPath;
+            var    app       = Application;
+
+            try { Directory.CreateDirectory(pythonDir); File.WriteAllText(logPath, "=== Vectorización iniciada: " + DateTime.Now.ToString("o") + " ===" + Environment.NewLine); }
+            catch { }
+
+            var t = new Thread(() =>
+            {
+                try
+                {
+                    // --full la primera vez (o si incremental no encuentra docs); embed_index sube todo
+                    RunAndStream(pythonExe, "-m app.chunk --full",  pythonDir, logPath, append: true);
+                    RunAndStream(pythonExe, "-m app.embed_index",   pythonDir, logPath, append: true);
+                    File.AppendAllText(logPath, Environment.NewLine + "=== Completado: " + DateTime.Now.ToString("o") + " ===" + Environment.NewLine);
+                }
+                catch (Exception ex)
+                {
+                    try { File.AppendAllText(logPath, "EXCEPTION: " + ex.Message + Environment.NewLine); } catch { }
+                }
+                finally
+                {
+                    app[VectKey] = false;
+                }
+            });
+            t.IsBackground = true;
+            t.Start();
+
+            tmrVectorizar.Enabled = true;
+            MostrarVectMsg("Vectorización iniciada en segundo plano...", true);
+            updVectorizarEstado.Update();
+            updVectorizarControl.Update();
+        }
+
+        protected void TmrVectorizar_Tick(object sender, EventArgs e)
+        {
+            bool running = Application[VectKey] is true;
+            phVectorizarProgress.Controls.Clear();
+
+            if (running)
+            {
+                phVectorizarProgress.Visible = true;
+                phVectorizarProgress.Controls.Add(new LiteralControl(BuildVectProgressHtml()));
+            }
+            else
+            {
+                tmrVectorizar.Enabled  = false;
+                phVectorizarProgress.Visible = false;
+                MostrarVectMsg("Vectorización completada. La colección rag_canarias está lista.", true);
+                updVectorizarControl.Update();
+            }
+            updVectorizarEstado.Update();
+        }
+
+        private string BuildVectProgressHtml()
+        {
+            var sb = new StringBuilder();
+            sb.Append("<div class=\"mt-3\"><div class=\"d-flex align-items-center mb-2\">");
+            sb.Append("<div class=\"spinner-border spinner-border-sm text-success me-2\"></div>");
+            sb.Append("<strong>Vectorizando corpus... (chunk → embed → Qdrant)</strong></div>");
+
+            if (File.Exists(VectLogPath))
+            {
+                try
+                {
+                    List<string> lines;
+                    using (var fs = new FileStream(VectLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var sr = new StreamReader(fs, Encoding.UTF8))
+                    {
+                        var all = sr.ReadToEnd().Split('\n')
+                            .Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+                        lines = all.Count > 25 ? all.GetRange(all.Count - 25, 25) : all;
+                    }
+                    sb.Append("<pre style=\"max-height:280px;overflow:auto;background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:6px;font-size:12px;\">");
+                    foreach (string l in lines)
+                        sb.Append(HttpUtility.HtmlEncode(l) + "\n");
+                    sb.Append("</pre>");
+                }
+                catch { }
+            }
+            sb.Append("</div>");
+            return sb.ToString();
+        }
+
+        private void MostrarVectMsg(string msg, bool ok)
+        {
+            lblVectorizarMsg.Text     = HttpUtility.HtmlEncode(msg);
+            lblVectorizarMsg.CssClass = ok ? "alert alert-success d-block mb-3" : "alert alert-danger d-block mb-3";
+            lblVectorizarMsg.Visible  = true;
+        }
+
+        private static void RunAndStream(string exe, string args, string workDir, string logPath, bool append)
+        {
+            var psi = new ProcessStartInfo(exe, args)
+            {
+                WorkingDirectory       = workDir,
+                UseShellExecute        = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                CreateNoWindow         = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding  = System.Text.Encoding.UTF8,
+            };
+            psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
+            psi.EnvironmentVariables["PYTHONUTF8"]       = "1";
+
+            using (var proc   = Process.Start(psi))
+            using (var log    = new StreamWriter(logPath, append, Encoding.UTF8) { AutoFlush = true })
+            {
+                var writeLock = new object();
+                var tOut = new Thread(() => { string ln; while ((ln = proc.StandardOutput.ReadLine()) != null) lock (writeLock) log.WriteLine(ln); }) { IsBackground = true };
+                var tErr = new Thread(() => { string ln; while ((ln = proc.StandardError.ReadLine())  != null) lock (writeLock) log.WriteLine("[!] " + ln); }) { IsBackground = true };
+                tOut.Start(); tErr.Start();
+                proc.WaitForExit();
+                tOut.Join(5000); tErr.Join(5000);
+                log.WriteLine("--- exit code: " + proc.ExitCode + " ---");
+            }
+        }
+
+        private static string ResolvePythonExe(string pythonDir)
+        {
+            string reposRoot = Path.GetFullPath(Path.Combine(pythonDir, "..", ".."));
+            string[] cands = {
+                Path.Combine(pythonDir, ".venv", "Scripts", "python.exe"),
+                Path.Combine(pythonDir, ".venv", "bin", "python"),
+                Path.Combine(reposRoot, "rag_can_python", ".venv", "Scripts", "python.exe"),
+                Path.Combine(reposRoot, "rag_can_python", ".venv", "bin", "python"),
+            };
+            foreach (string c in cands)
+                try { string n = Path.GetFullPath(c); if (File.Exists(n)) return n; } catch { }
+            return "python";
+        }
+
+        // ── Sidecars ───────────────────────────────────────────────────────────
 
         private static bool EsArchivoIndexablePrimario(string rutaArchivo)
         {

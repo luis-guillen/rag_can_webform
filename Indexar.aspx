@@ -40,6 +40,33 @@
             </div>
         </div>
 
+        <!-- Vectorizar corpus en Qdrant (Python pipeline) -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="mb-3"><i class="fas fa-database"></i> Vectorizar corpus en Qdrant</h4>
+                <p class="text-muted">
+                    Ejecuta <code>app.chunk --full</code> seguido de <code>app.embed_index</code>:
+                    re-genera todos los fragmentos del corpus y los sube a la colección <code>rag_canarias</code> en Qdrant.
+                    Requiere que la <strong>Demo API</strong> (Qdrant en Docker) esté activa.
+                </p>
+
+                <asp:UpdatePanel ID="updVectorizarControl" runat="server" UpdateMode="Conditional">
+                    <ContentTemplate>
+                        <asp:Label ID="lblVectorizarMsg" runat="server" CssClass="alert d-block mb-3" Visible="false"></asp:Label>
+                        <asp:Button ID="btnVectorizar" runat="server" Text="Chunk + Vectorizar en Qdrant"
+                            CssClass="btn btn-success btn-lg" OnClick="BtnVectorizar_Click" />
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+
+                <asp:UpdatePanel ID="updVectorizarEstado" runat="server" UpdateMode="Conditional">
+                    <ContentTemplate>
+                        <asp:Timer ID="tmrVectorizar" runat="server" Interval="3000" Enabled="false" OnTick="TmrVectorizar_Tick" />
+                        <asp:PlaceHolder ID="phVectorizarProgress" runat="server" Visible="false"></asp:PlaceHolder>
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+            </div>
+        </div>
+
         <!-- Escaneo manual de metadata (herramienta de reparacion) -->
         <div class="card mb-4">
             <div class="card-body">

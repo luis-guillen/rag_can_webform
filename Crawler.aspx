@@ -1,7 +1,7 @@
 <%@ Page Title="Crawler RAGCAN" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Crawler.aspx.cs" Inherits="rag_can_aspx.Crawler" %>
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
-    <div class="container">
+    <div class="container crawler-page">
         <h1 class="mb-3">Crawler <span class="title-rag">RAG</span><span class="title-dark">CAN</span></h1>
         <p class="lead">
             Lanza el crawling en segundo plano. Puedes cerrar o cambiar de pagina: el job sigue
@@ -41,10 +41,12 @@
                 <asp:UpdatePanel ID="updControl" runat="server" UpdateMode="Conditional">
                     <ContentTemplate>
                         <asp:Label ID="lblMensaje" runat="server" CssClass="alert alert-info d-block mb-3" Visible="false"></asp:Label>
-                        <asp:Button ID="btnIniciar" runat="server" Text="Iniciar Crawling"
-                            CssClass="btn btn-primary btn-lg" OnClick="BtnIniciar_Click" />
-                        <asp:Button ID="btnParar" runat="server" Text="Parar"
-                            CssClass="btn btn-outline-danger btn-lg ms-2" OnClick="BtnParar_Click" />
+                        <div class="crawler-actions">
+                            <asp:Button ID="btnIniciar" runat="server" Text="Iniciar Crawling"
+                                CssClass="btn btn-primary btn-lg" OnClick="BtnIniciar_Click" />
+                            <asp:Button ID="btnParar" runat="server" Text="Parar"
+                                CssClass="btn btn-outline-danger btn-lg" OnClick="BtnParar_Click" />
+                        </div>
                     </ContentTemplate>
                     <Triggers>
                         <asp:PostBackTrigger ControlID="btnIniciar" />
@@ -112,8 +114,10 @@
                     <label class="form-check-label" for="chkSchedIndex">Ejecutar indexado tras el crawl</label>
                 </div>
                 <asp:Label ID="lblScheduler" runat="server" CssClass="alert alert-success d-block mb-3" Visible="false"></asp:Label>
-                <asp:Button ID="btnGuardarScheduler" runat="server" Text="Guardar programacion"
-                    CssClass="btn btn-secondary" OnClick="BtnGuardarScheduler_Click" />
+                <div class="crawler-actions crawler-actions-secondary">
+                    <asp:Button ID="btnGuardarScheduler" runat="server" Text="Guardar programacion"
+                        CssClass="btn btn-secondary" OnClick="BtnGuardarScheduler_Click" />
+                </div>
             </div>
         </div>
     </div>
