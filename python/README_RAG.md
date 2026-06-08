@@ -26,7 +26,7 @@ ASP.NET Web Forms (crawler/indexer/chat)         Python (este módulo)
 | **MRR** | **0.8190** | **0.8190** |
 | Recall@1 | 72.0 % | 72.0 % |
 | Recall@3 | 92.0 % | 92.0 % |
-| Latencia media | 2 715 ms | 2 711 ms |
+| Latencia media | 2 715 ms | 26 283 ms |
 | Rechazadas | 0 % | 0 % |
 
 > Recall@K y MRR son independientes del LLM: dependen del índice Qdrant y los embeddings.
@@ -113,6 +113,17 @@ Toda la configuración vive en `app/config.py` y puede sobreescribirse vía vari
 | `RAG_LLM_MAX_CONTEXT_CHARS` | `1800` | Límite de contexto al LLM |
 
 ### LLM remoto (Dell Pro Max) vs local (Ollama)
+
+Entorno usado en las evaluaciones:
+
+| Rol | Equipo / servicio | Especificación observada |
+|-----|-------------------|--------------------------|
+| Local | Acer Nitro AN515-45 | AMD Ryzen 7 5800H, 8C/16T, 16 GB RAM, NVIDIA GeForce RTX 3050 Laptop GPU 4 GB VRAM |
+| Remoto | Dell Pro Max vía Ollama | API `http://10.17.159.197:11434`, Ollama `0.24.0`, modelo `qwen3:30b-a3b-instruct-2507-q4_K_M` |
+
+La API remota de Ollama informa que el modelo remoto es GGUF, familia `qwen3moe`,
+`30.5B` parámetros, cuantización `Q4_K_M` y tamaño aproximado de 18.6 GB. No expone
+CPU, RAM ni GPU de la Dell Pro Max, así que esos datos de hardware no se infieren.
 
 Los scripts `start_api.ps1` / `start_api.sh` **auto-detectan** el LLM disponible:
 

@@ -7,6 +7,20 @@
 
 ---
 
+## Entorno de ejecución
+
+| Rol | Equipo / servicio | Especificación observada |
+|-----|-------------------|--------------------------|
+| Pipeline y LLM local | Acer Nitro AN515-45 | AMD Ryzen 7 5800H, 8 cores / 16 hilos, 16 GB RAM, NVIDIA GeForce RTX 3050 Laptop GPU 4 GB VRAM |
+| LLM remoto | Dell Pro Max vía API Ollama | `http://10.17.159.197:11434`, Ollama `0.24.0`, modelo `qwen3:30b-a3b-instruct-2507-q4_K_M` |
+
+El modelo remoto expuesto por Ollama es GGUF, familia `qwen3moe`, `30.5B` parámetros,
+cuantización `Q4_K_M` y tamaño aproximado de 18.6 GB. La API remota no expone CPU,
+RAM ni GPU de la Dell Pro Max, por lo que la comparativa solo afirma los datos
+observables por el endpoint.
+
+---
+
 ## Métricas globales
 
 | Métrica | LLM remoto (30B) | LLM local (4B) | Δ |
