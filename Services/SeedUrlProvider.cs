@@ -25,14 +25,47 @@ namespace rag_can_aspx.Services
                     rutaSemillas);
             }
 
+            SeedLoadResult result = ParseLines(File.ReadAllLines(rutaSemillas));
+            result.FilePath = rutaSemillas;
+            return result;
+        }
+
+        public void SaveUrls(IEnumerable<string> urls)
+        {
+            if (urls == null)
+                throw new ArgumentNullException(nameof(urls));
+
+            string rutaSemillas = ResolverRutaSemillas(_settings.SeedsFile);
+            string directory = Path.GetDirectoryName(rutaSemillas);
+            if (!string.IsNullOrWhiteSpace(directory))
+                Directory.CreateDirectory(directory);
+
+            File.WriteAllLines(rutaSemillas, urls.ToArray());
+        }
+
+        public static SeedLoadResult ParseLines(IEnumerable<string> lines)
+        {
             var urls = new List<string>();
             var errores = new List<string>();
+            int entradas = 0;
 
-            foreach (var linea in File.ReadAllLines(rutaSemillas))
+            if (lines == null)
+            {
+                return new SeedLoadResult
+                {
+                    Urls = urls,
+                    InvalidEntries = errores,
+                    EntryCount = entradas
+                };
+            }
+
+            foreach (var linea in lines)
             {
                 string valor = (linea ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(valor) || valor.StartsWith("#"))
                     continue;
+
+                entradas++;
 
                 Uri uri;
                 if (!Uri.TryCreate(valor, UriKind.Absolute, out uri))
@@ -50,9 +83,9 @@ namespace rag_can_aspx.Services
 
             return new SeedLoadResult
             {
-                FilePath = rutaSemillas,
                 Urls = urls,
-                InvalidEntries = errores
+                InvalidEntries = errores,
+                EntryCount = entradas
             };
         }
 
@@ -76,5 +109,6 @@ namespace rag_can_aspx.Services
         public string FilePath { get; set; }
         public List<string> Urls { get; set; }
         public List<string> InvalidEntries { get; set; }
+        public int EntryCount { get; set; }
     }
 }

@@ -72,15 +72,20 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Landing.aspx">Inicio</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Chat.aspx">Chat</a></li>
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Default.aspx">Crawler</a></li>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Crawler.aspx">Crawler</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Indexar.aspx">Indexar</a></li>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Evaluacion.aspx">Evaluación</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">Acerca de</a></li>
                     </ul>
                 </div>
-                <button id="dark-mode-toggle" type="button" class="btn ms-2"
-                    style="width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.4); background-color: #343a40;"
+                <button id="btn-demo-api" type="button" class="btn btn-sm ms-2 nav-api-button"
+                    title="Demo API — click para iniciar">
+                    <span id="api-dot" class="nav-api-dot"></span>
+                    <span id="api-label" class="nav-api-label">Demo API</span>
+                </button>
+                <button id="dark-mode-toggle" type="button" class="btn ms-2 theme-toggle"
                     title="Alternar modo oscuro" aria-pressed="false">
-                    <i id="dm-icon" class="fas fa-moon" style="font-size:16px; color: inherit;"></i>
+                    <i id="dm-icon" class="fas fa-moon"></i>
                 </button>            </div>
         </nav>
         <div class="container body-content">
@@ -120,6 +125,86 @@
             document.getElementById('dm-icon').className = 'fas fa-sun';
             document.getElementById('dark-mode-toggle').setAttribute('aria-pressed', 'true');
         }
+    </script>
+
+    <script>
+    (function () {
+        var apiUrl = '<%= ResolveUrl("~/DemoApi.ashx") %>';
+        var btn = document.getElementById('btn-demo-api');
+        var dot = document.getElementById('api-dot');
+        var lbl = document.getElementById('api-label');
+        var apiRunning = false;
+        var busy = false;
+
+        function modelShort(model) {
+            if (!model) return '';
+            // "qwen3:30b-a3b-instruct-2507-q4_K_M" → "qwen3:30b"
+            var m = model.split('-')[0];
+            return m.length > 14 ? m.substring(0, 14) : m;
+        }
+
+        function setState(running, transitioning, d) {
+            apiRunning = running;
+            d = d || {};
+            if (transitioning) {
+                dot.style.background = '#ffc107';
+                lbl.textContent = 'Iniciando…';
+                btn.title = d.message || 'FastAPI iniciando…';
+            } else if (running) {
+                dot.style.background = d.llmRemote ? '#0d6efd' : '#28a745';
+                var src = d.llmRemote ? '⚡ remoto' : '💻 local';
+                lbl.textContent = 'API ON · ' + src;
+                btn.title = 'FastAPI activa · ' + (d.llmModel || '') + ' — click para detener';
+            } else {
+                dot.style.background = '#dc3545';
+                lbl.textContent = 'API OFF';
+                btn.title = 'Demo API detenida — click para iniciar (detecta LLM remoto automáticamente)';
+            }
+        }
+
+        function checkStatus() {
+            if (busy) return;
+            fetch(apiUrl + '?action=status', { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) { setState(d.running, false, d); })
+                .catch(function () { dot.style.background = '#6c757d'; });
+        }
+
+        btn.addEventListener('click', function () {
+            if (busy) return;
+            busy = true;
+            var action = apiRunning ? 'stop' : 'start';
+            if (action === 'start') setState(false, true, {});
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=' + action
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                busy = false;
+                if (action === 'start' && !d.running) {
+                    setState(false, true, d);
+                    var poll = setInterval(function () {
+                        fetch(apiUrl + '?action=status', { cache: 'no-store' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (d2) {
+                                if (d2.running) { clearInterval(poll); setState(true, false, d2); }
+                            })
+                            .catch(function () {});
+                    }, 2000);
+                    setTimeout(function () { clearInterval(poll); checkStatus(); }, 90000);
+                } else {
+                    setState(d.running, false, d);
+                }
+            })
+            .catch(function () { busy = false; checkStatus(); });
+        });
+
+        checkStatus();
+        setInterval(checkStatus, 6000);
+    })();
     </script>
 </body>
 </html>

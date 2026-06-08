@@ -2,6 +2,7 @@
 :root {
     --bg: #ffffff;
     --bg-soft: #f8f9fa;
+    --bg-elevated: #ffffff;
     --text: #212529;
     --text-muted: #6c757d;
     --border: #dee2e6;
@@ -9,12 +10,16 @@
     --input-bg: #ffffff;
     --link: #0d6efd;
     --link-hover: #0b5ed7;
+    --code-bg: #f1f3f5;
+    --log-bg: #f8fafc;
+    --log-text: #1f2937;
 }
 
 /* Design Tokens - Dark Mode */
 html.dark-mode {
     --bg: #121212;
     --bg-soft: #1e1e1e;
+    --bg-elevated: #181818;
     --text: #e0e0e0;
     --text-muted: #9e9e9e;
     --border: #3a3a3a;
@@ -22,6 +27,9 @@ html.dark-mode {
     --input-bg: #252525;
     --link: #66b2ff;
     --link-hover: #4a9eff;
+    --code-bg: #252525;
+    --log-bg: #1e1e1e;
+    --log-text: #d4d4d4;
 }
 
 /* Layout */
@@ -44,10 +52,10 @@ html.dark-mode body {
 }
 
 /* Form Elements */
-input,
-select,
-textarea {
-    max-width: 280px;
+.form-control,
+.form-select {
+    width: 100%;
+    max-width: 100%;
 }
 
 .form-control {
@@ -57,14 +65,23 @@ textarea {
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.form-control:focus {
+.form-select {
+    background-color: var(--input-bg);
+    color: var(--text);
+    border-color: var(--border);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
     background-color: var(--input-bg);
     color: var(--text);
     border-color: var(--link);
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
-html.dark-mode .form-control:focus {
+html.dark-mode .form-control:focus,
+html.dark-mode .form-select:focus {
     box-shadow: 0 0 0 0.2rem rgba(102, 178, 255, 0.25);
 }
 
@@ -72,8 +89,20 @@ html.dark-mode .form-control:focus {
     color: var(--text-muted);
 }
 
+.file-upload-wide {
+    width: 100%;
+    max-width: min(100%, 42rem);
+}
+
 .text-muted {
     color: var(--text-muted) !important;
+}
+
+code {
+    color: var(--link);
+    background-color: var(--code-bg);
+    border-radius: 4px;
+    padding: 0.1rem 0.25rem;
 }
 
 /* Cards */
@@ -96,6 +125,17 @@ html.dark-mode .form-control:focus {
 .card-footer {
     background-color: var(--bg-soft);
     border-color: var(--border);
+}
+
+.card.text-white,
+.card.text-white .card-body {
+    color: #ffffff !important;
+}
+
+.list-group-item {
+    background-color: var(--card-bg);
+    border-color: var(--border);
+    color: var(--text);
 }
 
 /* Links */
@@ -129,6 +169,18 @@ a:hover {
 .alert-danger {
     background-color: color-mix(in srgb, #dc3545 10%, var(--bg-soft));
     border-color: #dc3545;
+    color: var(--text);
+}
+
+.alert-warning {
+    background-color: color-mix(in srgb, #ffc107 18%, var(--bg-soft));
+    border-color: #ffc107;
+    color: var(--text);
+}
+
+.alert-secondary {
+    background-color: var(--bg-soft);
+    border-color: var(--border);
     color: var(--text);
 }
 
@@ -216,6 +268,14 @@ a:hover {
     color: var(--link) !important;
 }
 
+.navbar-dark .navbar-toggler {
+    border-color: var(--border);
+}
+
+html:not(.dark-mode) .navbar-dark .navbar-toggler-icon {
+    filter: invert(1) grayscale(1);
+}
+
 /* Tables */
 .table {
     color: var(--text);
@@ -228,6 +288,146 @@ a:hover {
 
 .table tbody tr {
     border-color: var(--border);
+}
+
+.table > :not(caption) > * > * {
+    background-color: var(--card-bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: var(--bg-soft);
+    color: var(--text);
+}
+
+html:not(.dark-mode) .table-dark,
+html:not(.dark-mode) .table-dark > tr > th,
+html:not(.dark-mode) .table-dark > tr > td {
+    background-color: #f1f5f9;
+    border-color: #dbe3ef;
+    color: #1f2937;
+}
+
+.accordion-item,
+.accordion-button {
+    background-color: var(--card-bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: var(--bg-soft);
+    color: var(--text);
+}
+
+.accordion-button:focus {
+    border-color: var(--link);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+}
+
+.accordion-body {
+    background-color: var(--card-bg);
+    color: var(--text);
+}
+
+/* Crawler Page */
+.crawler-page {
+    overflow-x: hidden;
+}
+
+.crawler-page .lead,
+.crawler-page .alert,
+.crawler-page .form-text,
+.crawler-page .list-group-item,
+.crawler-page .table,
+.crawler-page code {
+    overflow-wrap: anywhere;
+}
+
+.crawler-page .card {
+    min-width: 0;
+}
+
+.crawler-page .card-body {
+    min-width: 0;
+}
+
+.crawler-page .form-control,
+.crawler-page .form-select {
+    min-width: 0;
+}
+
+.crawler-page .file-upload-wide {
+    max-width: min(100%, 42rem);
+}
+
+.crawler-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.crawler-actions-secondary {
+    margin-top: 1rem;
+}
+
+.crawler-page .table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.crawler-page .table {
+    min-width: 720px;
+    margin-bottom: 0;
+}
+
+.crawler-log {
+    max-height: 280px;
+    max-width: 100%;
+    overflow: auto;
+    margin-bottom: 0;
+    padding: 12px;
+    border-radius: 6px;
+    background: var(--log-bg);
+    color: var(--log-text);
+    white-space: pre;
+    -webkit-overflow-scrolling: touch;
+}
+
+.app-log {
+    max-width: 100%;
+    overflow: auto;
+    margin-bottom: 0;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--log-bg);
+    color: var(--log-text);
+    white-space: pre;
+    -webkit-overflow-scrolling: touch;
+}
+
+.app-log-sm {
+    font-size: 0.82rem;
+}
+
+@media (max-width: 575.98px) {
+    .crawler-page {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .crawler-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .crawler-actions .btn {
+        width: 100%;
+    }
 }
 
 /* Modal */
@@ -281,21 +481,83 @@ footer {
 
 /* Dark Mode Toggle Button - always visible on dark navbar */
 #dark-mode-toggle {
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    color: rgba(255, 255, 255, 0.9);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: 6px;
     transition: all 0.15s ease;
 }
 
 #dark-mode-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: #ffffff;
-    border-color: #ffffff;
+    background-color: var(--bg-soft);
+    color: var(--link);
+    border-color: var(--link);
 }
 
 #dm-icon {
     font-size: 16px;
+    color: inherit;
+}
+
+.nav-api-button {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    background-color: #ffffff;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.nav-api-button:hover {
+    border-color: var(--link);
+    background-color: var(--bg-soft);
+    color: var(--text);
+}
+
+.nav-api-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #6c757d;
+    flex-shrink: 0;
+    transition: background 0.4s;
+}
+
+.nav-api-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+html.dark-mode #dark-mode-toggle,
+html.dark-mode .nav-api-button {
+    border-color: rgba(255, 255, 255, 0.4);
+    background-color: #1a1d20;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+html.dark-mode #dark-mode-toggle {
+    background-color: #343a40;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+html.dark-mode #dark-mode-toggle:hover,
+html.dark-mode .nav-api-button:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.72);
 }
 
 @media (max-width: 991.98px) {
@@ -546,15 +808,96 @@ footer {
     }
 }
 
-/* Force dark cards */
-html.dark-mode .card {
+html:not(.dark-mode) .landing-shell {
+    border-color: #dbe3ef;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(13, 110, 253, 0.12), transparent 34%),
+        radial-gradient(circle at 86% 18%, rgba(255, 193, 7, 0.14), transparent 32%),
+        linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 22px 70px rgba(15, 23, 42, 0.12);
+}
+
+html:not(.dark-mode) .landing-shell::before {
+    background:
+        linear-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+}
+
+html:not(.dark-mode) .landing-shell::after {
+    background-image:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.82) 34%, rgba(255, 255, 255, 0.36) 62%, rgba(255, 255, 255, 0.08) 100%),
+        url('brand/logo_rag3.png');
+    opacity: 0.5;
+    filter: saturate(1.05) contrast(1.02) brightness(1.04);
+    mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.88) 50%, rgba(0, 0, 0, 0.36) 78%, transparent 100%);
+}
+
+html:not(.dark-mode) .landing-title {
+    color: #111827;
+}
+
+html:not(.dark-mode) .landing-copy {
+    color: #334155;
+}
+
+html:not(.dark-mode) .landing-actions .btn-outline-light {
+    border-color: #cbd5e1;
+    color: #1f2937;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+html:not(.dark-mode) .landing-actions .btn-outline-light:hover {
+    border-color: var(--link);
+    background: #eff6ff;
+    color: #0b5ed7;
+}
+
+html:not(.dark-mode) .landing-feature {
+    background: rgba(255, 255, 255, 0.76);
+    border-color: #dbe3ef;
+    color: #1f2937;
+}
+
+html:not(.dark-mode) .landing-feature h3 {
+    color: #111827;
+}
+
+html:not(.dark-mode) .landing-feature p {
+    color: #475569;
+}
+
+@media (max-width: 991.98px) {
+    html:not(.dark-mode) .landing-shell::after {
+        background-image:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.72) 42%, rgba(255, 255, 255, 0.2) 100%),
+            url('brand/logo_rag3.png');
+        opacity: 0.34;
+    }
+}
+
+@media (max-width: 575.98px) {
+    html:not(.dark-mode) .landing-shell::after {
+        background-image:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.78) 46%, rgba(255, 255, 255, 0.25) 100%),
+            url('brand/logo_rag3.png');
+        opacity: 0.3;
+    }
+}
+
+/* Force dark cards without overriding Bootstrap metric/status cards */
+html.dark-mode .card:not([class*="bg-"]) {
     background-color: var(--card-bg) !important;
     color: var(--text) !important;
     border-color: var(--border) !important;
 }
 
-html.dark-mode .card-body {
+html.dark-mode .card:not([class*="bg-"]) .card-body {
     color: var(--text) !important;
+}
+
+html.dark-mode .card.text-white,
+html.dark-mode .card.text-white .card-body {
+    color: #ffffff !important;
 }
 
 /* Responsive */

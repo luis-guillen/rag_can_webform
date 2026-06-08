@@ -9,6 +9,15 @@
 # Sidecars de metadatos generados por el crawler
 *.metadata.json
 
+# --- Servicio Python (python/) -------------------------------------------
+python/.venv/
+python/**/__pycache__/
+python/**/*.pyc
+python/**/*.pyo
+python/**/*.pyd
+python/data/
+python/.env
+
 # Artefactos de builds/probes locales
 /build_tmp/
 # User-specific files

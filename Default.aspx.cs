@@ -11,6 +11,8 @@ namespace rag_can_aspx
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+            // La funcionalidad del crawler vive ahora en Crawler.aspx (control + estado + logs + parar).
+            Response.Redirect("~/Crawler.aspx", true);
         }
 
         protected void BtnCrawl_Click(object sender, EventArgs e)
