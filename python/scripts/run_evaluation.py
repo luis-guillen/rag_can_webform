@@ -1,15 +1,18 @@
 """Evaluación automática del sistema RAG Canarias.
 
 Ejecutar desde python/:
-    python scripts/run_evaluation.py
+    python scripts/run_evaluation.py              # auto-detecta LLM
+    python scripts/run_evaluation.py --label local
+    python scripts/run_evaluation.py --label remote
 
 Genera:
-    evaluation/results.json   — resultados brutos + métricas
-    evaluation/report.md      — informe en Markdown
-    evaluation/tfg_tables.md  — tablas LaTeX para la memoria
+    evaluation/results_<label>.json   — resultados brutos + métricas
+    evaluation/report_<label>.md      — informe en Markdown
+    evaluation/tfg_tables_<label>.md  — tablas LaTeX para la memoria
 """
 from __future__ import annotations
 
+import argparse
 import json
 import statistics
 import sys
@@ -21,12 +24,9 @@ import requests
 
 # ── Rutas ────────────────────────────────────────────────────────────────────
 
-ROOT = Path(__file__).resolve().parent.parent        # → python/
-DATA_FILE   = ROOT / "data" / "evaluation" / "questions.json"
-OUT_DIR     = ROOT / "evaluation"
-OUT_RESULTS = OUT_DIR / "results.json"
-OUT_REPORT  = OUT_DIR / "report.md"
-OUT_TABLES  = OUT_DIR / "tfg_tables.md"
+ROOT      = Path(__file__).resolve().parent.parent   # → python/
+DATA_FILE = ROOT / "data" / "evaluation" / "questions.json"
+OUT_DIR   = ROOT / "evaluation"
 
 API_URL  = "http://127.0.0.1:8000/query"
 TOP_K    = 5
@@ -251,13 +251,15 @@ def fmt_ms(v) -> str:
     return f"{v:.0f} ms"
 
 
-def write_report(results: list[dict], metrics: dict, path: Path, ts: str) -> None:
+def write_report(results: list[dict], metrics: dict, path: Path, ts: str, label: str = "") -> None:
+    label_str = f" ({label.upper()})" if label else ""
     lines: list[str] = []
 
     lines += [
-        "# Informe de Evaluación — RAG Canarias",
+        f"# Informe de Evaluación — RAG Canarias{label_str}",
         "",
         f"**Generado:** {ts}  ",
+        f"**Configuración LLM:** {label if label else 'auto'}  ",
         f"**API:** {API_URL}  ",
         f"**Top-K:** {TOP_K}",
         "",
@@ -366,7 +368,7 @@ def write_report(results: list[dict], metrics: dict, path: Path, ts: str) -> Non
 
 # ── Tablas LaTeX para TFG ─────────────────────────────────────────────────────
 
-def write_tfg_tables(metrics: dict, path: Path, ts: str) -> None:
+def write_tfg_tables(metrics: dict, path: Path, ts: str, label: str = "") -> None:
     r1  = fmt_dec(metrics["recall_at_1"], 4) if metrics["recall_at_1"] is not None else "-"
     r3  = fmt_dec(metrics["recall_at_3"], 4) if metrics["recall_at_3"] is not None else "-"
     r5  = fmt_dec(metrics["recall_at_5"], 4) if metrics["recall_at_5"] is not None else "-"
@@ -482,9 +484,35 @@ def write_tfg_tables(metrics: dict, path: Path, ts: str) -> None:
 
     path.write_text("\n".join(lines), encoding="utf-8")
 
+# ── Detección de LLM activo ───────────────────────────────────────────────────
+
+def detect_llm_label() -> str:
+    """Consulta /health y devuelve 'remote' o 'local' según el modelo activo."""
+    try:
+        r = requests.get("http://127.0.0.1:8000/health", timeout=3)
+        body = r.json()
+        model = body.get("llm_model", "")
+        if "30b" in model or "remote" in model.lower():
+            return "remote"
+    except Exception:
+        pass
+    return "local"
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Evaluación RAG Canarias")
+    parser.add_argument(
+        "--label", default=None,
+        help="Etiqueta del run: 'local' o 'remote'. Si se omite, se auto-detecta del /health."
+    )
+    args = parser.parse_args()
+
+    label = args.label or detect_llm_label()
+    out_results = OUT_DIR / f"results_{label}.json"
+    out_report  = OUT_DIR / f"report_{label}.md"
+    out_tables  = OUT_DIR / f"tfg_tables_{label}.md"
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if not DATA_FILE.exists():
@@ -495,13 +523,13 @@ def main() -> int:
     questions = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    print(f"RAG Canarias — Evaluación automática")
+    print(f"RAG Canarias - Evaluacion automatica  [{label}]")
     print(f"Preguntas: {len(questions)}  |  API: {API_URL}  |  Top-K: {TOP_K}")
     print(f"Inicio: {ts}")
     print("=" * 70)
 
-    results  = run_evaluation(questions)
-    metrics  = aggregate(results)
+    results = run_evaluation(questions)
+    metrics = aggregate(results)
 
     print("=" * 70)
     print(f"\n  Recall@1 : {fmt_pct(metrics['recall_at_1'])}")
@@ -514,25 +542,25 @@ def main() -> int:
     print(f"  Sin fuentes  : {metrics['pct_without_sources']}%")
     print(f"  Rechazadas   : {metrics['pct_rejected']}%")
 
-    # Guardar results.json
     payload = {
         "generated_at": ts,
         "api_url": API_URL,
         "top_k": TOP_K,
+        "label": label,
         "metrics": metrics,
         "results": results,
     }
-    OUT_RESULTS.write_text(
+    out_results.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
-    write_report(results, metrics, OUT_REPORT, ts)
-    write_tfg_tables(metrics, OUT_TABLES, ts)
+    write_report(results, metrics, out_report, ts, label=label)
+    write_tfg_tables(metrics, out_tables, ts, label=label)
 
-    print(f"\n  Resultados → {OUT_RESULTS}")
-    print(f"  Informe    → {OUT_REPORT}")
-    print(f"  Tablas TFG → {OUT_TABLES}")
+    print(f"\n  Resultados -> {out_results}")
+    print(f"  Informe    -> {out_report}")
+    print(f"  Tablas TFG -> {out_tables}")
 
     return 0
 

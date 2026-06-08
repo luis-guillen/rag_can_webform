@@ -11,9 +11,11 @@ namespace rag_can_aspx
         protected global::System.Web.UI.UpdatePanel updControl;
         protected global::System.Web.UI.UpdatePanel updResults;
         protected global::System.Web.UI.WebControls.Label lblStatus;
-        protected global::System.Web.UI.WebControls.Button btnEvaluar;
+        protected global::System.Web.UI.WebControls.Button btnEvaluarRemoto;
+        protected global::System.Web.UI.WebControls.Button btnEvaluarLocal;
         protected global::System.Web.UI.Timer tmrPoll;
         protected global::System.Web.UI.WebControls.PlaceHolder phProgress;
+        protected global::System.Web.UI.WebControls.PlaceHolder phTabs;
         protected global::System.Web.UI.WebControls.PlaceHolder phMetrics;
         protected global::System.Web.UI.WebControls.PlaceHolder phCategoryTable;
         protected global::System.Web.UI.WebControls.PlaceHolder phDifficultyTable;
