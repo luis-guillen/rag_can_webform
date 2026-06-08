@@ -78,16 +78,14 @@
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/About.aspx">Acerca de</a></li>
                     </ul>
                 </div>
-                <button id="btn-demo-api" type="button" class="btn btn-sm ms-2"
-                    style="height:40px;padding:0 12px;border:1px solid rgba(255,255,255,0.4);background-color:#1a1d20;color:white;display:flex;align-items:center;gap:6px;"
+                <button id="btn-demo-api" type="button" class="btn btn-sm ms-2 nav-api-button"
                     title="Demo API — click para iniciar">
-                    <span id="api-dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#6c757d;flex-shrink:0;transition:background 0.4s;"></span>
-                    <span id="api-label" style="font-size:12px;font-weight:600;letter-spacing:.4px;">Demo API</span>
+                    <span id="api-dot" class="nav-api-dot"></span>
+                    <span id="api-label" class="nav-api-label">Demo API</span>
                 </button>
-                <button id="dark-mode-toggle" type="button" class="btn ms-2"
-                    style="width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.4); background-color: #343a40;"
+                <button id="dark-mode-toggle" type="button" class="btn ms-2 theme-toggle"
                     title="Alternar modo oscuro" aria-pressed="false">
-                    <i id="dm-icon" class="fas fa-moon" style="font-size:16px; color: inherit;"></i>
+                    <i id="dm-icon" class="fas fa-moon"></i>
                 </button>            </div>
         </nav>
         <div class="container body-content">

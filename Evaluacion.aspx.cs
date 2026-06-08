@@ -474,7 +474,7 @@ namespace rag_can_aspx
                         lines = content.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
                     }
                     int start = Math.Max(0, lines.Length - 15);
-                    sb.Append("<pre style=\"max-height:220px;overflow:auto;background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:4px;font-size:0.82em;\">");
+                    sb.Append("<pre class=\"app-log app-log-sm\" style=\"max-height:220px;\">");
                     for (int i = start; i < lines.Length; i++)
                         sb.Append(Enc(lines[i]) + "\n");
                     sb.Append("</pre>");

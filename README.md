@@ -1,11 +1,14 @@
 # RAGCAN
 
-> **Plataforma ASP.NET Web Forms para crawling, indexación y chat RAG sobre patrimonio de Canarias**  
-> Aplicación web con landing, historial de conversaciones y crawler orientado a generar corpus reutilizable.
+> **Plataforma ASP.NET Web Forms para crawling, indexación, vectorización y chat RAG sobre patrimonio de Canarias**  
+> Aplicación web con landing, historial de conversaciones, crawler orientado a corpus, pipeline RAG Python y framework de evaluación automática.
 
 [![.NET Framework](https://img.shields.io/badge/.NET-Framework%204.8.1-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-7.3-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![ASP.NET Web Forms](https://img.shields.io/badge/ASP.NET-Web%20Forms-0078D4?logo=microsoft)](https://dotnet.microsoft.com/apps/aspnet)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python)](https://python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Qdrant](https://img.shields.io/badge/Qdrant-vectorDB-DC244C)](https://qdrant.tech/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.2.3-7952B3?logo=bootstrap)](https://getbootstrap.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -16,8 +19,10 @@
 - [Descripción](#descripción)
 - [Stack Tecnológico](#stack-tecnológico)
 - [Arquitectura](#arquitectura)
+- [Demo API — arranque con un clic](#demo-api--arranque-con-un-clic)
 - [Inicio Rápido](#inicio-rápido)
 - [Uso y Configuración](#uso-y-configuración)
+- [Evaluación del Sistema](#evaluación-del-sistema)
 - [Características Principales](#características-principales)
 - [Estructura del Proyecto](#estructura-del-proyecto)
 
@@ -25,99 +30,114 @@
 
 ## Descripción
 
-**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) pensada para explorar y consultar un corpus de conocimiento sobre Canarias.
+**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) pensada para explorar y consultar un corpus de conocimiento sobre Canarias mediante Retrieval-Augmented Generation (RAG).
 
-La app combina:
+La app integra:
 
-- una **landing page** descriptiva como entrada principal
-- una **página de chat RAG** con historial persistente
-- un **crawler** para descargar y limpiar contenido web
-- una capa de **indexación** para preparar el corpus
+- **Landing page** descriptiva como entrada principal
+- **Chat RAG** con historial persistente, consulta en tiempo real y visualización de fuentes
+- **Crawler BFS** incremental con hash, scheduler y control de jobs en background
+- **Indexación** de metadatos y vectorización del corpus en Qdrant con un clic
+- **Pipeline RAG Python** (FastAPI + Qdrant + embeddings E5 + LLM Ollama/OpenAI-compatible)
+- **Demo API** — botón en navbar que arranca Qdrant Docker + FastAPI con detección automática de LLM remoto o local
+- **Framework de evaluación** automática con 50 preguntas, métricas Recall@K / MRR y comparativa local/remoto
 
-El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.txt` individuales por página, listos para su uso como corpus en sistemas RAG (Retrieval-Augmented Generation).
+**Resultado de evaluación sobre 50 preguntas de patrimonio canario:**
 
-**Características clave:**
-- Algoritmo **BFS (Breadth-First Search)** para rastreo eficiente
-- **Limpieza HTML automática**: elimina scripts, estilos y etiquetas innecesarias
-- **Guardado por página**: cada URL se descarga en un fichero `.txt` separado con solo texto limpio
-- **Restricción de dominio**: respeta automáticamente los límites del dominio rastreado
-- **Control de profundidad**: limita el número de niveles de navegación
-- **Indexación de metadatos**: genera `metadata.json` a partir del corpus ya crawleado
-- **Interfaz web**: formulario Bootstrap 5 para configurar y lanzar rastreos
-- **Chat RAG**: entrada directa al chat, `Enter` para enviar, estado `Pensando` animado y respuestas con fuentes
-- **Landing moderna**: portada descriptiva con branding, hero y accesos directos
-- **UI responsive unificada**: crawler, chat y master pages usan Bootstrap 5 en escritorio, tablet y móvil
-- **Tema oscuro**: con Font Awesome 6.4.0 y persistencia en localStorage
-- **Favicon con el logo** de la aplicación
+| Métrica | LLM remoto (qwen3:30b) | LLM local (qwen3.5:4b) |
+|---------|------------------------|------------------------|
+| **Recall@5** | **100.0 %** | **100.0 %** |
+| **MRR** | **0.8190** | **0.8190** |
+| Latencia media | 2 715 ms | 2 711 ms |
+| Rechazadas | 0 % | 0 % |
+
+> Las métricas de recuperación son idénticas en ambas configuraciones: Recall@K y MRR dependen
+> del índice Qdrant y los embeddings, no del LLM empleado para la generación.
 
 ---
 
 ## Stack Tecnológico
 
-| Categoría | Tecnología | Versión | Propósito |
-|-----------|-----------|---------|----------|
-| **Lenguaje** | C# | 7.3 | Código backend y lógica de aplicación |
-| **Runtime** | .NET Framework | 4.8.1 | Plataforma de ejecución |
-| **Web Framework** | ASP.NET Web Forms | — | Pages, code-behind y controles de servidor |
-| **Template Engine** | ASPX | — | Vistas dinámicas (.aspx) con master pages |
-| **HTML Parsing** | HtmlAgilityPack | 1.11.61 | DOM parsing y XPath queries |
-| **HTTP Client** | System.Net.Http | — | Peticiones HTTP (built-in .NET) |
-| **CSS Framework** | Bootstrap | 5.2.3 | Componentes UI y responsive design |
-| **Iconos** | Font Awesome | 6.4.0 (CDN) | Iconos UI y toggle de tema oscuro |
-| **Serialización** | Newtonsoft.Json | 13.0.3 | Lectura/escritura de metadata.json |
-| **Servidor** | IIS Express | — | Desarrollo local |
-| **Control de Versión** | Git | — | Repositorio en GitHub |
+### Backend web (C#)
+
+| Categoría | Tecnología | Versión |
+|-----------|-----------|---------|
+| Lenguaje | C# | 7.3 |
+| Runtime | .NET Framework | 4.8.1 |
+| Web Framework | ASP.NET Web Forms | — |
+| HTML Parsing | HtmlAgilityPack | 1.11.61 |
+| Serialización | Newtonsoft.Json | 13.0.3 |
+| Servidor | IIS Express | — |
+| Compilador | Roslyn (csc.exe) | 2.0.1 |
+
+### Pipeline RAG (Python)
+
+| Categoría | Tecnología | Versión |
+|-----------|-----------|---------|
+| API | FastAPI + uvicorn | 0.136+ |
+| Vector DB | Qdrant | Docker `qdrant/qdrant` |
+| Embeddings | intfloat/multilingual-e5-small | 384 dims |
+| Aceleración | PyTorch CUDA 12.8 | 2.7+ |
+| LLM (remoto) | qwen3:30b-a3b (Ollama, Dell Pro Max) | — |
+| LLM (local) | qwen3.5:4b (Ollama local) | — |
+| Evaluación | scripts/run_evaluation.py | — |
+
+### Frontend
+
+| Tecnología | Versión |
+|-----------|---------|
+| Bootstrap | 5.2.3 |
+| Font Awesome | 6.4.0 (CDN) |
+| jQuery | 3.7.0 |
 
 ---
 
 ## Arquitectura
 
-### Flujo de Ejecución — Crawling
+### Flujo completo del sistema
 
 ```
-[Usuario] → [Landing.aspx - Entrada principal]
-                    ↓
-        [Crawler.aspx - Control + estado + logs]
-                    ↓
-        [Crawler.aspx.cs - BtnIniciar_Click()]
-                    ↓
-        [CrawlerSettings — validación de parámetros]
-                    ↓
-        [CrawlerService.CrawlDomain() — BFS Loop]
-                    ↓
-     [HtmlAgilityPack — ExtraerTextoLimpio()]
-                    ↓
-     [PathHelper — GuardaFichero en App_Data/crawlings/]
-                    ↓
-        [Resultados.aspx — resumen por dominio]
+[Usuario] ──► Landing.aspx ──► Chat.aspx
+                                   │ POST /query
+                                   ▼
+                          FastAPI :8000 (python/.venv)
+                                   │
+                    ┌──────────────┴──────────────┐
+                    ▼                             ▼
+             Qdrant :6333                  LLM (Ollama)
+          rag_canarias (501 pts)      remoto :11434 Dell Pro Max
+          multilingual-e5-small        o local :11434
 ```
 
-### Flujo de Ejecución — Indexación
+### Flujo de indexación y vectorización
 
 ```
-[Usuario] → [Indexar.aspx - Selección de carpeta]
-                    ↓
-        [Indexar.aspx.cs - BtnIndexar_Click()]
-                    ↓
-        [MetadataService — escanea .txt del corpus]
-                    ↓
-        [QualityScorer — puntúa cada documento]
-                    ↓
-        [App_Data/crawlings/.../metadata.json]
+[Crawler.aspx] ──► App_Data/crawlings/<dominio>/*.txt + *.metadata.json
+                                   │
+                         [Indexar.aspx]
+                         "Chunk + Vectorizar en Qdrant"
+                                   │
+                    python scripts/run_evaluation.py
+                    python -m app.chunk --full
+                    python -m app.embed_index
+                                   │
+                             Qdrant collection
+                             rag_canarias (501 puntos)
 ```
 
-### Flujo de Ejecución — Chat RAG
+### Flujo de evaluación
 
 ```
-[Usuario] → [Landing.aspx - Entrada principal]
-                    ↓
-        [Chat.aspx - Chat RAG]
-                    ↓
-        [Chat.aspx.cs - Nuevo chat limpio al cargar]
-                    ↓
-        [RagQueryService - consulta al corpus indexado]
-                    ↓
-        [Historial de conversaciones + fuentes]
+[Evaluacion.aspx]
+  Botón "Evaluar — LLM remoto"  ──► python scripts/run_evaluation.py --label remote
+  Botón "Evaluar — LLM local"   ──► python scripts/run_evaluation.py --label local
+                                          │
+                               POST /query × 50 preguntas
+                                          │
+                          evaluation/results_{label}.json
+                          evaluation/report_{label}.md
+                          evaluation/tfg_tables_{label}.md
+                          evaluation/comparison.md
 ```
 
 ### Capa de Servicios (`Services/`)
@@ -135,66 +155,43 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 | `SeedUrlProvider` | Lee y provee las URLs semilla desde `App_Data/seeds.txt` |
 | `PathHelper` | Centraliza la construcción de rutas dentro de `App_Data/` |
 
-### Páginas
+---
 
-#### `Landing.aspx` — Portada principal
-- Hero descriptivo con branding de RAGCAN
-- Accesos directos a chat y crawler
-- Estética oscura alineada con el resto de la app
-- Es el documento por defecto de IIS (`Web.config`) y la ruta raíz (`RouteConfig`)
+## Demo API — arranque con un clic
 
-#### `Chat.aspx` — Chat RAG
-- `RAG Chat` como cabecera principal
-- `RAG` en azul y navegación coherente con la marca
-- El formulario de entrada usa un `textarea` que acepta `Enter` para enviar
-- Al entrar a la página se inicia un chat nuevo
-- Estado `Pensando` animado mientras se prepara la respuesta
-- Respuestas con iconos en lugar de emojis y fuentes visibles
-- Usa `PageScripts`; tanto `Site.Master` como `Site.Mobile.Master` exponen ese placeholder
+El botón **Demo API** en la navbar arranca todo el stack Python con un clic:
 
-#### `Crawler.aspx` — Control del crawler
-- Formulario de URL única o archivo `.txt` de semillas
-- Selector de archivo a ancho completo para evitar recortes en móvil
-- Botones de acción en fila en escritorio y apilados en móvil
-- Estado vivo, tabla de fuentes y logs con scroll interno sin romper el ancho de página
-- Scheduler integrado para crawl/index programado
+1. Detecta si el **LLM remoto** (Dell Pro Max `10.17.159.197:11434`) es alcanzable; si no, usa Ollama local.
+2. Arranca **Qdrant** en Docker (`qdrant/qdrant`, puertos 6333/6334, volumen `python/qdrant_storage/`).
+3. Arranca **FastAPI** con el `.venv` de `python/` (o repo hermano `rag_can_python` como fallback).
+4. El indicador del botón cambia:
+   - **Gris** — API apagada
+   - **Amarillo** — iniciando...
+   - **Azul** ⚡ remoto — API activa con LLM Dell Pro Max
+   - **Verde** 💻 local — API activa con LLM Ollama local
 
-#### `Default.aspx` — Compatibilidad antigua
-- Conservado por compatibilidad con enlaces previos
-- Redirige a `Crawler.aspx`, donde vive la UI actual del crawler
+La configuración de LLM vive en `Web.config`:
 
-#### `Indexar.aspx` — Generación de metadatos
-- `ddlCarpeta` — Dropdown con subcarpetas detectadas automáticamente en `App_Data/`
-- `txtCarpetaCustom` — Ruta personalizada relativa a `App_Data/`
-- `chkRecursivo` — Escanear subdirectorios recursivamente
-- `btnIndexar` — Genera/actualiza `metadata.json`
+```xml
+<add key="Llm:RemoteUrl"   value="http://10.17.159.197:11434" />
+<add key="Llm:RemoteModel" value="qwen3:30b-a3b-instruct-2507-q4_K_M" />
+<add key="Llm:LocalUrl"    value="http://127.0.0.1:11434" />
+<add key="Llm:LocalModel"  value="qwen3.5:4b" />
+```
 
-#### `Resultados.aspx` — Resultados del crawling
-- Muestra resumen por dominio: páginas descargadas y ruta de guardado
-- Enlace de vuelta al formulario
-
-#### `Contact.aspx` — Página no usada
-- Redirige a `Landing.aspx` para evitar caer en la plantilla de contacto por defecto
-
-#### Master Page y Tema Oscuro (`Site.Master`)
-- Navbar con navegación y toggle dark mode
-- Script pre-paint en `<head>` para evitar parpadeo al cargar
-- CSS con custom properties (`--bg-color`, `--text-color`, etc.) en `Content/Site.css`
-- Favicon apuntando al logo de la aplicación
-
-#### Master móvil (`Site.Mobile.Master`)
-- Replica la estructura responsive de `Site.Master`
-- Incluye bundles, `ScriptManager`, navbar, dark mode y `PageScripts`
-- Evita errores en páginas que cargan scripts al final, como `Chat.aspx`
+**Implementación:** `DemoApi.ashx` — handler `IHttpHandler` con acciones `start`, `stop`, `status`. El proceso FastAPI se mantiene referenciado en `Application["DemoApi:Process"]`.
 
 ---
 
 ## Inicio Rápido
 
 ### Requisitos Previos
+
 - **Visual Studio 2019+** (Community es suficiente)
-- **.NET Framework 4.8.1** SDK (incluido en VS 2019+)
-- **IIS Express** (incluido en VS)
+- **.NET Framework 4.8.1** SDK
+- **Docker Desktop** (para Qdrant)
+- **Python 3.10+** con venv en `python/` (o `rag_can_python/`)
+- **Ollama** para el LLM local (opcional; se auto-detecta el remoto si está disponible)
 
 ### Instalación
 
@@ -204,35 +201,37 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
    cd rag_can_webform
    ```
 
-2. **Abrir en Visual Studio**
+2. **Restaurar dependencias NuGet y abrir en Visual Studio**
    ```powershell
    explorer rag_can_aspx.slnx
+   # Clic derecho en Solución → Restore NuGet Packages
    ```
 
-3. **Restaurar dependencias NuGet**
-   - Clic derecho en Solución → "Restore NuGet Packages"
-   - O desde Package Manager Console:
-     ```powershell
-     Update-Package -Reinstall
-     ```
+3. **Preparar el entorno Python**
+   ```powershell
+   cd python
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
 
-4. **Ejecutar localmente**
-   - Presionar **F5** (Debug) o **Ctrl+F5** (sin debugger)
-   - Se abre automáticamente `https://localhost:<puerto>/`
-   - HTTP: 5000 | HTTPS: 44345 (ver `.vs/config/applicationhost.config` para el puerto exacto)
+4. **Ejecutar la webapp**
+   - Presionar **F5** en Visual Studio
+   - HTTP: puerto variable (ver `.vs/config/applicationhost.config`)
 
-5. **Probar el crawler**
-   - Dejar URL vacía para usar seeds de `App_Data/seeds.txt`
-   - O introducir una URL válida (ej: `https://ejemplo.com`)
-   - Ajustar `maxPages` y `maxDepth`
-   - Pulsar "Iniciar crawling"
-   - Revisar resultados y ficheros en `App_Data/crawlings/<dominio>/`
+5. **Arrancar la Demo API**
+   - Pulsar el botón **Demo API** en la navbar
+   - Esperar a que el indicador se ponga azul (remoto) o verde (local)
+
+6. **Vectorizar el corpus** (primera vez)
+   - Ir a **Indexar** → botón **"Chunk + Vectorizar en Qdrant"**
+   - Espera ~2-3 min; genera 532 chunks → 501 puntos en Qdrant
 
 ---
 
 ## Uso y Configuración
 
-### Parámetros del Formulario de Crawling
+### Parámetros del Crawler
 
 | Parámetro | Tipo | Rango | Defecto | Descripción |
 |-----------|------|-------|---------|------------|
@@ -242,54 +241,69 @@ El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.t
 | `maxDepth` | int | 0–10 | 2 | Profundidad máxima de enlaces a seguir. |
 | `fullCrawl` | bool | — | false | Permite hasta 1000 páginas. |
 
-### Configuración Común
+### Variables de entorno del pipeline Python
 
-#### Cambiar carpeta de salida por defecto
+| Variable | Valor por defecto | Descripción |
+|----------|------------------|-------------|
+| `RAG_LLM_ENABLED` | `true` | Activa síntesis generativa |
+| `RAG_LLM_BASE_URL` | auto-detectado | Endpoint Ollama/OpenAI-compatible |
+| `RAG_LLM_MODEL` | auto-detectado | Nombre del modelo |
+| `RAG_LLM_TIMEOUT_SECONDS` | `90` | Timeout de generación |
+| `RAG_LLM_MAX_TOKENS` | `300` | Tokens máximos de respuesta |
+| `QDRANT_URL` | `http://localhost:6333` | Endpoint Qdrant |
+| `RAG_COLLECTION` | `rag_canarias` | Colección Qdrant |
+| `RAG_EMBED_MODEL` | `intfloat/multilingual-e5-small` | Modelo de embeddings |
 
-En `Services/CrawlerSettings.cs` o `Services/PathHelper.cs`:
-```csharp
-// Cambiar la subcarpeta base dentro de App_Data:
-string carpetaBase = "crawlings";  // → "mi_corpus"
-```
+---
 
-#### Cambiar timeout de petición HTTP
+## Evaluación del Sistema
 
-En `Services/CrawlerService.cs`:
-```csharp
-client.Timeout = TimeSpan.FromSeconds(15);  // → 30
-```
+La página **Evaluación** ejecuta 50 preguntas de patrimonio cultural canario contra la API y calcula métricas estándar de recuperación.
 
-#### Cambiar delay politeness entre peticiones
+### Métricas globales (corpus: 315 páginas, 501 puntos Qdrant)
 
-En `Services/CrawlerService.cs`:
-```csharp
-System.Threading.Thread.Sleep(300);  // → 100 (más rápido)
-```
+| Métrica | LLM remoto (qwen3:30b) | LLM local (qwen3.5:4b) |
+|---------|------------------------|------------------------|
+| **Recall@1** | **72.0 %** | **72.0 %** |
+| **Recall@3** | **92.0 %** | **92.0 %** |
+| **Recall@5** | **100.0 %** | **100.0 %** |
+| **MRR** | **0.8190** | **0.8190** |
+| Latencia media | 2 715 ms | 2 711 ms |
+| Latencia p90 | 3 780 ms | 3 835 ms |
+| Con fuentes | 100.0 % | 100.0 % |
+| Rechazadas | 0.0 % | 0.0 % |
 
-#### Cambiar límite de `fullCrawl`
+### Por tipo de pregunta (LLM remoto)
 
-En `Default.aspx.cs`, método `BtnCrawl_Click()`:
-```csharp
-if (fullCrawl) maxPages = Math.Min(maxPages, 1000);  // → 5000
-```
+| Tipo | N | Recall@5 | MRR | Lat. media |
+|------|---|---------|-----|-----------|
+| Recuperación directa | 15 | 100.0 % | 0.8167 | 2 546 ms |
+| Síntesis | 10 | 100.0 % | 0.8250 | 2 723 ms |
+| Multifuente | 10 | 100.0 % | 0.9500 | 2 707 ms |
+| Semántica | 8 | 100.0 % | 0.7396 | 3 111 ms |
+| Razonamiento | 7 | 100.0 % | 0.7190 | 2 627 ms |
 
-#### Añadir URLs semilla
+### Archivos generados
 
-Editar `App_Data/seeds.txt`, una URL por línea:
-```
-https://ejemplo.com
-https://otro-dominio.org
-```
+| Archivo | Contenido |
+|---------|-----------|
+| `python/evaluation/results_remote.json` | Resultados brutos + métricas (LLM remoto) |
+| `python/evaluation/results_local.json` | Resultados brutos + métricas (LLM local) |
+| `python/evaluation/report_remote.md` | Informe Markdown (LLM remoto) |
+| `python/evaluation/report_local.md` | Informe Markdown (LLM local) |
+| `python/evaluation/tfg_tables_remote.md` | Tablas LaTeX para TFG (LLM remoto) |
+| `python/evaluation/tfg_tables_local.md` | Tablas LaTeX para TFG (LLM local) |
+| `python/evaluation/comparison.md` | Comparativa completa ambas configuraciones |
 
-#### Ajustar estilos del tema oscuro
+### Ejecutar evaluación
 
-En `Content/Site.css`:
-```css
-html.dark-mode {
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --navbar-bg: #1e1e1e;
-}
+Desde la webapp: **Evaluación** → botón **"Evaluar — LLM remoto"** o **"Evaluar — LLM local"**.
+
+Desde consola:
+```powershell
+cd python
+.\.venv\Scripts\Activate.ps1
+python scripts/run_evaluation.py --label remote   # o --label local
 ```
 
 ---
@@ -297,31 +311,39 @@ html.dark-mode {
 ## Características Principales
 
 ### Crawling Inteligente
-- Algoritmo BFS con control de profundidad
-- Restricción automática a dominio único
-- Filtro de URLs binarias (`.exe`, `.zip`, `.pdf`, etc.)
+- Algoritmo BFS con control de profundidad e incremental por hash SHA-256
+- Restricción automática a dominio único; filtro de URLs binarias
 - Delay configurable entre peticiones (politeness)
-- Detección y evitado de bucles (URLs ya visitadas)
+- Jobs controlables (iniciar / parar) desde la UI, con estado persistido en disco
 
-### Limpieza de Contenido
-- Eliminación de `<script>`, `<style>`, `<noscript>` via XPath (HtmlAgilityPack)
-- Decodificación de entidades HTML (`HtmlEntity.DeEntitize()`)
-- Normalización de espacios y saltos de línea
-- Guardado en archivos `.txt` puros por página
+### Pipeline RAG Python
+- Chunking configurable (~2200 chars, overlap 250) con filtro de páginas ruidosas
+- Embeddings `intfloat/multilingual-e5-small` con GPU CUDA si disponible
+- Qdrant como vector store local en Docker
+- Detección automática de fuente por alias en la pregunta (filtro suave + fallback)
+- LLM generativo opcional (Ollama, OpenAI-compatible); fallback extractivo si falla
 
-### Indexación y Metadatos
-- Escaneo recursivo de carpetas del corpus
-- Puntuación de calidad por documento (`QualityScorer`)
-- Detección de duplicados (`DuplicateDetector`)
-- Generación de `metadata.json` por lote de crawling
+### Demo API (un clic)
+- Detecta LLM remoto (Dell Pro Max) o cae a local automáticamente
+- Arranca Qdrant Docker si no está corriendo
+- Indicador visual en navbar con estado en tiempo real (polling cada 6 s)
+
+### Vectorización desde la UI
+- Botón en Indexar.aspx lanza `app.chunk --full` + `app.embed_index` en background
+- Progreso en tiempo real via timer + FileShare.ReadWrite
+- Log disponible en `python/vectorizar.log`
+
+### Evaluación Automática
+- 50 preguntas clasificadas por dificultad (easy/medium/hard/expert) y tipo
+- Métricas: Recall@1/3/5, MRR, latencia avg/p90, % fuentes, % rechazadas
+- Dos botones para comparar LLM remoto vs local
+- Resultados en tabs Bootstrap, tablas LaTeX para TFG
+- Comparativa completa en `python/evaluation/comparison.md`
 
 ### Interfaz Web
-- Formulario Bootstrap 5 responsive
-- Tema oscuro persistente (localStorage + cookie fallback)
-- Sin parpadeo al cargar (script pre-paint en `<head>`)
-- Resumen visual de resultados por dominio
-- `Content/Site.css` evita límites globales de `280px` en controles Bootstrap y añade reglas responsive específicas para `Crawler.aspx`
-- Tablas y logs del crawler usan scroll interno para no generar overflow horizontal de página
+- Tema oscuro persistente (localStorage + cookie fallback), sin parpadeo al cargar
+- Navbar con botón Demo API y indicador de estado con color
+- Responsive Bootstrap 5
 
 ---
 
@@ -330,273 +352,132 @@ html.dark-mode {
 ```
 rag_can_webform/
 ├── Landing.aspx                   # Portada principal
-├── Landing.aspx.cs                # Code-behind de la landing
-├── Chat.aspx                      # Chat RAG
-├── Chat.aspx.cs                   # Code-behind del chat
-├── Chat.aspx.designer.cs
-├── Crawler.aspx                    # UI unificada de crawling: control, estado, logs y scheduler
-├── Crawler.aspx.cs                 # Code-behind: iniciar/parar crawl, render de estado, fuentes y logs
-├── Crawler.aspx.designer.cs
-├── Default.aspx                    # Compatibilidad antigua; redirige a Crawler.aspx
-├── Default.aspx.cs                 # Code-behind heredado
-├── Default.aspx.designer.cs        # Diseñador (autogenerado)
-├── Indexar.aspx                    # Formulario para generar metadatos del corpus
-├── Indexar.aspx.cs                 # Code-behind: BtnIndexar_Click
-├── Indexar.aspx.designer.cs
-├── Resultados.aspx                 # Página de resultados del crawling
-├── Resultados.aspx.cs
-├── Resultados.aspx.designer.cs
-├── About.aspx                      # Página informativa
-├── Contact.aspx                    # Página no usada; redirige a Landing.aspx
-├── Site.Master                     # Master page (layout + navbar + dark mode toggle)
-├── Site.Master.cs
-├── Site.Master.designer.cs
-├── Site.Mobile.Master              # Master móvil alineada con Site.Master + PageScripts
-├── Site.Mobile.Master.cs
-├── Site.Mobile.Master.designer.cs
-├── ViewSwitcher.ascx               # Control de cambio de vista (desktop/móvil)
-├── ViewSwitcher.ascx.cs
+├── Chat.aspx / .cs                # Chat RAG
+├── Crawler.aspx / .cs             # UI de crawling: control, estado, logs, scheduler
+├── Indexar.aspx / .cs             # Indexación + vectorización Qdrant
+├── Evaluacion.aspx / .cs          # Framework de evaluación (50 preguntas, Recall@K, MRR)
+├── DemoApi.ashx                   # Handler IHttpHandler: arranca/para Qdrant+FastAPI
+├── Resultados.aspx / .cs          # Resumen de crawling
+├── Default.aspx / .cs             # Compatibilidad; redirige a Crawler.aspx
+├── About.aspx                     # Página informativa
+├── Contact.aspx                   # Redirige a Landing.aspx
+├── Site.Master                    # Layout + navbar + Demo API button + dark mode
+├── Site.Mobile.Master             # Master page móvil
 ├── Services/
-│   ├── ChatHistoryService.cs      # Historial persistente de conversaciones
-│   ├── CrawlerService.cs           # Motor BFS: descarga y extracción de texto
-│   ├── CrawlerSettings.cs          # Validación y encapsulación de parámetros
-│   ├── CrawlJobManager.cs          # Gestión del estado del trabajo
-│   ├── DuplicateDetector.cs        # Detección de URLs duplicadas
-│   ├── MetadataService.cs          # Generación de metadata.json
-│   ├── PathHelper.cs               # Construcción de rutas en App_Data
-│   ├── QualityScorer.cs            # Puntuación de calidad de documentos
-│   ├── RagQueryService.cs          # Consulta al backend RAG y health check
-│   └── SeedUrlProvider.cs          # Proveedor de URLs semilla
+│   ├── ChatHistoryService.cs
+│   ├── CrawlerService.cs
+│   ├── CrawlerSettings.cs
+│   ├── CrawlJobManager.cs
+│   ├── DuplicateDetector.cs
+│   ├── MetadataService.cs
+│   ├── PathHelper.cs
+│   ├── QualityScorer.cs
+│   ├── RagQueryService.cs
+│   ├── SeedUrlProvider.cs
+│   └── Jobs/
+│       ├── CrawlJob.cs
+│       ├── IndexJob.cs
+│       ├── JobStatusManager.cs
+│       ├── JobStatusModels.cs
+│       ├── JobLogger.cs
+│       ├── JsonFile.cs
+│       ├── Chunker.cs
+│       ├── IVectorIndexSink.cs
+│       └── Scheduler.cs
+├── python/                        # Pipeline RAG Python (self-contained)
+│   ├── .venv/                     # Entorno virtual Python (local al repo)
+│   ├── app/
+│   │   ├── api.py                 # FastAPI /query + /health
+│   │   ├── chunk.py               # Chunking + filtro de ruido
+│   │   ├── config.py              # Configuración (env / .env)
+│   │   ├── corpus_utils.py        # Lectura del corpus ASP.NET
+│   │   ├── embed_index.py         # Embeddings → Qdrant
+│   │   ├── generation.py          # Síntesis LLM + fallback extractivo
+│   │   ├── models.py              # Pydantic models
+│   │   ├── query.py               # CLI de consulta
+│   │   ├── retrieval.py           # Lógica de búsqueda (CLI + API)
+│   │   └── validate_corpus.py
+│   ├── data/
+│   │   └── evaluation/
+│   │       └── questions.json     # 50 preguntas con expected_sources
+│   ├── evaluation/                # Generado por run_evaluation.py
+│   │   ├── results_remote.json
+│   │   ├── results_local.json
+│   │   ├── report_remote.md
+│   │   ├── report_local.md
+│   │   ├── tfg_tables_remote.md
+│   │   ├── tfg_tables_local.md
+│   │   └── comparison.md          # Comparativa completa para TFG
+│   ├── scripts/
+│   │   └── run_evaluation.py      # Runner de evaluación (--label local|remote)
+│   ├── qdrant_storage/            # Datos persistentes de Qdrant (Docker volume)
+│   ├── requirements.txt
+│   ├── start_api.ps1              # Arranca Qdrant + FastAPI (Windows)
+│   ├── start_api.sh               # Arranca Qdrant + FastAPI (Linux/WSL)
+│   ├── run_all.ps1                # Valida + chunks + embed + smoke tests (Windows)
+│   └── run_all.sh                 # Ídem (Linux/WSL)
 ├── App_Data/
-│   ├── seeds.txt                   # URLs semilla (una por línea)
-│   └── crawlings/                  # Salida de crawlings (generada en runtime)
+│   ├── seeds.txt                  # URLs semilla
+│   ├── status/                    # Estado de jobs (JSON)
+│   ├── logs/                      # Logs de crawler e indexer
+│   └── crawlings/                 # Corpus crawleado
 │       └── <dominio>/
-│           ├── 00_index.txt
-│           ├── 01_about.txt
-│           └── metadata.json       # Generado por Indexar.aspx
+│           ├── NNN_*.txt
+│           ├── NNN_*.metadata.json
+│           └── metadata.json
 ├── Content/
-│   ├── bootstrap.css               # Bootstrap 5.2.3
-│   └── Site.css                    # Estilos personalizados + dark mode tokens
+│   ├── bootstrap.css
+│   └── Site.css                   # Dark mode tokens + responsive fixes
 ├── Scripts/
-│   ├── bootstrap.bundle.js         # Bootstrap + Popper
+│   ├── bootstrap.bundle.js
 │   ├── jquery-3.7.0.min.js
-│   ├── modernizr-2.8.3.js
-│   └── WebForms/                   # Scripts del framework ASP.NET Web Forms
-│       └── MSAjax/                 # Microsoft AJAX
-├── App_Start/
-│   ├── BundleConfig.cs             # Bundling de CSS/JS
-│   └── RouteConfig.cs              # Rutas amigables (home → Landing.aspx, /Crawler → Crawler.aspx)
-├── Properties/
-│   └── AssemblyInfo.cs
-├── Global.asax                     # Configuración global de la aplicación
-├── Global.asax.cs
-├── Web.config                      # Configuración ASP.NET e IIS
-├── Web.Debug.config
-├── Web.Release.config
-├── Bundle.config
-├── packages.config                 # Dependencias NuGet
-├── rag_can_aspx.csproj             # Proyecto C#
+│   └── ...
+├── Web.config                     # Config ASP.NET + LLM endpoints
+├── packages.config
+├── rag_can_aspx.csproj
 └── README.md
 ```
 
 ---
 
-## Dependencias NuGet
+## Operación en background: crawler/indexer controlables
 
-| Paquete | Versión | Uso |
-|---------|---------|-----|
-| Bootstrap | 5.2.3 | UI framework |
-| jQuery | 3.7.0 | DOM (requerido por WebForms) |
-| HtmlAgilityPack | 1.11.61 | DOM parsing y extracción de texto |
-| Newtonsoft.Json | 13.0.3 | Serialización de metadata.json |
-| Microsoft.AspNet.FriendlyUrls | 1.0.2 | URLs amigables en Web Forms |
-| Microsoft.AspNet.Web.Optimization | 1.1.3 | Bundling y minificación CSS/JS |
-| Microsoft.AspNet.ScriptManager.WebForms | 5.0.0 | Script Manager para Web Forms |
-| Microsoft.CodeDom.Providers.DotNetCompilerPlatform | 2.0.1 | Compilador Roslyn |
-| Modernizr | 2.8.3 | Detección de características del navegador |
+El crawler y el indexer funcionan como **procesos en segundo plano controlables** con estado persistido en disco, crawling e indexado incrementales por hash, scheduler interno y servicio WCF opcional.
 
----
-
-## Operación en background (NIVEL 1): crawler/indexer controlables
-
-A partir de esta versión, el crawler y el indexer funcionan como **procesos en segundo plano
-controlables** desde Web Forms (iniciar / parar / consultar progreso / ver logs), con estado
-**persistido en disco**, **crawling e indexado incrementales por hash**, un **scheduler interno**
-y exposición opcional como **servicio WCF**. No se ejecuta trabajo largo dentro del request web.
-
-### Arquitectura nueva
-
-```
-UI:  Crawler.aspx        Indexar.aspx       (Default.aspx / Resultados.aspx -> redirigen a Crawler.aspx)
-        |                     |
-        v                     v
-   ┌──────────────────────────────────────────┐       ┌──────────────────────────────┐
-   │  CrawlerIndexerFacade  (capa de control)  │ <──── │ CrawlerIndexerService.svc     │
-   │  StartCrawl/StopCrawl/GetCrawlStatus/...   │  WCF  │ + ICrawlerIndexerService      │
-   └──────────────────────────────────────────┘       └──────────────────────────────┘
-        |            |              |             |
-        v            v              v             v
-   CrawlJob      IndexJob      JobStatusManager   Scheduler (Timer in-process)
-        |            |              |
-        v            v              v
-   CrawlerService MetadataService  App_Data/status/*.json  +  App_Data/logs/*.log  (escritura atomica)
-   (reutilizados)
-```
-
-Cada job se lanza con `HostingEnvironment.QueueBackgroundWorkItem`, escribe su estado mediante
-`JobStatusManager`, respeta un `CancellationToken` (para *Parar*) y un *single-flight lock*
-(impide ejecuciones concurrentes duplicadas). El estado persiste a disco, por lo que sobrevive a
-que el usuario cambie de página o recargue.
-
-### Métodos públicos (fachada y WCF)
-
-Definidos en `Services/CrawlerIndexerFacade.cs` y expuestos por `Services/Wcf/ICrawlerIndexerService.cs`:
+### Métodos públicos (fachada)
 
 | Método | Descripción |
 |--------|-------------|
-| `StartCrawl()` | Lanza el crawl de todas las semillas de `seeds.txt` en segundo plano. |
-| `StartCrawlSource(string url)` | Crawl de una sola URL. |
-| `StopCrawl()` | Solicita parar el crawl en curso. |
-| `GetCrawlStatus()` | Estado actual del crawl (estado, progreso, URL actual, contadores). |
-| `GetLastCrawlRun()` | Última ejecución del crawl (mismo fichero de estado persistido). |
-| `StartIndexing()` | Indexa en segundo plano solo lo que tiene `needs_index=true`. |
-| `StopIndexing()` | Solicita parar la indexación. |
-| `GetIndexingStatus()` / `GetLastIndexingRun()` | Estado de la indexación. |
-| `GetSources()` | Lista de fuentes con su estado. |
-| `GetSourceStatus(string url)` | Estado de una fuente concreta. |
-| `GetLogs(int lines)` | Últimas N líneas de `crawler.log` e `indexer.log`. |
+| `StartCrawl()` | Lanza el crawl de todas las semillas |
+| `StopCrawl()` | Para el crawl en curso |
+| `GetCrawlStatus()` | Estado actual (progreso, URL actual, contadores) |
+| `StartIndexing()` | Indexa solo los documentos con `needs_index=true` |
+| `StopIndexing()` | Para la indexación |
+| `GetLogs(int lines)` | Últimas N líneas de `crawler.log` / `indexer.log` |
 
-### Ficheros de estado y logs (`App_Data/`)
-
-Se crean automáticamente al arrancar la app (`Global.asax` → `JobStatusManager.EnsureFolders()`):
+### Ficheros de estado (`App_Data/`)
 
 | Fichero | Contenido |
 |---------|-----------|
-| `status/crawl_status.json` | Estado del crawl: `state` (idle/running/completed/error/stopped), `started_at`, `finished_at`, `total_sources`, `processed_sources`, `failed_sources`, `skipped_sources`, `current_url`, `last_error`, `progress_percent`. |
-| `status/index_status.json` | Igual que el anterior, para la indexación. |
-| `status/sources_status.json` | Una entrada por URL: `last_crawled_at`, `http_status`, `title`, `content_sha256`, rutas (`txt_path`/`metadata_path`), `needs_index`, `last_indexed_at`, `chunk_count`, `pages_total/changed/skipped`, `state`, `last_error`. |
-| `status/scheduler_config.json` | Configuración del scheduler (modo, intervalo/hora, habilitado). |
-| `logs/crawler.log`, `logs/indexer.log` | Logs con timestamp UTC (rotan a `.1` al superar ~5 MB). |
+| `status/crawl_status.json` | Estado del crawl: state, progreso, URL actual, contadores |
+| `status/index_status.json` | Estado de la indexación |
+| `status/sources_status.json` | Una entrada por URL con hash, needs_index, chunk_count |
+| `status/scheduler_config.json` | Configuración del scheduler |
+| `logs/crawler.log`, `logs/indexer.log` | Logs con rotación (~5 MB) |
 
-> Se mantiene la compatibilidad con `App_Data/crawlings/` y `App_Data/seeds.txt`. Los `.txt` y los
-> sidecars `*.metadata.json` siguen generándose igual; ahora el sidecar incluye además
-> `needs_index`, `last_indexed_at` y `chunks`.
+---
 
-### Cómo lanzar el crawling
+## Dependencias NuGet
 
-1. Ir a **Crawler.aspx** (enlace *Crawler* del menú).
-2. Opcional: indicar una URL única, ajustar *Max Páginas* / *Max Profundidad*.
-3. Pulsar **Iniciar Crawling**. El job arranca en segundo plano y la página muestra estado,
-   barra de progreso, URL actual, contadores, tabla de fuentes y logs (refresco automático cada 3 s).
-4. Se puede cerrar o cambiar de página: el job sigue. Para detenerlo, **Parar**.
-
-**Incremental por hash:** para cada página se calcula el SHA-256 del texto limpio. Si coincide con el
-del crawl anterior, se marca como *skipped* y **no** se vuelve a indexar; si cambió (o es nueva), se
-marca `needs_index=true`.
-
-### Cómo lanzar la indexación
-
-1. Ir a **Indexar.aspx**.
-2. Pulsar **Iniciar Indexado**: procesa **solo** los documentos con `needs_index=true`, calcula el
-   número de *chunks*, registra `last_indexed_at` y pone `needs_index=false`.
-3. (Conservado) *Regenerar metadata (manual)*: escanea una carpeta y regenera `metadata.json`
-   + sidecars sin volver a crawlear.
-
-> **Integración Qdrant (preparada, no activa):** el push real de *embeddings* a Qdrant
-> (`rag_can_python`) está abstraído en `Services/Jobs/IVectorIndexSink.cs`. Por defecto se usa
-> `NullVectorIndexSink` (no-op). Para activarlo en el futuro, implementar `RagPythonVectorIndexSink`
-> y asignarlo a `IndexJob.Sink`.
-
-### Cómo programarlo (scheduler)
-
-En **Crawler.aspx**, tarjeta *Programación*:
-- **Modo**: `manual` (sin programación), `interval` (cada X horas) o `daily` (diario a una hora).
-- Marcar *Ejecutar crawl programado* y/o *Ejecutar indexado tras el crawl*.
-- **Guardar programación** → se persiste en `App_Data/status/scheduler_config.json`.
-
-Un `Timer` interno (arrancado en `Global.asax` → `Scheduler.Start()`) revisa la configuración cada
-minuto y, si toca y no hay jobs en curso, ejecuta el ciclo **crawl → index**.
-
-> **Importante (in-process):** el scheduler interno solo se ejecuta mientras el *app pool* esté vivo.
-> En IIS conviene habilitar **Application Initialization** / *AlwaysRunning* (o un *keep-alive*) para
-> que no se duerma. Ver más abajo la alternativa con Tarea programada de Windows.
-
-### Servicio WCF (opcional)
-
-- Endpoint: `/Services/Wcf/CrawlerIndexerService.svc` (SOAP / `basicHttpBinding`, con WSDL).
-- Implementación delgada que delega en `CrawlerIndexerFacade`.
-- **Requisito**: tener instalada la característica de Windows **"WCF HTTP Activation"** (en
-  *Activar o desactivar características de Windows → .NET Framework 4.8 Advanced Services →
-  Activación de WCF → Activación HTTP*) para que IIS/IIS Express mapeen la extensión `.svc`.
-- Probar con el *WCF Test Client* (`WcfTestClient.exe`) o `Add Service Reference` apuntando al `.svc`.
-- Si la característica no está instalada, la web y la UI siguen funcionando con normalidad; solo
-  queda inaccesible el endpoint WCF (la fachada interna es la vía principal).
-
-### Cómo escalar de 5 a 500 URLs
-
-1. **Ampliar las semillas**: añadir las ~500 URLs a `App_Data/seeds.txt` (o `~/Config/seeds.txt`), una por línea.
-2. **Ajustar concurrencia/politeness** en `Web.config`:
-   - `Crawler:MaxConcurrentDomains` (subir con cuidado, p. ej. 4–8),
-   - `Crawler:RequestDelayMs`, `Crawler:HttpTimeoutSeconds`,
-   - `Crawler:MaxPages` / `Crawler:MaxDepth`, `Index:ChunkSize`.
-3. **Incremental**: en cada ejecución solo se re-indexa lo que cambió (hash), por lo que el coste
-   de mantener 500 webs al día es bajo.
-4. **Programación robusta para producción**: en lugar del scheduler in-process, usar la **Tarea
-   programada de Windows** (ver abajo) que sobrevive a reciclajes del *app pool*.
-5. **Vectorización real**: conectar `IVectorIndexSink` con `rag_can_python`/Qdrant para indexar a escala.
-
-### Ejecutar en Windows (PC propio y servidor del profesor)
-
-> El proyecto es **.NET Framework 4.8.1 + ASP.NET Web Forms**: se compila y ejecuta en **Windows**
-> (Visual Studio 2022 / `msbuild` / IIS Express / IIS). No se ejecuta en Linux/WSL.
-
-**En tu PC (desarrollo):**
-1. Abrir la solución en Visual Studio 2022 y restaurar paquetes NuGet.
-2. Compilar (F6) y ejecutar (F5 / Ctrl+F5) con IIS Express.
-3. Asegurar permisos de escritura en `App_Data/` (normalmente automático con IIS Express).
-
-**En el servidor Windows del profesor (IIS):**
-1. Publicar el sitio (Build → Publish, o copiar el contenido compilado) a una carpeta del servidor.
-2. Crear un sitio/aplicación en IIS apuntando a esa carpeta, con un *Application Pool* de
-   **.NET Framework v4.0** (modo integrado).
-3. Dar permisos de **escritura** a la identidad del *app pool* (p. ej. `IIS AppPool\<nombre>`) sobre
-   `App_Data/` (subcarpetas `status`, `logs`, `crawlings`).
-4. (Recomendado) Habilitar **Application Initialization** y poner el *app pool* en `AlwaysRunning`
-   para que el scheduler interno no se detenga.
-5. (Opcional WCF) Instalar **WCF HTTP Activation**.
-
-**Programación con Tarea de Windows (alternativa de producción, sobrevive a reciclajes):**
-- Crear una tarea en el *Programador de tareas* que, en el horario deseado, invoque el servicio
-  (p. ej. con `curl`/PowerShell) llamando a `StartCrawl` y `StartIndexing` del `.svc`, o a una URL
-  de disparo de la aplicación. Así el ciclo no depende de que el *app pool* esté activo en ese momento.
-
-### Robustez
-
-- *Single-flight*: no se permiten dos crawls (ni dos indexados) simultáneos.
-- Control de excepciones **por URL**: una URL que falla no detiene el resto (se registra en
-  `failed_sources` y en el log).
-- Toda escritura queda **anclada a `App_Data`** (validación de rutas en `PathHelper`).
-- *Parar* cancela el job vía `CancellationToken` y deja el estado en `stopped`.
-- Tras un reciclaje del *app pool*, los estados que quedaron en `running` se reparan a `stopped`
-  al arrancar (`JobStatusManager.ReconcileOnStartup()`).
-
-### Nuevos archivos relevantes
-
-```
-Services/CrawlerIndexerFacade.cs        # capa de control (metodos publicos)
-Services/Jobs/JobStatusModels.cs        # modelos de estado (JSON)
-Services/Jobs/JobStatusManager.cs       # estado central + single-flight + cancelacion
-Services/Jobs/JsonFile.cs               # escritura/lectura JSON atomica
-Services/Jobs/JobLogger.cs              # logs con rotacion
-Services/Jobs/CrawlJob.cs               # crawl incremental
-Services/Jobs/IndexJob.cs               # indexado incremental
-Services/Jobs/Chunker.cs               # troceo (chunk_count + base para Qdrant)
-Services/Jobs/IVectorIndexSink.cs       # hook Qdrant (NullVectorIndexSink por defecto)
-Services/Jobs/Scheduler.cs              # scheduler in-process
-Services/Wcf/ICrawlerIndexerService.cs  # contrato WCF + DTOs
-Services/Wcf/CrawlerIndexerService.svc(.cs)  # servicio WCF (wrapper de la fachada)
-Crawler.aspx(.cs/.designer.cs)          # UI unificada de crawling
-```
+| Paquete | Versión |
+|---------|---------|
+| Bootstrap | 5.2.3 |
+| jQuery | 3.7.0 |
+| HtmlAgilityPack | 1.11.61 |
+| Newtonsoft.Json | 13.0.3 |
+| Microsoft.AspNet.FriendlyUrls | 1.0.2 |
+| Microsoft.AspNet.Web.Optimization | 1.1.3 |
+| Microsoft.CodeDom.Providers.DotNetCompilerPlatform | 2.0.1 |
 
 ---
 
@@ -606,4 +487,4 @@ Este proyecto está bajo licencia **MIT**. Consulta `LICENSE` para más detalles
 
 ---
 
-**Última actualización:** 2026-06-08 | **Versión:** 1.1 | **Estado:** En desarrollo
+**Última actualización:** 2026-06-08 | **Estado:** En desarrollo (TFG)

@@ -6,8 +6,8 @@
         * { box-sizing: border-box; }
 
         body {
-            background: #0a0e27;
-            color: #e0e0e0;
+            background: var(--bg);
+            color: var(--text);
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 15px;
             line-height: 1.6;
@@ -567,13 +567,13 @@
             color: #666;
         }
 
-        .btn-group {
+        .chat-container .btn-group {
             display: flex;
             flex: 0 0 auto;
             align-self: stretch;
         }
 
-        .btn {
+        .chat-container .btn {
             height: 56px;
             padding: 0 1.15rem;
             border: none;
@@ -616,6 +616,170 @@
             border-radius: 4px;
             font-family: 'Geist Mono', monospace;
             color: #60a5fa;
+        }
+
+        html:not(.dark-mode) .chat-container {
+            color: #1f2937;
+        }
+
+        html:not(.dark-mode) .chat-sidebar {
+            background: #f8fafc;
+            border-right-color: #e2e8f0;
+        }
+
+        html:not(.dark-mode) .sidebar-header {
+            border-bottom-color: #e2e8f0;
+        }
+
+        html:not(.dark-mode) .sidebar-header-icon {
+            border-color: rgba(13, 110, 253, 0.24);
+            background: linear-gradient(180deg, rgba(13, 110, 253, 0.12), rgba(13, 110, 253, 0.03));
+            color: #0d6efd;
+        }
+
+        html:not(.dark-mode) .history-new {
+            border-color: rgba(13, 110, 253, 0.24);
+            background: rgba(13, 110, 253, 0.08);
+            color: #0b5ed7;
+        }
+
+        html:not(.dark-mode) .history-new:hover {
+            background: rgba(13, 110, 253, 0.13);
+            border-color: rgba(13, 110, 253, 0.35);
+        }
+
+        html:not(.dark-mode) .history-item {
+            background: #ffffff;
+            border-color: #e5e7eb;
+        }
+
+        html:not(.dark-mode) .history-item:hover,
+        html:not(.dark-mode) .history-item.active {
+            background: #eff6ff;
+            border-color: rgba(13, 110, 253, 0.24);
+        }
+
+        html:not(.dark-mode) .history-open {
+            color: #1f2937;
+        }
+
+        html:not(.dark-mode) .history-open:hover,
+        html:not(.dark-mode) .chat-sources-list a:hover {
+            color: #0b5ed7;
+        }
+
+        html:not(.dark-mode) .history-meta,
+        html:not(.dark-mode) .history-empty,
+        html:not(.dark-mode) .chat-header p,
+        html:not(.dark-mode) .chat-bubble em,
+        html:not(.dark-mode) .chat-empty,
+        html:not(.dark-mode) .chat-footer-info,
+        html:not(.dark-mode) .chat-answer-mode,
+        html:not(.dark-mode) .thinking-subtitle {
+            color: #64748b;
+        }
+
+        html:not(.dark-mode) .chat-main {
+            background: #ffffff;
+        }
+
+        html:not(.dark-mode) .chat-header {
+            background: linear-gradient(180deg, rgba(13, 110, 253, 0.04) 0%, transparent 100%);
+            border-bottom-color: #e5e7eb;
+        }
+
+        html:not(.dark-mode) .chat-header h1,
+        html:not(.dark-mode) .chat-header h1 .title-dark,
+        html:not(.dark-mode) .thinking-title {
+            color: #111827;
+        }
+
+        html:not(.dark-mode) .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(15, 23, 42, 0.16);
+        }
+
+        html:not(.dark-mode) .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(15, 23, 42, 0.24);
+        }
+
+        html:not(.dark-mode) .chat-message.bot .chat-bubble,
+        html:not(.dark-mode) .chat-message.is-thinking .chat-bubble {
+            background: #f8fafc;
+            border-color: #dbeafe;
+            color: #1f2937;
+            box-shadow: none;
+        }
+
+        html:not(.dark-mode) .chat-sources {
+            background: #f8fbff;
+            border-color: #dbeafe;
+        }
+
+        html:not(.dark-mode) .chat-sources-title,
+        html:not(.dark-mode) .chat-sources-list a,
+        html:not(.dark-mode) .chat-sources-badge,
+        html:not(.dark-mode) .chat-footer-info code {
+            color: #0d6efd;
+        }
+
+        html:not(.dark-mode) .chat-sources-list li {
+            background: #ffffff;
+            border-color: #e5e7eb;
+        }
+
+        html:not(.dark-mode) .chat-sources-list li:hover {
+            background: #eff6ff;
+            border-color: rgba(13, 110, 253, 0.25);
+        }
+
+        html:not(.dark-mode) .chat-sources-badge,
+        html:not(.dark-mode) .chat-footer-info code {
+            background: rgba(13, 110, 253, 0.08);
+        }
+
+        html:not(.dark-mode) .health-pill {
+            background: #f8fafc;
+            border-color: #e5e7eb;
+            color: #475569;
+        }
+
+        html:not(.dark-mode) .health-ok {
+            background: rgba(25, 135, 84, 0.08);
+            border-color: rgba(25, 135, 84, 0.25);
+            color: #147246;
+        }
+
+        html:not(.dark-mode) .health-warn {
+            background: rgba(220, 53, 69, 0.08);
+            border-color: rgba(220, 53, 69, 0.25);
+            color: #b02a37;
+        }
+
+        html:not(.dark-mode) .chat-error {
+            background: rgba(220, 53, 69, 0.08);
+            border-color: rgba(220, 53, 69, 0.22);
+            color: #b02a37;
+        }
+
+        html:not(.dark-mode) .chat-footer {
+            background: linear-gradient(180deg, transparent 0%, rgba(13, 110, 253, 0.03) 100%);
+            border-top-color: #e5e7eb;
+        }
+
+        html:not(.dark-mode) .input-group-wrapper .chat-prompt {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #111827;
+        }
+
+        html:not(.dark-mode) .input-group-wrapper .chat-prompt:focus {
+            background: #ffffff;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+        }
+
+        html:not(.dark-mode) .input-group-wrapper .chat-prompt::placeholder {
+            color: #94a3b8;
         }
 
         @media (max-width: 1024px) {

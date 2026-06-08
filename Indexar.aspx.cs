@@ -104,7 +104,7 @@ namespace rag_can_aspx
                 return "<p class=\"text-muted\">Sin logs todavia.</p>";
 
             var sb = new StringBuilder();
-            sb.Append("<pre style=\"max-height:260px; overflow:auto; background:#1e1e1e; color:#d4d4d4; padding:12px; border-radius:6px;\">");
+            sb.Append("<pre class=\"app-log\" style=\"max-height:260px;\">");
             foreach (string line in lines)
                 sb.Append(System.Web.HttpUtility.HtmlEncode(line) + "\n");
             sb.Append("</pre>");
@@ -335,7 +335,7 @@ namespace rag_can_aspx
                             .Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
                         lines = all.Count > 25 ? all.GetRange(all.Count - 25, 25) : all;
                     }
-                    sb.Append("<pre style=\"max-height:280px;overflow:auto;background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:6px;font-size:12px;\">");
+                    sb.Append("<pre class=\"app-log app-log-sm\" style=\"max-height:280px;\">");
                     foreach (string l in lines)
                         sb.Append(HttpUtility.HtmlEncode(l) + "\n");
                     sb.Append("</pre>");
