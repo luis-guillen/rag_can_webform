@@ -39,4 +39,7 @@ if ([string]::IsNullOrWhiteSpace($env:RAG_LLM_MAX_CONTEXT_CHARS)) {
     $env:RAG_LLM_MAX_CONTEXT_CHARS = "1800"
 }
 
-& $PythonCmd -m uvicorn app.api:app --host 127.0.0.1 --port 8000
+$ApiHost = if ($env:RAG_API_HOST) { $env:RAG_API_HOST } else { "127.0.0.1" }
+$ApiPort = if ($env:RAG_API_PORT) { $env:RAG_API_PORT } else { "8000" }
+
+& $PythonCmd -m uvicorn app.api:app --host $ApiHost --port $ApiPort

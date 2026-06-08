@@ -148,3 +148,12 @@ ALLOWED_ORIGINS = [
     ).split(",")
     if o.strip()
 ]
+
+# Regex de orígenes permitidos. El default conserva el comportamiento previo
+# (solo localhost/127.0.0.1). Para habilitar el front que llega por VPN, ajusta
+# RAG_ALLOWED_ORIGINS con el origen exacto y/o esta regex. Un string vacío
+# desactiva la regex y deja activa solo la lista ALLOWED_ORIGINS.
+ALLOWED_ORIGIN_REGEX = _env_str(
+    "RAG_ALLOWED_ORIGIN_REGEX",
+    r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+)

@@ -375,6 +375,53 @@ Notas:
   no generan ningún chunk. La corrección requiere mejorar el crawler (headless browser
   o mejor extractor HTML).
 
+## Despliegue en Dell Pro Max (NVIDIA GB10 / DGX Spark) con Docker
+
+Para servir la API a un frontend WebForms en otra máquina (p. ej. por VPN) desde
+un Dell Pro Max con GB10 (ARM64 + Blackwell, memoria unificada), se conteneriza el
+stack completo (API + Qdrant + Ollama).
+
+Ficheros (en `python/`): `Dockerfile`, `docker-compose.yml`, `requirements-app.txt`, `.env.example`.
+Ejecuta los comandos `docker compose` desde `python/` (es el contexto de build).
+Requiere `nvidia-container-toolkit` en el host (DGX OS suele traerlo).
+
+```bash
+cd python
+
+# 1. Configuración
+cp .env.example .env          # ajusta RAG_ALLOWED_ORIGINS (origen del WebForms) y RAG_CORPUS_HOST_DIR
+
+# 2. Build de la API (imagen base NGC PyTorch ARM64; primera vez ~20+ GB)
+docker compose build api
+
+# 3. Gate CUDA: debe imprimir True y NVIDIA GB10
+docker compose run --rm api python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+
+# 4. Infra + modelo LLM (persisten en volúmenes)
+docker compose up -d qdrant ollama
+docker compose exec ollama ollama pull qwen2.5:14b-instruct
+
+# 5a. Indexar en el contenedor (corpus montado en /data/corpus)
+docker compose run --rm api bash -lc "python -m app.validate_corpus && python -m app.chunk && python -m app.embed_index --recreate"
+# 5b. (alternativa) restaurar un volumen qdrant_storage ya generado en otra máquina.
+
+# 6. Arrancar la API (bind 0.0.0.0:8000)
+docker compose up -d api
+
+# 7. Verificar
+curl -s http://localhost:8000/health        # status ok, qdrant_points > 0, answer_mode llm
+```
+
+Notas:
+- `QDRANT_URL` y `RAG_LLM_BASE_URL` se fijan a DNS de servicio (`qdrant`, `ollama`)
+  en `docker-compose.yml`; no toques esos en `.env`.
+- **CORS por VPN:** con `allow_credentials=True` no vale `*`. Pon el origen exacto
+  del WebForms en `RAG_ALLOWED_ORIGINS` y/o ajusta `RAG_ALLOWED_ORIGIN_REGEX`.
+- Abre el puerto TCP 8000 en el firewall y rutas de la VPN.
+- En `Chat.aspx` apunta `Rag:QueryEndpoint` / `Rag:HealthEndpoint` (en `Web.config`)
+  a `http://<IP-VPN-del-Dell>:8000/query` y `/health`.
+- `qwen2.5:14b-instruct` es el arranque recomendado para 128 GB; sube a 32B si quieres.
+
 ## Lo que NO incluye esta versión (a propósito)
 
 - Reranking (cross-encoder).

@@ -30,4 +30,4 @@ export RAG_LLM_TIMEOUT_SECONDS="${RAG_LLM_TIMEOUT_SECONDS:-90}"
 export RAG_LLM_MAX_TOKENS="${RAG_LLM_MAX_TOKENS:-300}"
 export RAG_LLM_MAX_CONTEXT_CHARS="${RAG_LLM_MAX_CONTEXT_CHARS:-1800}"
 
-"$PYTHON_CMD" -m uvicorn app.api:app --host 127.0.0.1 --port 8000
+"$PYTHON_CMD" -m uvicorn app.api:app --host "${RAG_API_HOST:-127.0.0.1}" --port "${RAG_API_PORT:-8000}"

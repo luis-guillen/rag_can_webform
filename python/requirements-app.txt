@@ -1,0 +1,28 @@
+# Dependencias de la APLICACIÓN para el contenedor Docker (Dell Pro Max / GB10).
+#
+# IMPORTANTE: torch / torchvision / torchaudio NO van aquí. Los aporta la imagen
+# base NGC (nvcr.io/nvidia/pytorch), que trae la build CUDA correcta para
+# ARM64 + Blackwell (sm_121). Si añades torch aquí, pip lo reemplazaría por una
+# rueda incompatible y se rompería la aceleración GPU.
+#
+# Para desarrollo nativo en Windows/x86 con CUDA usa el requirements.txt clásico.
+
+# API y Servidor
+fastapi==0.136.3
+uvicorn==0.48.0
+openai==2.9.0
+
+# Base de datos vectorial, Embeddings y Procesamiento de Texto
+qdrant-client==1.18.0
+sentence-transformers==5.5.1
+langchain-text-splitters==1.1.2
+
+# Utilidades y Soporte
+pydantic==2.13.4
+python-dotenv==1.2.2
+requests==2.34.2
+numpy==2.4.4
+tqdm==4.67.3
+
+# Form data / multipart (lo usan algunas dependencias internas de FastAPI)
+python-multipart
