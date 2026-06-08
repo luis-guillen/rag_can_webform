@@ -48,7 +48,7 @@ La app integra:
 |---------|------------------------|------------------------|
 | **Recall@5** | **100.0 %** | **100.0 %** |
 | **MRR** | **0.8190** | **0.8190** |
-| Latencia media | 2 715 ms | 2 711 ms |
+| Latencia media | 2 715 ms | 26 283 ms |
 | Rechazadas | 0 % | 0 % |
 
 > Las métricas de recuperación son idénticas en ambas configuraciones: Recall@K y MRR dependen
@@ -269,8 +269,8 @@ Cada botón fuerza su endpoint/modelo de LLM desde `Web.config`, así que la eva
 | **Recall@3** | **92.0 %** | **92.0 %** |
 | **Recall@5** | **100.0 %** | **100.0 %** |
 | **MRR** | **0.8190** | **0.8190** |
-| Latencia media | 2 715 ms | 2 711 ms |
-| Latencia p90 | 3 780 ms | 3 835 ms |
+| Latencia media | 2 715 ms | 26 283 ms |
+| Latencia p90 | 3 780 ms | 36 179 ms |
 | Con fuentes | 100.0 % | 100.0 % |
 | Rechazadas | 0.0 % | 0.0 % |
 

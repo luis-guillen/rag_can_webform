@@ -15,15 +15,15 @@
 | **Recall@3** | **92.0 %** | **92.0 %** | = |
 | **Recall@5** | **100.0 %** | **100.0 %** | = |
 | **MRR** | **0.8190** | **0.8190** | = |
-| Latencia media | 2 715 ms | 2 711 ms | −4 ms |
-| Latencia p90 | 3 780 ms | 3 835 ms | +55 ms |
+| Latencia media | 2 715 ms | 26 283 ms | +23 568 ms |
+| Latencia p90 | 3 780 ms | 36 179 ms | +32 399 ms |
 | Respuestas con fuentes | 100.0 % | 100.0 % | = |
 | Respuestas rechazadas | 0.0 % | 0.0 % | = |
 | Errores de API | 0 | 0 | = |
 | Respuestas texto distintas | — | 39 / 50 | — |
 
 **Ejecución remoto:** 2026-06-08T20:09:24Z  
-**Ejecución local:** 2026-06-08T20:34:58Z
+**Ejecución local:** 2026-06-08T21:41:00Z
 
 ---
 
@@ -42,11 +42,11 @@ Ejemplo representativo — Q09 *"¿Qué información contiene el blog Izuran?"*:
 
 | Tipo | N | R@5 remoto | MRR remoto | Lat. remoto | R@5 local | MRR local | Lat. local |
 |------|---|-----------|-----------|------------|----------|----------|-----------|
-| Recuperación directa | 15 | 100.0 % | 0.8167 | 2 546 ms | 100.0 % | 0.8167 | 2 602 ms |
-| Síntesis | 10 | 100.0 % | 0.8250 | 2 723 ms | 100.0 % | 0.8250 | 2 886 ms |
-| Multifuente | 10 | 100.0 % | 0.9500 | 2 707 ms | 100.0 % | 0.9500 | 2 810 ms |
-| Semántica | 8 | 100.0 % | 0.7396 | 3 111 ms | 100.0 % | 0.7396 | 2 429 ms |
-| Razonamiento | 7 | 100.0 % | 0.7190 | 2 627 ms | 100.0 % | 0.7190 | 2 873 ms |
+| Recuperación directa | 15 | 100.0 % | 0.8167 | 2 546 ms | 100.0 % | 0.8167 | 26 002 ms |
+| Síntesis | 10 | 100.0 % | 0.8250 | 2 723 ms | 100.0 % | 0.8250 | 29 237 ms |
+| Multifuente | 10 | 100.0 % | 0.9500 | 2 707 ms | 100.0 % | 0.9500 | 25 412 ms |
+| Semántica | 8 | 100.0 % | 0.7396 | 3 111 ms | 100.0 % | 0.7396 | 23 376 ms |
+| Razonamiento | 7 | 100.0 % | 0.7190 | 2 627 ms | 100.0 % | 0.7190 | 27 237 ms |
 
 ---
 
@@ -54,10 +54,10 @@ Ejemplo representativo — Q09 *"¿Qué información contiene el blog Izuran?"*:
 
 | Nivel | N | R@5 remoto | MRR remoto | Lat. remoto | R@5 local | MRR local | Lat. local |
 |-------|---|-----------|-----------|------------|----------|----------|-----------|
-| Fácil (Nivel 1) | 15 | 100.0 % | 0.8167 | 2 546 ms | 100.0 % | 0.8167 | 2 602 ms |
-| Medio (Nivel 2) | 10 | 100.0 % | 0.8250 | 2 723 ms | 100.0 % | 0.8250 | 2 886 ms |
-| Difícil (Niveles 3-4) | 18 | 100.0 % | 0.8565 | 2 886 ms | 100.0 % | 0.8565 | 2 640 ms |
-| Experto (Nivel 5) | 7 | 100.0 % | 0.7190 | 2 627 ms | 100.0 % | 0.7190 | 2 873 ms |
+| Fácil (Nivel 1) | 15 | 100.0 % | 0.8167 | 2 546 ms | 100.0 % | 0.8167 | 26 002 ms |
+| Medio (Nivel 2) | 10 | 100.0 % | 0.8250 | 2 723 ms | 100.0 % | 0.8250 | 29 237 ms |
+| Difícil (Niveles 3-4) | 18 | 100.0 % | 0.8565 | 2 886 ms | 100.0 % | 0.8565 | 24 507 ms |
+| Experto (Nivel 5) | 7 | 100.0 % | 0.7190 | 2 627 ms | 100.0 % | 0.7190 | 27 237 ms |
 
 ---
 
@@ -78,8 +78,8 @@ Recall@1   & 72.0\,\% & 72.0\,\% & 0 \\
 Recall@3   & 92.0\,\% & 92.0\,\% & 0 \\
 Recall@5   & \textbf{100.0\,\%} & \textbf{100.0\,\%} & 0 \\
 MRR        & \textbf{0.8190} & \textbf{0.8190} & 0 \\
-Lat.\ media & 2\,715\,ms & 2\,711\,ms & $-$4\,ms \\
-Lat.\ p90  & 3\,780\,ms & 3\,835\,ms & +55\,ms \\
+Lat.\ media & 2\,715\,ms & 26\,283\,ms & +23\,568\,ms \\
+Lat.\ p90  & 3\,780\,ms & 36\,179\,ms & +32\,399\,ms \\
 Con fuentes & 100.0\,\% & 100.0\,\% & 0 \\
 Rechazadas & 0.0\,\% & 0.0\,\% & 0 \\
 \bottomrule
@@ -135,11 +135,17 @@ Experto (Nivel 5)      &  7 & 1.0000 & 0.7190 & 1.0000 & 0.7190 \\
 ## Conclusión para el TFG
 
 El pipeline de recuperación vectorial es **robusto e independiente del LLM** empleado:
-ambas configuraciones alcanzan **Recall@5 = 100 %** y **MRR = 0.82** sobre las 50 preguntas,
-con latencias prácticamente idénticas (~2.7 s media).
+ambas configuraciones alcanzan **Recall@5 = 100 %** y **MRR = 0.82** sobre las 50 preguntas.
+
+La diferencia principal aparece en la generación: en esta ejecución, el LLM local forzado
+(`qwen3.5:4b` en Ollama local) tarda bastante más que el LLM remoto, con una latencia media
+de **26.3 s** frente a **2.7 s**. Esto separa claramente dos conclusiones: la cobertura
+documental la garantiza Qdrant+embeddings, mientras que el coste temporal depende del LLM
+y del hardware donde se ejecuta.
 
 Esto demuestra que la calidad de la recuperación reside en el índice Qdrant y el modelo de
 embeddings (`intfloat/multilingual-e5-small`), lo que permite desplegar el sistema tanto en
-entorno local como conectado a modelos de mayor capacidad sin sacrificar la cobertura documental.
+entorno local como conectado a modelos de mayor capacidad sin sacrificar la cobertura documental,
+aunque con diferencias operativas relevantes en latencia.
 
 _Generado: 2026-06-08_

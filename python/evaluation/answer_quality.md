@@ -182,6 +182,11 @@ la elección entre ambas configuraciones depende de factores operativos:
 | Disponibilidad offline | — | ✓ |
 | Sin dependencia de red/VPN | — | ✓ |
 | Coste de infraestructura | — | ✓ |
-| Latencia | Similar (~2.7 s) | Similar (~2.7 s) |
+| Latencia | ✓ (~2.7 s media) | — (~26.3 s media en el run local forzado) |
+
+En el último run local, la latencia sube porque la evaluación ya no usa la API `:8000`
+arrancada con el LLM remoto, sino `qwen3.5:4b` directamente contra Ollama local
+(`http://127.0.0.1:11434`). Esta diferencia afecta al coste operativo, no a la calidad
+de recuperación documental.
 
 _Generado: 2026-06-08_
