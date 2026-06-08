@@ -163,6 +163,26 @@ def chunk_document(doc: Document, chunk_size: int, chunk_overlap: int) -> Iterab
         out_index += 1
 
 
+def _needs_index(meta_path: Path) -> bool:
+    """Devuelve True si el sidecar indica que la página necesita re-indexarse."""
+    try:
+        with meta_path.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+        return bool(raw.get("page_metadata", {}).get("needs_index", False))
+    except Exception:
+        return False
+
+
+def _get_url(meta_path: Path) -> Optional[str]:
+    """Extrae la URL del sidecar, o None si no está disponible."""
+    try:
+        with meta_path.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+        return raw.get("page_metadata", {}).get("url")
+    except Exception:
+        return None
+
+
 def build_chunks(
     corpus_dir: Path,
     output_path: Path,
@@ -228,6 +248,116 @@ def build_chunks(
     }
 
 
+def build_chunks_incremental(
+    corpus_dir: Path,
+    output_path: Path,
+    chunk_size: int,
+    chunk_overlap: int,
+    max_doc_chars: int,
+    *,
+    include_noisy: bool = False,
+    noise_patterns: Optional[List[str]] = None,
+) -> dict:
+    """Modo incremental: solo re-chunkea páginas con needs_index=true.
+
+    Carga el chunks.jsonl existente, descarta los chunks de las URLs que han
+    cambiado, re-chunkea esas páginas y escribe el resultado fusionado.
+    Con embed_index sin --recreate, Qdrant recibe solo los chunks nuevos/modificados.
+    Los chunks huérfanos de páginas modificadas permanecen en Qdrant hasta el
+    próximo rebuild completo (--full), que se recomienda hacer periódicamente.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    patterns = noise_patterns if noise_patterns is not None else config.NOISE_PATTERNS
+
+    # 1. Determinar qué URLs necesitan re-indexarse
+    entries = list(iter_corpus_entries(corpus_dir))
+    changed_entries = [e for e in entries if _needs_index(e.meta_path)]
+    changed_urls: set[str] = set()
+    for e in changed_entries:
+        url = _get_url(e.meta_path)
+        if url:
+            changed_urls.add(url)
+
+    print(f"[chunk:incremental] {len(changed_entries)} docs con needs_index=true de {len(entries)} totales")
+
+    # 2. Cargar chunks existentes y descartar los de URLs cambiadas
+    kept_chunks: list[str] = []
+    kept_count = 0
+    if output_path.exists():
+        with output_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    url = obj.get("metadata", {}).get("url", "")
+                    if url not in changed_urls:
+                        kept_chunks.append(line)
+                        kept_count += 1
+                except Exception:
+                    kept_chunks.append(line)
+                    kept_count += 1
+    print(f"[chunk:incremental] {kept_count} chunks anteriores conservados, {len(changed_urls)} URLs a re-chunkear")
+
+    # 3. Re-chunkear solo los documentos cambiados
+    docs_ok = docs_skipped = docs_oversized = docs_noisy = new_chunks = 0
+    oversized_examples: list[str] = []
+    noisy_examples: list[str] = []
+    new_lines: list[str] = []
+
+    for entry in tqdm(changed_entries, desc="Chunking (incremental)", unit="doc"):
+        doc = load_document(entry)
+        if doc is None:
+            docs_skipped += 1
+            continue
+        if len(doc.text) > max_doc_chars:
+            docs_oversized += 1
+            if len(oversized_examples) < 10:
+                oversized_examples.append(f"{entry.txt_path.name} ({len(doc.text):,} chars)")
+            continue
+        if not include_noisy:
+            matched = is_noisy(doc.page_metadata.url, doc.page_metadata.title, patterns)
+            if matched:
+                docs_noisy += 1
+                if len(noisy_examples) < 10:
+                    noisy_examples.append(
+                        f"[{matched}] {doc.page_metadata.url or doc.page_metadata.title or entry.txt_path.name}"
+                    )
+                continue
+        docs_ok += 1
+        for chunk in chunk_document(doc, chunk_size, chunk_overlap):
+            new_lines.append(json.dumps(chunk.model_dump(), ensure_ascii=False))
+            new_chunks += 1
+
+    # 4. Escribir resultado fusionado
+    with output_path.open("w", encoding="utf-8") as out:
+        for line in kept_chunks:
+            out.write(line + "\n")
+        for line in new_lines:
+            out.write(line + "\n")
+
+    return {
+        "mode": "incremental",
+        "docs_changed": len(changed_entries),
+        "docs_processed": docs_ok,
+        "docs_skipped_invalid": docs_skipped,
+        "docs_skipped_oversized": docs_oversized,
+        "docs_skipped_noisy": docs_noisy,
+        "oversized_examples": oversized_examples,
+        "noisy_examples": noisy_examples,
+        "chunks_kept": kept_count,
+        "chunks_new": new_chunks,
+        "chunks_total": kept_count + new_chunks,
+        "output": str(output_path),
+        "splitter": "langchain.RecursiveCharacterTextSplitter" if _HAS_LANGCHAIN else "builtin",
+        "chunk_size": chunk_size,
+        "chunk_overlap": chunk_overlap,
+        "max_doc_chars": max_doc_chars,
+        "min_chunk_chars": config.MIN_CHUNK_CHARS,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Genera chunks RAG desde el corpus ASP.NET.")
     parser.add_argument("--corpus", default=str(config.CORPUS_DIR))
@@ -245,6 +375,18 @@ def main() -> None:
         action="store_true",
         help="Indexar también páginas de aviso legal, cookies, login, tags, feed, etc.",
     )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--incremental",
+        action="store_true",
+        default=True,
+        help="(Por defecto) Solo re-chunkea páginas con needs_index=true y fusiona con chunks existentes.",
+    )
+    mode.add_argument(
+        "--full",
+        action="store_true",
+        help="Rebuild completo: re-chunkea TODO el corpus y sobreescribe chunks.jsonl.",
+    )
     args = parser.parse_args()
 
     corpus = Path(args.corpus)
@@ -252,14 +394,24 @@ def main() -> None:
         print(f"ERROR: corpus not found: {corpus}", file=sys.stderr)
         sys.exit(2)
 
-    stats = build_chunks(
-        corpus,
-        Path(args.output),
-        args.chunk_size,
-        args.chunk_overlap,
-        args.max_doc_chars,
-        include_noisy=args.include_noisy,
-    )
+    if args.full:
+        stats = build_chunks(
+            corpus,
+            Path(args.output),
+            args.chunk_size,
+            args.chunk_overlap,
+            args.max_doc_chars,
+            include_noisy=args.include_noisy,
+        )
+    else:
+        stats = build_chunks_incremental(
+            corpus,
+            Path(args.output),
+            args.chunk_size,
+            args.chunk_overlap,
+            args.max_doc_chars,
+            include_noisy=args.include_noisy,
+        )
     print(json.dumps(stats, indent=2, ensure_ascii=False))
 
 

@@ -23,12 +23,12 @@ Write-Host "🚀 [1/5] Validando el corpus..." -ForegroundColor Yellow
 & $PythonCmd -m app.validate_corpus
 
 Write-Host ""
-Write-Host "🚀 [2/5] Generando chunks (fragmentando textos)..." -ForegroundColor Yellow
-& $PythonCmd -m app.chunk
+Write-Host "🚀 [2/5] Generando chunks (solo paginas nuevas/cambiadas)..." -ForegroundColor Yellow
+& $PythonCmd -m app.chunk --incremental
 
 Write-Host ""
-Write-Host "🚀 [3/5] Creando embeddings e indexando en Qdrant (recreando colección)..." -ForegroundColor Yellow
-& $PythonCmd -m app.embed_index --recreate
+Write-Host "🚀 [3/5] Indexando en Qdrant (upsert incremental, sin recrear coleccion)..." -ForegroundColor Yellow
+& $PythonCmd -m app.embed_index
 
 Write-Host ""
 Write-Host "🚀 [4/5] Ejecutando smoke tests de retrieval..." -ForegroundColor Yellow

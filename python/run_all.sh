@@ -30,12 +30,12 @@ echo "🚀 [1/5] Validando el corpus..."
 "$PYTHON_CMD" -m app.validate_corpus
 
 echo ""
-echo "🚀 [2/5] Generando chunks (fragmentando textos)..."
-"$PYTHON_CMD" -m app.chunk
+echo "🚀 [2/5] Generando chunks (solo paginas nuevas/cambiadas)..."
+"$PYTHON_CMD" -m app.chunk --incremental
 
 echo ""
-echo "🚀 [3/5] Creando embeddings e indexando en Qdrant (recreando colección)..."
-"$PYTHON_CMD" -m app.embed_index --recreate
+echo "🚀 [3/5] Indexando en Qdrant (upsert incremental, sin recrear coleccion)..."
+"$PYTHON_CMD" -m app.embed_index
 
 echo ""
 echo "🚀 [4/5] Ejecutando smoke tests de retrieval..."
