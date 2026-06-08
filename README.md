@@ -6,6 +6,7 @@
 [![.NET Framework](https://img.shields.io/badge/.NET-Framework%204.8.1-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-7.3-239120?logo=csharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![ASP.NET Web Forms](https://img.shields.io/badge/ASP.NET-Web%20Forms-0078D4?logo=microsoft)](https://dotnet.microsoft.com/apps/aspnet)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python)](https://python.org/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.2.3-7952B3?logo=bootstrap)](https://getbootstrap.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -17,294 +18,428 @@
 - [Stack Tecnológico](#stack-tecnológico)
 - [Arquitectura](#arquitectura)
 - [Inicio Rápido](#inicio-rápido)
+- [Pipeline completo: crawl → index → chat](#pipeline-completo-crawl--index--chat)
 - [Uso y Configuración](#uso-y-configuración)
-- [Características Principales](#características-principales)
+- [Operación en background (NIVEL 1)](#operación-en-background-nivel-1)
+- [Servicio Python RAG (`python/`)](#servicio-python-rag-python)
+- [Escalar de 5 a 500 URLs](#escalar-de-5-a-500-urls)
 - [Estructura del Proyecto](#estructura-del-proyecto)
+- [Dependencias NuGet](#dependencias-nuget)
 
 ---
 
 ## Descripción
 
-**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) pensada para explorar y consultar un corpus de conocimiento sobre Canarias.
+**RAGCAN** es una aplicación web ASP.NET Web Forms (.NET Framework 4.8.1) para explorar y consultar un corpus de conocimiento sobre Canarias mediante Retrieval-Augmented Generation (RAG).
 
-La app combina:
+El repositorio contiene **dos componentes en un solo repo**:
 
-- una **landing page** descriptiva como entrada principal
-- una **página de chat RAG** con historial persistente
-- un **crawler** para descargar y limpiar contenido web
-- una capa de **indexación** para preparar el corpus
+| Componente | Carpeta | Stack | Función |
+|---|---|---|---|
+| App web | `/` (raíz) | .NET 4.8.1 / C# | Crawler, indexer, chat UI |
+| Servicio RAG | `python/` | Python 3.10+ / FastAPI | Embeddings, Qdrant, API de consulta |
 
-El texto limpio extraído se almacena en `App_Data/crawlings/` como archivos `.txt` individuales por página, listos para su uso como corpus en sistemas RAG (Retrieval-Augmented Generation).
+**Flujo de datos:**
+
+```
+seeds.txt → [Crawler .NET] → App_Data/crawlings/*.txt + *.metadata.json
+                                         ↓
+                          [python/run_all.ps1] → Qdrant (vectores)
+                                         ↓
+                          [Chat.aspx] → python/app/api.py → respuesta RAG
+```
 
 **Características clave:**
-- Algoritmo **BFS (Breadth-First Search)** para rastreo eficiente
-- **Limpieza HTML automática**: elimina scripts, estilos y etiquetas innecesarias
-- **Guardado por página**: cada URL se descarga en un fichero `.txt` separado con solo texto limpio
-- **Restricción de dominio**: respeta automáticamente los límites del dominio rastreado
-- **Control de profundidad**: limita el número de niveles de navegación
-- **Indexación de metadatos**: genera `metadata.json` a partir del corpus ya crawleado
-- **Interfaz web**: formulario Bootstrap 5 para configurar y lanzar rastreos
-- **Chat RAG**: entrada directa al chat, `Enter` para enviar, estado `Pensando` animado y respuestas con fuentes
-- **Landing moderna**: portada descriptiva con branding, hero y accesos directos
-- **Tema oscuro**: con Font Awesome 6.4.0 y persistencia en localStorage
-- **Favicon con el logo** de la aplicación
+- Crawler BFS incremental (SHA-256 por página: solo re-crawlea lo que cambia)
+- Jobs en **segundo plano** controlables desde la UI: iniciar / parar / progreso / logs en vivo
+- Indexación incremental: solo procesa páginas con `needs_index=true`
+- Scheduler interno configurable (manual / intervalo / diario)
+- Chat RAG con historial persistente y fuentes citadas
+- Tema oscuro persistente, landing moderna, Bootstrap 5
 
 ---
 
 ## Stack Tecnológico
 
-| Categoría | Tecnología | Versión | Propósito |
-|-----------|-----------|---------|----------|
-| **Lenguaje** | C# | 7.3 | Código backend y lógica de aplicación |
-| **Runtime** | .NET Framework | 4.8.1 | Plataforma de ejecución |
-| **Web Framework** | ASP.NET Web Forms | — | Pages, code-behind y controles de servidor |
-| **Template Engine** | ASPX | — | Vistas dinámicas (.aspx) con master pages |
-| **HTML Parsing** | HtmlAgilityPack | 1.11.61 | DOM parsing y XPath queries |
-| **HTTP Client** | System.Net.Http | — | Peticiones HTTP (built-in .NET) |
-| **CSS Framework** | Bootstrap | 5.2.3 | Componentes UI y responsive design |
-| **Iconos** | Font Awesome | 6.4.0 (CDN) | Iconos UI y toggle de tema oscuro |
-| **Serialización** | Newtonsoft.Json | 13.0.3 | Lectura/escritura de metadata.json |
-| **Servidor** | IIS Express | — | Desarrollo local |
-| **Control de Versión** | Git | — | Repositorio en GitHub |
+### .NET (app web)
+
+| Categoría | Tecnología | Versión |
+|---|---|---|
+| Lenguaje | C# | 7.3 |
+| Runtime | .NET Framework | 4.8.1 |
+| Framework web | ASP.NET Web Forms | — |
+| HTML Parsing | HtmlAgilityPack | 1.11.61 |
+| Serialización | Newtonsoft.Json | 13.0.3 |
+| CSS | Bootstrap | 5.2.3 |
+| Iconos | Font Awesome | 6.4.0 (CDN) |
+| Servidor dev | IIS Express | — |
+
+### Python (servicio RAG, `python/`)
+
+| Categoría | Tecnología |
+|---|---|
+| API | FastAPI + uvicorn |
+| Embeddings | sentence-transformers (`intfloat/multilingual-e5-small`) |
+| Vector DB | Qdrant |
+| Chunking | langchain-text-splitters (fallback propio) |
+| LLM opcional | OpenAI-compatible (Ollama, OpenRouter, Azure…) |
 
 ---
 
 ## Arquitectura
 
-### Flujo de Ejecución — Crawling
+### Flujo de crawling (background)
 
 ```
-[Usuario] → [Default.aspx - Formulario]
-                    ↓
-        [Default.aspx.cs - BtnCrawl_Click()]
-                    ↓
-        [CrawlerSettings — validación de parámetros]
-                    ↓
-        [CrawlerService.CrawlDomain() — BFS Loop]
-                    ↓
-     [HtmlAgilityPack — ExtraerTextoLimpio()]
-                    ↓
-     [PathHelper — GuardaFichero en App_Data/crawlings/]
-                    ↓
-        [Resultados.aspx — resumen por dominio]
+[Crawler.aspx] → CrawlerIndexerFacade.StartCrawl()
+                        ↓  QueueBackgroundWorkItem
+                   CrawlJob.RunAsync()
+                        ↓  SemaphoreSlim (MaxConcurrentDomains=10)
+              CrawlerService.CrawlDominioAsync()  ×N dominios
+                        ↓
+              App_Data/crawlings/<dominio>/
+                  ├── 01_home.txt                ← texto limpio
+                  └── 01_home.metadata.json      ← sidecar con SHA-256, needs_index, etc.
+                        ↓
+              JobStatusManager → App_Data/status/crawl_status.json
+                              → App_Data/status/sources_status.json
+                              → App_Data/logs/crawler.log
 ```
 
-### Flujo de Ejecución — Indexación
+### Flujo de indexación Python (después del crawl)
 
 ```
-[Usuario] → [Indexar.aspx - Selección de carpeta]
-                    ↓
-        [Indexar.aspx.cs - BtnIndexar_Click()]
-                    ↓
-        [MetadataService — escanea .txt del corpus]
-                    ↓
-        [QualityScorer — puntúa cada documento]
-                    ↓
-        [App_Data/crawlings/.../metadata.json]
+python/run_all.ps1
+    ├── app.validate_corpus  → valida pares .txt / .metadata.json
+    ├── app.chunk --incremental
+    │       Lee needs_index=true en sidecars
+    │       Fusiona chunks existentes + chunks nuevos → data/chunks.jsonl
+    ├── app.embed_index (upsert, sin recrear colección)
+    │       Genera embeddings (multilingual-e5-small)
+    │       Upsert en Qdrant (IDs estables por hash)
+    ├── scripts/smoke_test_retrieval.py
+    └── scripts/acceptance_questions.py
 ```
 
-### Flujo de Ejecución — Chat RAG
+### Flujo de consulta RAG
 
 ```
-[Usuario] → [Landing.aspx - Entrada principal]
+[Chat.aspx] → RagQueryService.Ask(pregunta)
+                    ↓  POST http://127.0.0.1:8000/query
+              python/app/api.py
                     ↓
-        [Chat.aspx - Chat RAG]
+              Qdrant → top-K chunks → generación (LLM o extractiva)
                     ↓
-        [Chat.aspx.cs - Nuevo chat limpio al cargar]
-                    ↓
-        [RagQueryService - consulta al corpus indexado]
-                    ↓
-        [Historial de conversaciones + fuentes]
+              { answer, sources, answer_mode }
 ```
 
-### Capa de Servicios (`Services/`)
+### Capa de servicios .NET (`Services/`)
 
 | Clase | Responsabilidad |
-|-------|----------------|
-| `ChatHistoryService` | Persistencia, carga y listado del historial de conversaciones |
+|---|---|
+| `CrawlerIndexerFacade` | Punto único de control: Start/Stop/Get para crawl e index |
 | `CrawlerService` | Motor BFS: descarga, extrae texto, sigue enlaces |
-| `CrawlerSettings` | Validación y encapsulación de parámetros del formulario |
-| `CrawlJobManager` | Gestión del estado del trabajo de crawling |
-| `DuplicateDetector` | Evita procesar URLs duplicadas o ya visitadas |
-| `MetadataService` | Genera y actualiza `metadata.json` desde el corpus |
-| `QualityScorer` | Puntúa documentos por calidad de texto |
-| `RagQueryService` | Consulta al servicio RAG y exposición del estado de salud |
-| `SeedUrlProvider` | Lee y provee las URLs semilla desde `App_Data/seeds.txt` |
-| `PathHelper` | Centraliza la construcción de rutas dentro de `App_Data/` |
-
-### Páginas
-
-#### `Landing.aspx` — Portada principal
-- Hero descriptivo con branding de RAGCAN
-- Accesos directos a chat y crawler
-- Estética oscura alineada con el resto de la app
-
-#### `Chat.aspx` — Chat RAG
-- `RAG Chat` como cabecera principal
-- `RAG` en azul y navegación coherente con la marca
-- El formulario de entrada usa un `textarea` que acepta `Enter` para enviar
-- Al entrar a la página se inicia un chat nuevo
-- Estado `Pensando` animado mientras se prepara la respuesta
-- Respuestas con iconos en lugar de emojis y fuentes visibles
-
-#### `Default.aspx` — Formulario de crawling
-Controles ASP.NET:
-- `txtUrl` — URL a rastrear (opcional; si vacía usa `seeds.txt`)
-- `txtCarpeta` — Subcarpeta de salida dentro de `App_Data/` (defecto: `crawlings/`)
-- `txtMaxPages` — Límite de páginas (1–10000, defecto: 50)
-- `txtMaxDepth` — Profundidad máxima (0–10, defecto: 2)
-- `chkFullCrawl` — Permite hasta 1000 páginas
-- `btnCrawl` — Inicia el crawling (PostBack)
-
-#### `Indexar.aspx` — Generación de metadatos
-- `ddlCarpeta` — Dropdown con subcarpetas detectadas automáticamente en `App_Data/`
-- `txtCarpetaCustom` — Ruta personalizada relativa a `App_Data/`
-- `chkRecursivo` — Escanear subdirectorios recursivamente
-- `btnIndexar` — Genera/actualiza `metadata.json`
-
-#### `Resultados.aspx` — Resultados del crawling
-- Muestra resumen por dominio: páginas descargadas y ruta de guardado
-- Enlace de vuelta al formulario
-
-#### Master Page y Tema Oscuro (`Site.Master`)
-- Navbar con navegación y toggle dark mode
-- Script pre-paint en `<head>` para evitar parpadeo al cargar
-- CSS con custom properties (`--bg-color`, `--text-color`, etc.) en `Content/Site.css`
-- Favicon apuntando al logo de la aplicación
+| `MetadataService` | Genera sidecars `*.metadata.json` con SHA-256, calidad, etc. |
+| `Jobs/CrawlJob` | Orquesta crawl incremental por dominio con semáforo |
+| `Jobs/IndexJob` | Procesa `needs_index=true`: calcula chunks, registra `last_indexed_at` |
+| `Jobs/JobStatusManager` | Estado central thread-safe, single-flight CTS, escritura atómica |
+| `Jobs/Scheduler` | Timer in-process (crawl + index programados) |
+| `Jobs/JobLogger` | Logs con timestamp UTC y rotación a `.1` al superar 5 MB |
+| `RagQueryService` | Llama al API Python y expone health check |
+| `ChatHistoryService` | Historial persistente de conversaciones |
+| `DuplicateDetector` | SHA-256 por página para detección de contenido duplicado |
+| `PathHelper` | Valida y construye rutas ancladas a `App_Data/` |
+| `SeedUrlProvider` | Lee URLs semilla desde `seeds.txt` |
 
 ---
 
 ## Inicio Rápido
 
-### Requisitos Previos
-- **Visual Studio 2019+** (Community es suficiente)
-- **.NET Framework 4.8.1** SDK (incluido en VS 2019+)
-- **IIS Express** (incluido en VS)
+### Requisitos
 
-### Instalación
+- **Windows** (el proyecto .NET solo compila/ejecuta en Windows)
+- Visual Studio 2022 (Community es suficiente) con .NET Framework 4.8.1
+- Python 3.10+ (para el servicio RAG)
+- Qdrant corriendo en `http://localhost:6333` ([Docker](https://qdrant.tech/documentation/quick-start/): `docker run -p 6333:6333 qdrant/qdrant`)
 
-1. **Clonar el repositorio**
-   ```powershell
-   git clone https://github.com/luis-guillen/rag_can_webform.git
-   cd rag_can_webform
-   ```
+### 1. Clonar y abrir
 
-2. **Abrir en Visual Studio**
-   ```powershell
-   explorer rag_can_aspx.slnx
-   ```
+```powershell
+git clone https://github.com/luis-guillen/rag_can_webform.git
+cd rag_can_webform
+explorer rag_can_aspx.slnx   # abre Visual Studio
+```
 
-3. **Restaurar dependencias NuGet**
-   - Clic derecho en Solución → "Restore NuGet Packages"
-   - O desde Package Manager Console:
-     ```powershell
-     Update-Package -Reinstall
-     ```
+### 2. Restaurar NuGet y ejecutar la app .NET
 
-4. **Ejecutar localmente**
-   - Presionar **F5** (Debug) o **Ctrl+F5** (sin debugger)
-   - Se abre automáticamente `https://localhost:<puerto>/`
-   - HTTP: 5000 | HTTPS: 44345 (ver `.vs/config/applicationhost.config` para el puerto exacto)
+```
+Clic derecho en Solución → Restore NuGet Packages
+F5 (Debug) o Ctrl+F5 (sin debugger)
+```
 
-5. **Probar el crawler**
-   - Dejar URL vacía para usar seeds de `App_Data/seeds.txt`
-   - O introducir una URL válida (ej: `https://ejemplo.com`)
-   - Ajustar `maxPages` y `maxDepth`
-   - Pulsar "Iniciar crawling"
-   - Revisar resultados y ficheros en `App_Data/crawlings/<dominio>/`
+La app abre en `https://localhost:<puerto>/`. Puertos por defecto: HTTP 5000, HTTPS 44345.
+
+### 3. Preparar el entorno Python
+
+```powershell
+cd python
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 4. Crawlear desde la app web
+
+1. Ir a **Crawler.aspx** (menú → *Crawler*).
+2. Pulsar **Iniciar Crawling**. El job corre en background; la UI se actualiza cada 3 s.
+3. Esperar a que termine (estado *Completado*).
+
+Los ficheros aparecen en `App_Data/crawlings/<dominio>/`.
+
+### 5. Indexar en Qdrant
+
+```powershell
+# Desde rag_can_webform/python/  (con .venv activo)
+.\run_all.ps1
+```
+
+En el primer arranque hace chunking y embedding completo. En ejecuciones sucesivas solo procesa las páginas nuevas o cambiadas.
+
+### 6. Iniciar la API Python y chatear
+
+```powershell
+.\start_api.ps1   # levanta FastAPI en http://127.0.0.1:8000
+```
+
+Abrir **Chat.aspx** en la app .NET y hacer preguntas.
+
+---
+
+## Pipeline completo: crawl → index → chat
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  1. Crawler.aspx → [Iniciar Crawling]                        │
+│     Genera: App_Data/crawlings/**/*.txt + *.metadata.json    │
+│     needs_index=true en páginas nuevas o con hash cambiado   │
+└──────────────────────────────────────────────────────────────┘
+                            ↓
+┌──────────────────────────────────────────────────────────────┐
+│  2. python/run_all.ps1  (o run_all.sh en WSL/Linux)          │
+│     chunk --incremental  → data/chunks.jsonl (solo lo nuevo) │
+│     embed_index (upsert) → Qdrant                            │
+└──────────────────────────────────────────────────────────────┘
+                            ↓
+┌──────────────────────────────────────────────────────────────┐
+│  3. python/start_api.ps1  → http://127.0.0.1:8000            │
+│  4. Chat.aspx → preguntas RAG con fuentes                    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+> **Rebuild completo de Qdrant** (p. ej. tras cambios grandes o mensualmente):
+> ```powershell
+> python -m app.chunk --full
+> python -m app.embed_index --recreate
+> ```
 
 ---
 
 ## Uso y Configuración
 
-### Parámetros del Formulario de Crawling
+### `Web.config` — parámetros del crawler
 
-| Parámetro | Tipo | Rango | Defecto | Descripción |
-|-----------|------|-------|---------|------------|
-| `url` | text | N/A | vacío | URL a rastrear. Si vacía, se usan seeds de `App_Data/seeds.txt`. |
-| `carpeta` | text | N/A | `crawlings/` | Subcarpeta de salida dentro de `App_Data/`. |
-| `maxPages` | int | 1–10000 | 50 | Máximo número de páginas a descargar. |
-| `maxDepth` | int | 0–10 | 2 | Profundidad máxima de enlaces a seguir. |
-| `fullCrawl` | bool | — | false | Permite hasta 1000 páginas. |
+| Clave | Valor actual | Descripción |
+|---|---|---|
+| `Crawler:MaxConcurrentDomains` | **10** | Dominios en paralelo (semáforo) |
+| `Crawler:RequestDelayMs` | **500** | Pausa entre peticiones HTTP por dominio |
+| `Crawler:HttpTimeoutSeconds` | 15 | Timeout por petición |
+| `Crawler:MaxPages` | 50 | Límite de páginas por dominio |
+| `Crawler:MaxDepth` | 2 | Profundidad máxima de enlaces |
+| `Index:ChunkSize` | 1000 | Tamaño de chunk para conteo en el .NET indexer |
+| `Rag:QueryEndpoint` | `http://127.0.0.1:8000/query` | URL del API Python |
+| `Rag:TopK` | 5 | Número de fragmentos a recuperar |
 
-### Configuración Común
+### `python/.env` — parámetros del servicio Python
 
-#### Cambiar carpeta de salida por defecto
+Crear `python/.env` para sobreescribir valores (el fichero está en `.gitignore`):
 
-En `Services/CrawlerSettings.cs` o `Services/PathHelper.cs`:
-```csharp
-// Cambiar la subcarpeta base dentro de App_Data:
-string carpetaBase = "crawlings";  // → "mi_corpus"
+```env
+# Corpus (por defecto apunta a App_Data/crawlings/ automáticamente)
+RAG_CORPUS_DIR=C:\ruta\alternativa\si\necesaria
+
+# Qdrant
+QDRANT_URL=http://localhost:6333
+RAG_COLLECTION=rag_canarias
+
+# Embeddings
+RAG_EMBED_MODEL=intfloat/multilingual-e5-small
+RAG_CHUNK_SIZE=2200
+RAG_CHUNK_OVERLAP=250
+
+# LLM opcional (Ollama, OpenAI, etc.)
+RAG_LLM_ENABLED=true
+RAG_LLM_BASE_URL=http://127.0.0.1:11434
+RAG_LLM_API_KEY=ollama
+RAG_LLM_MODEL=qwen3.5:4b
 ```
 
-#### Cambiar timeout de petición HTTP
+### Añadir URLs semilla
 
-En `Services/CrawlerService.cs`:
-```csharp
-client.Timeout = TimeSpan.FromSeconds(15);  // → 30
-```
+Editar `App_Data/seeds.txt` (o `Config/seeds.txt`), una URL por línea:
 
-#### Cambiar delay politeness entre peticiones
-
-En `Services/CrawlerService.cs`:
-```csharp
-System.Threading.Thread.Sleep(300);  // → 100 (más rápido)
-```
-
-#### Cambiar límite de `fullCrawl`
-
-En `Default.aspx.cs`, método `BtnCrawl_Click()`:
-```csharp
-if (fullCrawl) maxPages = Math.Min(maxPages, 1000);  // → 5000
-```
-
-#### Añadir URLs semilla
-
-Editar `App_Data/seeds.txt`, una URL por línea:
 ```
 https://ejemplo.com
 https://otro-dominio.org
 ```
 
-#### Ajustar estilos del tema oscuro
+---
 
-En `Content/Site.css`:
-```css
-html.dark-mode {
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --navbar-bg: #1e1e1e;
-}
-```
+## Operación en background (NIVEL 1)
+
+El crawler y el indexer funcionan como **procesos en segundo plano controlables** desde Web Forms, con estado **persistido en disco**, **crawling e indexado incrementales por hash**, un **scheduler interno** y exposición opcional como **servicio WCF**.
+
+### Métodos públicos (fachada y WCF)
+
+Definidos en `Services/CrawlerIndexerFacade.cs` y expuestos en `Services/Wcf/ICrawlerIndexerService.cs`:
+
+| Método | Descripción |
+|---|---|
+| `StartCrawl()` | Lanza el crawl de todas las semillas en segundo plano |
+| `StartCrawlSource(string url)` | Crawl de una sola URL |
+| `StopCrawl()` | Solicita parar el crawl en curso |
+| `GetCrawlStatus()` | Estado actual: progreso, URL actual, contadores |
+| `StartIndexing()` | Indexa en background solo lo que tiene `needs_index=true` |
+| `StopIndexing()` | Solicita parar la indexación |
+| `GetSources()` | Lista de fuentes con su estado |
+| `GetLogs(int lines)` | Últimas N líneas de `crawler.log` e `indexer.log` |
+
+### Ficheros de estado (`App_Data/`)
+
+| Fichero | Contenido |
+|---|---|
+| `status/crawl_status.json` | `state`, `progress_percent`, `current_url`, `total/processed/failed/skipped_sources` |
+| `status/index_status.json` | Igual para la indexación |
+| `status/sources_status.json` | Por URL: `last_crawled_at`, `http_status`, `needs_index`, `pages_total/changed/skipped`, `state` |
+| `status/scheduler_config.json` | Modo, intervalo, última/próxima ejecución |
+| `logs/crawler.log` | Log del crawler con timestamp UTC |
+| `logs/indexer.log` | Log del indexer con timestamp UTC |
+
+### Scheduler
+
+En **Crawler.aspx**, tarjeta *Programación*: modo `manual` / `interval` / `daily`. Un `Timer` in-process revisa la configuración cada minuto y ejecuta el ciclo **crawl → index** si toca y no hay jobs en curso.
+
+> **Nota IIS:** habilitar *Application Initialization* / `AlwaysRunning` en el app pool para que el scheduler no se duerma. Para producción ver [Tarea de Windows](#escalar-de-5-a-500-urls).
+
+### Servicio WCF (opcional)
+
+- Endpoint: `/Services/Wcf/CrawlerIndexerService.svc` (SOAP / `basicHttpBinding`)
+- Requiere **WCF HTTP Activation** en *Características de Windows → .NET Framework 4.8 Advanced Services*
+- La web y la UI funcionan igualmente sin él
+
+### Robustez
+
+- **Single-flight**: no se permiten dos crawls ni dos indexados simultáneos
+- **Try/catch por URL**: una URL fallida no detiene las demás
+- **Escritura atómica**: todos los JSON se escriben vía fichero temporal + `File.Replace`
+- **Reconciliación en arranque**: `ReconcileOnStartup()` repara estados `running` huérfanos tras un reciclaje del app pool
 
 ---
 
-## Características Principales
+## Servicio Python RAG (`python/`)
 
-### Crawling Inteligente
-- Algoritmo BFS con control de profundidad
-- Restricción automática a dominio único
-- Filtro de URLs binarias (`.exe`, `.zip`, `.pdf`, etc.)
-- Delay configurable entre peticiones (politeness)
-- Detección y evitado de bucles (URLs ya visitadas)
+El directorio `python/` contiene el servicio FastAPI que genera los embeddings y responde las consultas del chat.
 
-### Limpieza de Contenido
-- Eliminación de `<script>`, `<style>`, `<noscript>` via XPath (HtmlAgilityPack)
-- Decodificación de entidades HTML (`HtmlEntity.DeEntitize()`)
-- Normalización de espacios y saltos de línea
-- Guardado en archivos `.txt` puros por página
+### Estructura
 
-### Indexación y Metadatos
-- Escaneo recursivo de carpetas del corpus
-- Puntuación de calidad por documento (`QualityScorer`)
-- Detección de duplicados (`DuplicateDetector`)
-- Generación de `metadata.json` por lote de crawling
+```
+python/
+├── app/
+│   ├── api.py            # FastAPI: /query, /health
+│   ├── config.py         # Config central (vars entorno / .env)
+│   ├── corpus_utils.py   # Iterador de pares .txt + .metadata.json
+│   ├── chunk.py          # Chunking (--incremental / --full)
+│   ├── embed_index.py    # Embeddings + upsert Qdrant
+│   ├── retrieval.py      # Búsqueda vectorial + alias de fuentes
+│   ├── generation.py     # Generación LLM opcional (extractiva si no hay LLM)
+│   ├── models.py         # Dataclasses Document, Chunk, DomainMetadata, etc.
+│   └── validate_corpus.py # Validación del corpus antes de indexar
+├── scripts/
+│   ├── smoke_test_retrieval.py
+│   └── acceptance_questions.py
+├── run_all.ps1 / run_all.sh   # Pipeline completo (valida → chunkea → indexa → tests)
+├── start_api.ps1 / start_api.sh
+└── requirements.txt
+```
 
-### Interfaz Web
-- Formulario Bootstrap 5 responsive
-- Tema oscuro persistente (localStorage + cookie fallback)
-- Sin parpadeo al cargar (script pre-paint en `<head>`)
-- Resumen visual de resultados por dominio
+### Rutas automáticas
+
+`python/app/config.py` calcula las rutas relativas al repo:
+
+```python
+PROJECT_ROOT = Path(__file__).resolve().parent.parent   # → python/
+_WEBFORM_ROOT = PROJECT_ROOT.parent                     # → rag_can_webform/
+DEFAULT_CORPUS = str(_WEBFORM_ROOT / "App_Data" / "crawlings")
+```
+
+No hace falta configurar `RAG_CORPUS_DIR` si la estructura del repo no cambia.
+
+### Modo incremental vs. completo
+
+```powershell
+# Incremental (por defecto): solo re-chunkea páginas con needs_index=true
+python -m app.chunk --incremental   # o simplemente: python -m app.chunk
+python -m app.embed_index           # upsert en Qdrant (sin recrear colección)
+
+# Rebuild completo (primer arranque o limpieza mensual)
+python -m app.chunk --full
+python -m app.embed_index --recreate
+```
+
+**Cómo funciona `--incremental`:**
+1. Lee los sidecars `*.metadata.json` y detecta los que tienen `needs_index=true`
+2. Carga el `chunks.jsonl` existente y descarta los chunks de esas URLs
+3. Re-chunkea solo las páginas cambiadas y escribe el resultado fusionado
+4. `embed_index` hace upsert con IDs estables (uuid5): solo los chunks nuevos se embeden realmente
+
+> Los chunks huérfanos de páginas cuyo contenido cambió permanecen en Qdrant hasta el próximo `--recreate`, lo cual es aceptable para ciclos normales de actualización.
+
+---
+
+## Escalar de 5 a 500 URLs
+
+### Qué escala sin cambios
+
+| Componente | Por qué |
+|---|---|
+| `seeds.txt` | Añadir líneas |
+| Hashing incremental | 490 sitios sin cambios → saltados en segundos |
+| Qdrant | Diseñado para millones de vectores |
+| `sources_status.json` | 500 entradas es insignificante |
+
+### Pasos para 500 URLs
+
+1. **Añadir semillas** a `App_Data/seeds.txt` (o `Config/seeds.txt`).
+
+2. **Concurrencia ya ajustada** en `Web.config`:
+   - `MaxConcurrentDomains = 10` → 500 sitios ÷ 10 × ~1.5 min ≈ **~75 min** por ciclo
+   - `RequestDelayMs = 500` → más cortés con mayor concurrencia
+
+3. **Primer ciclo Python** (`--full` + `--recreate`). Ciclos sucesivos usan `--incremental`.
+
+4. **Programación robusta para producción:** en lugar del scheduler in-process, crear una **Tarea de Windows** que, en el horario deseado, llame a `StartCrawl` y `StartIndexing` del endpoint WCF (o a una URL de disparo HTTP). Así el ciclo sobrevive a reciclajes del app pool.
+
+5. **GPU para embeddings:** si se dispone de GPU (la RTX 3050 del proyecto la detecta automáticamente), `embed_index` la usa. En CPU, 75.000 chunks tarda ~20-40 min; en GPU, ~2-5 min.
+
+6. **Vectorización real activada:** el hook `IVectorIndexSink` (actualmente `NullVectorIndexSink`) está preparado para conectar el indexer .NET directamente con el API Python sin pasos manuales.
+
+### Ejecutar en el servidor del profesor (IIS)
+
+1. **Publicar** (VS → Build → Publish) a una carpeta del servidor.
+2. Crear sitio en IIS: **.NET Framework v4.0**, modo integrado.
+3. Dar permisos de **escritura** al app pool sobre `App_Data/`.
+4. (Recomendado) Habilitar **Application Initialization** + `AlwaysRunning`.
+5. (Opcional) Instalar **WCF HTTP Activation**.
+6. Instalar Python + Qdrant en el servidor y ejecutar `run_all.ps1` + `start_api.ps1`.
 
 ---
 
@@ -312,71 +447,83 @@ html.dark-mode {
 
 ```
 rag_can_webform/
-├── Landing.aspx                   # Portada principal
-├── Landing.aspx.cs                # Code-behind de la landing
-├── Chat.aspx                      # Chat RAG
-├── Chat.aspx.cs                   # Code-behind del chat
-├── Chat.aspx.designer.cs
-├── Default.aspx                    # Formulario principal de crawling
-├── Default.aspx.cs                 # Code-behind: BtnCrawl_Click, lógica de inicio
-├── Default.aspx.designer.cs        # Diseñador (autogenerado)
-├── Indexar.aspx                    # Formulario para generar metadatos del corpus
-├── Indexar.aspx.cs                 # Code-behind: BtnIndexar_Click
-├── Indexar.aspx.designer.cs
-├── Resultados.aspx                 # Página de resultados del crawling
-├── Resultados.aspx.cs
-├── Resultados.aspx.designer.cs
-├── About.aspx                      # Página informativa
-├── Contact.aspx                    # Página de contacto
-├── Site.Master                     # Master page (layout + navbar + dark mode toggle)
-├── Site.Master.cs
-├── Site.Master.designer.cs
-├── Site.Mobile.Master              # Master page para dispositivos móviles
-├── Site.Mobile.Master.cs
-├── Site.Mobile.Master.designer.cs
-├── ViewSwitcher.ascx               # Control de cambio de vista (desktop/móvil)
-├── ViewSwitcher.ascx.cs
+├── Landing.aspx / .cs              # Portada principal
+├── Chat.aspx / .cs                 # Chat RAG con historial
+├── Crawler.aspx / .cs              # Control de crawling (iniciar/parar/estado/logs/scheduler)
+├── Indexar.aspx / .cs              # Control de indexado incremental + herramienta de reparación de sidecars
+├── Default.aspx / .cs              # Redirige a Crawler.aspx
+├── Resultados.aspx / .cs           # Redirige a Crawler.aspx
+├── About.aspx / Contact.aspx
+├── Site.Master / Site.Mobile.Master
+│
 ├── Services/
-│   ├── ChatHistoryService.cs      # Historial persistente de conversaciones
+│   ├── CrawlerIndexerFacade.cs     # Capa de control (métodos públicos)
 │   ├── CrawlerService.cs           # Motor BFS: descarga y extracción de texto
-│   ├── CrawlerSettings.cs          # Validación y encapsulación de parámetros
-│   ├── CrawlJobManager.cs          # Gestión del estado del trabajo
-│   ├── DuplicateDetector.cs        # Detección de URLs duplicadas
-│   ├── MetadataService.cs          # Generación de metadata.json
-│   ├── PathHelper.cs               # Construcción de rutas en App_Data
+│   ├── CrawlerSettings.cs          # Parámetros de crawling (desde Web.config)
+│   ├── MetadataService.cs          # Sidecars *.metadata.json (SHA-256, needs_index…)
+│   ├── ChatHistoryService.cs       # Historial de conversaciones
+│   ├── DuplicateDetector.cs        # Detección de contenido duplicado
+│   ├── PathHelper.cs               # Rutas seguras ancladas a App_Data
 │   ├── QualityScorer.cs            # Puntuación de calidad de documentos
-│   ├── RagQueryService.cs          # Consulta al backend RAG y health check
-│   └── SeedUrlProvider.cs          # Proveedor de URLs semilla
+│   ├── RagQueryService.cs          # Consulta al API Python + health check
+│   ├── SeedUrlProvider.cs          # Proveedor de URLs semilla
+│   │
+│   ├── Jobs/
+│   │   ├── JobStatusModels.cs      # Modelos JSON: JobRunStatus, SourceStatus, SchedulerConfig
+│   │   ├── JobStatusManager.cs     # Estado central thread-safe + single-flight + CTS
+│   │   ├── JsonFile.cs             # Escritura atómica de JSON
+│   │   ├── JobLogger.cs            # Logs con rotación (~5 MB)
+│   │   ├── CrawlJob.cs             # Crawl incremental por dominio
+│   │   ├── IndexJob.cs             # Indexado incremental (needs_index=true)
+│   │   ├── Chunker.cs              # Conteo de chunks (base para Qdrant)
+│   │   ├── IVectorIndexSink.cs     # Hook Qdrant (NullVectorIndexSink por defecto)
+│   │   └── Scheduler.cs            # Timer in-process
+│   │
+│   └── Wcf/
+│       ├── ICrawlerIndexerService.cs  # Contrato WCF + DTOs
+│       └── CrawlerIndexerService.svc(.cs)  # Wrapper WCF de la fachada
+│
 ├── App_Data/
 │   ├── seeds.txt                   # URLs semilla (una por línea)
-│   └── crawlings/                  # Salida de crawlings (generada en runtime)
-│       └── <dominio>/
-│           ├── 00_index.txt
-│           ├── 01_about.txt
-│           └── metadata.json       # Generado por Indexar.aspx
+│   ├── crawlings/                  # Salida del crawler (generada en runtime)
+│   │   └── <dominio>/
+│   │       ├── 01_home.txt         # Texto limpio por página
+│   │       └── 01_home.metadata.json  # Sidecar: sha256, needs_index, chunks…
+│   ├── status/                     # Estado persistido de jobs y scheduler
+│   └── logs/                       # crawler.log, indexer.log
+│
+├── python/                         # Servicio RAG (FastAPI + Qdrant)
+│   ├── app/
+│   │   ├── config.py               # Config central (rutas relativas al repo)
+│   │   ├── api.py                  # /query, /health
+│   │   ├── chunk.py                # --incremental (defecto) / --full
+│   │   ├── embed_index.py          # Embeddings + upsert Qdrant
+│   │   ├── corpus_utils.py         # Iterador de pares .txt + .metadata.json
+│   │   ├── retrieval.py            # Búsqueda vectorial
+│   │   ├── generation.py           # LLM opcional / fallback extractivo
+│   │   ├── models.py               # Dataclasses
+│   │   └── validate_corpus.py
+│   ├── scripts/
+│   ├── run_all.ps1 / run_all.sh    # Pipeline: valida→chunkea→indexa→tests
+│   ├── start_api.ps1 / start_api.sh
+│   └── requirements.txt
+│
 ├── Content/
 │   ├── bootstrap.css               # Bootstrap 5.2.3
-│   └── Site.css                    # Estilos personalizados + dark mode tokens
+│   └── Site.css                    # Estilos + dark mode tokens
 ├── Scripts/
-│   ├── bootstrap.bundle.js         # Bootstrap + Popper
+│   ├── bootstrap.bundle.js
 │   ├── jquery-3.7.0.min.js
-│   ├── modernizr-2.8.3.js
-│   └── WebForms/                   # Scripts del framework ASP.NET Web Forms
-│       └── MSAjax/                 # Microsoft AJAX
+│   └── WebForms/ (MSAjax)
 ├── App_Start/
-│   ├── BundleConfig.cs             # Bundling de CSS/JS
-│   └── RouteConfig.cs              # Rutas amigables (home → Landing.aspx)
-├── Properties/
-│   └── AssemblyInfo.cs
-├── Global.asax                     # Configuración global de la aplicación
-├── Global.asax.cs
-├── Web.config                      # Configuración ASP.NET e IIS
-├── Web.Debug.config
-├── Web.Release.config
-├── Bundle.config
-├── packages.config                 # Dependencias NuGet
-├── rag_can_aspx.csproj             # Proyecto C#
-└── README.md
+│   ├── BundleConfig.cs
+│   └── RouteConfig.cs
+├── Config/
+│   └── seeds.txt                   # Alternativa a App_Data/seeds.txt
+├── Global.asax / .cs               # EnsureFolders, ReconcileOnStartup, Scheduler.Start
+├── Web.config                      # Config .NET + parámetros del crawler
+├── packages.config
+└── rag_can_aspx.csproj
 ```
 
 ---
@@ -384,199 +531,16 @@ rag_can_webform/
 ## Dependencias NuGet
 
 | Paquete | Versión | Uso |
-|---------|---------|-----|
+|---|---|---|
 | Bootstrap | 5.2.3 | UI framework |
 | jQuery | 3.7.0 | DOM (requerido por WebForms) |
 | HtmlAgilityPack | 1.11.61 | DOM parsing y extracción de texto |
-| Newtonsoft.Json | 13.0.3 | Serialización de metadata.json |
-| Microsoft.AspNet.FriendlyUrls | 1.0.2 | URLs amigables en Web Forms |
-| Microsoft.AspNet.Web.Optimization | 1.1.3 | Bundling y minificación CSS/JS |
-| Microsoft.AspNet.ScriptManager.WebForms | 5.0.0 | Script Manager para Web Forms |
+| Newtonsoft.Json | 13.0.3 | Serialización JSON |
+| Microsoft.AspNet.FriendlyUrls | 1.0.2 | URLs amigables |
+| Microsoft.AspNet.Web.Optimization | 1.1.3 | Bundling CSS/JS |
+| Microsoft.AspNet.ScriptManager.WebForms | 5.0.0 | Script Manager |
 | Microsoft.CodeDom.Providers.DotNetCompilerPlatform | 2.0.1 | Compilador Roslyn |
 | Modernizr | 2.8.3 | Detección de características del navegador |
-
----
-
-## Operación en background (NIVEL 1): crawler/indexer controlables
-
-A partir de esta versión, el crawler y el indexer funcionan como **procesos en segundo plano
-controlables** desde Web Forms (iniciar / parar / consultar progreso / ver logs), con estado
-**persistido en disco**, **crawling e indexado incrementales por hash**, un **scheduler interno**
-y exposición opcional como **servicio WCF**. No se ejecuta trabajo largo dentro del request web.
-
-### Arquitectura nueva
-
-```
-UI:  Crawler.aspx        Indexar.aspx       (Default.aspx / Resultados.aspx -> redirigen a Crawler.aspx)
-        |                     |
-        v                     v
-   ┌──────────────────────────────────────────┐       ┌──────────────────────────────┐
-   │  CrawlerIndexerFacade  (capa de control)  │ <──── │ CrawlerIndexerService.svc     │
-   │  StartCrawl/StopCrawl/GetCrawlStatus/...   │  WCF  │ + ICrawlerIndexerService      │
-   └──────────────────────────────────────────┘       └──────────────────────────────┘
-        |            |              |             |
-        v            v              v             v
-   CrawlJob      IndexJob      JobStatusManager   Scheduler (Timer in-process)
-        |            |              |
-        v            v              v
-   CrawlerService MetadataService  App_Data/status/*.json  +  App_Data/logs/*.log  (escritura atomica)
-   (reutilizados)
-```
-
-Cada job se lanza con `HostingEnvironment.QueueBackgroundWorkItem`, escribe su estado mediante
-`JobStatusManager`, respeta un `CancellationToken` (para *Parar*) y un *single-flight lock*
-(impide ejecuciones concurrentes duplicadas). El estado persiste a disco, por lo que sobrevive a
-que el usuario cambie de página o recargue.
-
-### Métodos públicos (fachada y WCF)
-
-Definidos en `Services/CrawlerIndexerFacade.cs` y expuestos por `Services/Wcf/ICrawlerIndexerService.cs`:
-
-| Método | Descripción |
-|--------|-------------|
-| `StartCrawl()` | Lanza el crawl de todas las semillas de `seeds.txt` en segundo plano. |
-| `StartCrawlSource(string url)` | Crawl de una sola URL. |
-| `StopCrawl()` | Solicita parar el crawl en curso. |
-| `GetCrawlStatus()` | Estado actual del crawl (estado, progreso, URL actual, contadores). |
-| `GetLastCrawlRun()` | Última ejecución del crawl (mismo fichero de estado persistido). |
-| `StartIndexing()` | Indexa en segundo plano solo lo que tiene `needs_index=true`. |
-| `StopIndexing()` | Solicita parar la indexación. |
-| `GetIndexingStatus()` / `GetLastIndexingRun()` | Estado de la indexación. |
-| `GetSources()` | Lista de fuentes con su estado. |
-| `GetSourceStatus(string url)` | Estado de una fuente concreta. |
-| `GetLogs(int lines)` | Últimas N líneas de `crawler.log` e `indexer.log`. |
-
-### Ficheros de estado y logs (`App_Data/`)
-
-Se crean automáticamente al arrancar la app (`Global.asax` → `JobStatusManager.EnsureFolders()`):
-
-| Fichero | Contenido |
-|---------|-----------|
-| `status/crawl_status.json` | Estado del crawl: `state` (idle/running/completed/error/stopped), `started_at`, `finished_at`, `total_sources`, `processed_sources`, `failed_sources`, `skipped_sources`, `current_url`, `last_error`, `progress_percent`. |
-| `status/index_status.json` | Igual que el anterior, para la indexación. |
-| `status/sources_status.json` | Una entrada por URL: `last_crawled_at`, `http_status`, `title`, `content_sha256`, rutas (`txt_path`/`metadata_path`), `needs_index`, `last_indexed_at`, `chunk_count`, `pages_total/changed/skipped`, `state`, `last_error`. |
-| `status/scheduler_config.json` | Configuración del scheduler (modo, intervalo/hora, habilitado). |
-| `logs/crawler.log`, `logs/indexer.log` | Logs con timestamp UTC (rotan a `.1` al superar ~5 MB). |
-
-> Se mantiene la compatibilidad con `App_Data/crawlings/` y `App_Data/seeds.txt`. Los `.txt` y los
-> sidecars `*.metadata.json` siguen generándose igual; ahora el sidecar incluye además
-> `needs_index`, `last_indexed_at` y `chunks`.
-
-### Cómo lanzar el crawling
-
-1. Ir a **Crawler.aspx** (enlace *Crawler* del menú).
-2. Opcional: indicar una URL única, ajustar *Max Páginas* / *Max Profundidad*.
-3. Pulsar **Iniciar Crawling**. El job arranca en segundo plano y la página muestra estado,
-   barra de progreso, URL actual, contadores, tabla de fuentes y logs (refresco automático cada 3 s).
-4. Se puede cerrar o cambiar de página: el job sigue. Para detenerlo, **Parar**.
-
-**Incremental por hash:** para cada página se calcula el SHA-256 del texto limpio. Si coincide con el
-del crawl anterior, se marca como *skipped* y **no** se vuelve a indexar; si cambió (o es nueva), se
-marca `needs_index=true`.
-
-### Cómo lanzar la indexación
-
-1. Ir a **Indexar.aspx**.
-2. Pulsar **Iniciar Indexado**: procesa **solo** los documentos con `needs_index=true`, calcula el
-   número de *chunks*, registra `last_indexed_at` y pone `needs_index=false`.
-3. (Conservado) *Regenerar metadata (manual)*: escanea una carpeta y regenera `metadata.json`
-   + sidecars sin volver a crawlear.
-
-> **Integración Qdrant (preparada, no activa):** el push real de *embeddings* a Qdrant
-> (`rag_can_python`) está abstraído en `Services/Jobs/IVectorIndexSink.cs`. Por defecto se usa
-> `NullVectorIndexSink` (no-op). Para activarlo en el futuro, implementar `RagPythonVectorIndexSink`
-> y asignarlo a `IndexJob.Sink`.
-
-### Cómo programarlo (scheduler)
-
-En **Crawler.aspx**, tarjeta *Programación*:
-- **Modo**: `manual` (sin programación), `interval` (cada X horas) o `daily` (diario a una hora).
-- Marcar *Ejecutar crawl programado* y/o *Ejecutar indexado tras el crawl*.
-- **Guardar programación** → se persiste en `App_Data/status/scheduler_config.json`.
-
-Un `Timer` interno (arrancado en `Global.asax` → `Scheduler.Start()`) revisa la configuración cada
-minuto y, si toca y no hay jobs en curso, ejecuta el ciclo **crawl → index**.
-
-> **Importante (in-process):** el scheduler interno solo se ejecuta mientras el *app pool* esté vivo.
-> En IIS conviene habilitar **Application Initialization** / *AlwaysRunning* (o un *keep-alive*) para
-> que no se duerma. Ver más abajo la alternativa con Tarea programada de Windows.
-
-### Servicio WCF (opcional)
-
-- Endpoint: `/Services/Wcf/CrawlerIndexerService.svc` (SOAP / `basicHttpBinding`, con WSDL).
-- Implementación delgada que delega en `CrawlerIndexerFacade`.
-- **Requisito**: tener instalada la característica de Windows **"WCF HTTP Activation"** (en
-  *Activar o desactivar características de Windows → .NET Framework 4.8 Advanced Services →
-  Activación de WCF → Activación HTTP*) para que IIS/IIS Express mapeen la extensión `.svc`.
-- Probar con el *WCF Test Client* (`WcfTestClient.exe`) o `Add Service Reference` apuntando al `.svc`.
-- Si la característica no está instalada, la web y la UI siguen funcionando con normalidad; solo
-  queda inaccesible el endpoint WCF (la fachada interna es la vía principal).
-
-### Cómo escalar de 5 a 500 URLs
-
-1. **Ampliar las semillas**: añadir las ~500 URLs a `App_Data/seeds.txt` (o `~/Config/seeds.txt`), una por línea.
-2. **Ajustar concurrencia/politeness** en `Web.config`:
-   - `Crawler:MaxConcurrentDomains` (subir con cuidado, p. ej. 4–8),
-   - `Crawler:RequestDelayMs`, `Crawler:HttpTimeoutSeconds`,
-   - `Crawler:MaxPages` / `Crawler:MaxDepth`, `Index:ChunkSize`.
-3. **Incremental**: en cada ejecución solo se re-indexa lo que cambió (hash), por lo que el coste
-   de mantener 500 webs al día es bajo.
-4. **Programación robusta para producción**: en lugar del scheduler in-process, usar la **Tarea
-   programada de Windows** (ver abajo) que sobrevive a reciclajes del *app pool*.
-5. **Vectorización real**: conectar `IVectorIndexSink` con `rag_can_python`/Qdrant para indexar a escala.
-
-### Ejecutar en Windows (PC propio y servidor del profesor)
-
-> El proyecto es **.NET Framework 4.8.1 + ASP.NET Web Forms**: se compila y ejecuta en **Windows**
-> (Visual Studio 2022 / `msbuild` / IIS Express / IIS). No se ejecuta en Linux/WSL.
-
-**En tu PC (desarrollo):**
-1. Abrir la solución en Visual Studio 2022 y restaurar paquetes NuGet.
-2. Compilar (F6) y ejecutar (F5 / Ctrl+F5) con IIS Express.
-3. Asegurar permisos de escritura en `App_Data/` (normalmente automático con IIS Express).
-
-**En el servidor Windows del profesor (IIS):**
-1. Publicar el sitio (Build → Publish, o copiar el contenido compilado) a una carpeta del servidor.
-2. Crear un sitio/aplicación en IIS apuntando a esa carpeta, con un *Application Pool* de
-   **.NET Framework v4.0** (modo integrado).
-3. Dar permisos de **escritura** a la identidad del *app pool* (p. ej. `IIS AppPool\<nombre>`) sobre
-   `App_Data/` (subcarpetas `status`, `logs`, `crawlings`).
-4. (Recomendado) Habilitar **Application Initialization** y poner el *app pool* en `AlwaysRunning`
-   para que el scheduler interno no se detenga.
-5. (Opcional WCF) Instalar **WCF HTTP Activation**.
-
-**Programación con Tarea de Windows (alternativa de producción, sobrevive a reciclajes):**
-- Crear una tarea en el *Programador de tareas* que, en el horario deseado, invoque el servicio
-  (p. ej. con `curl`/PowerShell) llamando a `StartCrawl` y `StartIndexing` del `.svc`, o a una URL
-  de disparo de la aplicación. Así el ciclo no depende de que el *app pool* esté activo en ese momento.
-
-### Robustez
-
-- *Single-flight*: no se permiten dos crawls (ni dos indexados) simultáneos.
-- Control de excepciones **por URL**: una URL que falla no detiene el resto (se registra en
-  `failed_sources` y en el log).
-- Toda escritura queda **anclada a `App_Data`** (validación de rutas en `PathHelper`).
-- *Parar* cancela el job vía `CancellationToken` y deja el estado en `stopped`.
-- Tras un reciclaje del *app pool*, los estados que quedaron en `running` se reparan a `stopped`
-  al arrancar (`JobStatusManager.ReconcileOnStartup()`).
-
-### Nuevos archivos relevantes
-
-```
-Services/CrawlerIndexerFacade.cs        # capa de control (metodos publicos)
-Services/Jobs/JobStatusModels.cs        # modelos de estado (JSON)
-Services/Jobs/JobStatusManager.cs       # estado central + single-flight + cancelacion
-Services/Jobs/JsonFile.cs               # escritura/lectura JSON atomica
-Services/Jobs/JobLogger.cs              # logs con rotacion
-Services/Jobs/CrawlJob.cs               # crawl incremental
-Services/Jobs/IndexJob.cs               # indexado incremental
-Services/Jobs/Chunker.cs               # troceo (chunk_count + base para Qdrant)
-Services/Jobs/IVectorIndexSink.cs       # hook Qdrant (NullVectorIndexSink por defecto)
-Services/Jobs/Scheduler.cs              # scheduler in-process
-Services/Wcf/ICrawlerIndexerService.cs  # contrato WCF + DTOs
-Services/Wcf/CrawlerIndexerService.svc(.cs)  # servicio WCF (wrapper de la fachada)
-Crawler.aspx(.cs/.designer.cs)          # UI unificada de crawling
-```
 
 ---
 
@@ -586,4 +550,4 @@ Este proyecto está bajo licencia **MIT**. Consulta `LICENSE` para más detalles
 
 ---
 
-**Última actualización:** 2026-06-08 | **Versión:** 1.1 | **Estado:** En desarrollo
+**Última actualización:** 2026-06-08 | **Versión:** 1.2 | **Estado:** En desarrollo
