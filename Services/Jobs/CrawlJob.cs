@@ -115,9 +115,12 @@ namespace rag_can_aspx.Services.Jobs
 
                     if (!resultado.Exitoso)
                     {
-                        source.State = "failed";
-                        lock (gate) { status.FailedSources++; }
-                        JobLogger.Append(JobLogger.CrawlerLog, string.Format("FALLO {0}: {1}", seed, resultado.Mensaje));
+                        bool wasCancelled = cancellationToken.IsCancellationRequested;
+                        source.State = wasCancelled ? "stopped" : "failed";
+                        if (!wasCancelled)
+                            lock (gate) { status.FailedSources++; }
+                        JobLogger.Append(JobLogger.CrawlerLog, string.Format(
+                            wasCancelled ? "DETENIDO {0}: {1}" : "FALLO {0}: {1}", seed, resultado.Mensaje));
                     }
                     else if (scan.Changed == 0 && scan.Total > 0)
                     {
