@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-08T20:34:58Z",
+  "generated_at": "2026-06-08T21:30:29Z",
   "api_url": "http://127.0.0.1:8000/query",
   "top_k": 5,
   "label": "local",
@@ -11,10 +11,10 @@
     "recall_at_3": 0.92,
     "recall_at_5": 1,
     "mrr": 0.819,
-    "latency_avg_ms": 2710.6,
-    "latency_max_ms": 7159.4,
-    "latency_min_ms": 967.2,
-    "latency_p90_ms": 3834.8,
+    "latency_avg_ms": 2650.9,
+    "latency_max_ms": 7189.3,
+    "latency_min_ms": 1043.5,
+    "latency_p90_ms": 3621.5,
     "pct_with_sources": 100.0,
     "pct_without_sources": 0.0,
     "pct_rejected": 0.0,
@@ -23,31 +23,31 @@
         "n": 15,
         "recall_at_5": 1,
         "mrr": 0.8167,
-        "latency_avg_ms": 2602.0
+        "latency_avg_ms": 2585.6
       },
       "synthesis": {
         "n": 10,
         "recall_at_5": 1,
         "mrr": 0.825,
-        "latency_avg_ms": 2886.2
+        "latency_avg_ms": 2747.7
       },
       "multisource": {
         "n": 10,
         "recall_at_5": 1,
         "mrr": 0.95,
-        "latency_avg_ms": 2809.5
+        "latency_avg_ms": 2687.2
       },
       "semantic": {
         "n": 8,
         "recall_at_5": 1,
         "mrr": 0.7396,
-        "latency_avg_ms": 2429.1
+        "latency_avg_ms": 2435.9
       },
       "reasoning": {
         "n": 7,
         "recall_at_5": 1,
         "mrr": 0.719,
-        "latency_avg_ms": 2872.9
+        "latency_avg_ms": 2846.6
       }
     },
     "by_difficulty": {
@@ -55,25 +55,25 @@
         "n": 15,
         "recall_at_5": 1,
         "mrr": 0.8167,
-        "latency_avg_ms": 2602.0
+        "latency_avg_ms": 2585.6
       },
       "medium": {
         "n": 10,
         "recall_at_5": 1,
         "mrr": 0.825,
-        "latency_avg_ms": 2886.2
+        "latency_avg_ms": 2747.7
       },
       "hard": {
         "n": 18,
         "recall_at_5": 1,
         "mrr": 0.8565,
-        "latency_avg_ms": 2640.4
+        "latency_avg_ms": 2575.5
       },
       "expert": {
         "n": 7,
         "recall_at_5": 1,
         "mrr": 0.719,
-        "latency_avg_ms": 2872.9
+        "latency_avg_ms": 2846.6
       }
     },
     "best_questions": [
@@ -168,7 +168,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 7159.4,
+      "response_time_ms": 7189.3,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -240,7 +240,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 967.2,
+      "response_time_ms": 1043.5,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -313,7 +313,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1848.8,
+      "response_time_ms": 2007.0,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -337,7 +337,7 @@
         "Gran Canaria",
         "patrimonio"
       ],
-      "answer": "El Museo y Parque Arqueológico Cueva Pintada de Gáldar depende del Cabildo de Gran Canaria, ya que es gestionado por la Consejería de Cultura del Cabildo [3]. Además, el Cabildo financia proyectos como la ampliación del Museo Canario, aunque este no está bajo su gestión directa [1].",
+      "answer": "El Museo y Parque Arqueológico Cueva Pintada de Gáldar depende del Cabildo de Gran Canaria, ya que es gestionado por la Consejería de Cultura del mismo [3]. Además, el Cabildo financia proyectos como la ampliación del Museo Canario, aunque este no está especificado como dependiente directamente del Cabildo [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -386,7 +386,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1771.5,
+      "response_time_ms": 1899.9,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -459,7 +459,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2571.2,
+      "response_time_ms": 2585.5,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -483,7 +483,7 @@
         "historia",
         "documentación"
       ],
-      "answer": "Memoria de Lanzarote es una iniciativa que recopila y preserva testimonios, anécdotas, fotografías y materiales audiovisuales relacionados con la memoria cultural, artesanal y paisajística de Lanzarote [1]. A través de entrevistas y documentos digitales, como videos de grupos folklóricos o imágenes históricas de avionetas en el antiguo aeropuerto, busca reconstruir la identidad del territorio y el impacto de figuras clave como César Manrique en la preservación del paisaje y la arquitectura insular [2].",
+      "answer": "Memoria de Lanzarote es una iniciativa que recopila y preserva testimonios, anécdotas, fotografías y materiales audiovisuales relacionados con la memoria oral, la cultura, el arte y la identidad de Lanzarote [1]. Entre sus proyectos destaca la recopilación de relatos sobre figuras clave como César Manrique, así como el registro de tradiciones populares, como la actuación del grupo folklórico Los Campesinos o imágenes históricas de avionetas en el antiguo aeropuerto de la isla [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -532,7 +532,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2650.9,
+      "response_time_ms": 2627.3,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -605,7 +605,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2423.3,
+      "response_time_ms": 2421.0,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -629,7 +629,7 @@
         "corpus",
         "canarias"
       ],
-      "answer": "El proyecto Canarias Azul aborda el patrimonio cultural material e inmaterial asociado al litoral de las Islas Canarias, centrándose en fortificaciones, infraestructuras portuarias, faros y maquinaria portuaria, así como en los procesos históricos y usos tradicionales de estos espacios [1]. Su objetivo es promover el turismo cultural mediante la visibilidad, conservación y desarrollo comunitario de este patrimonio, aprovechando su relevancia estratégica en la historia de la mundialización y globalización [1].",
+      "answer": "El proyecto Canarias Azul aborda el patrimonio cultural material e inmaterial vinculado al litoral de las Islas Canarias, destacando fortificaciones, infraestructuras portuarias, faros y maquinaria portuaria, así como los usos históricos y procesos sociales asociados a estos espacios [1]. Su objetivo es promover el turismo cultural y fomentar la preservación comunitaria del patrimonio litoral, aprovechando su visibilidad y valor histórico [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -678,7 +678,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2450.8,
+      "response_time_ms": 2258.0,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -702,7 +702,7 @@
         "costumbre",
         "pueblo"
       ],
-      "answer": "El blog Izuran recoge información sobre la cultura, historia y lengua de los guanches, los pueblos indígenas de Canarias, con énfasis en su origen amazigh (beréber) [1]. Entre sus contenidos destacan: el significado y origen del término \"majorero/a\", referido a lo originario de Fuerteventura, cuyo uso se justifica por su raíz amazigh [1]; vocabulario guanche, incluyendo términos como *Acoran* (Dios eterno), *Magec* y *Magot* (el sol), y entidades como *Tyterogaka* [2]; y referencias a creencias religiosas y mitológicas, como la existencia de un infierno asociado al volcán del Pico del Teide, donde se supone que habitaba el demonio *guaíota* [2].",
+      "answer": "El blog Izuran recoge información sobre la cultura, historia y lengua de los guanches, los pueblos indígenas de Canarias, con énfasis en su origen amazigh (beréber) [1]. Entre sus contenidos destacan: el significado y origen del término \"majorero/a\", referido a lo originario de Fuerteventura, cuyo uso se justifica por su raíz amazigh [1]; vocabulario guanche, incluyendo términos como *Acoran* (Dios eterno), *Magec* y *Magot* (el sol), y entidades míticas como *Tyterogaka* [2]; y referencias a creencias religiosas y mitológicas, como la existencia de un infierno asociado al volcán del Pico del Teide, donde se supone que habitaba el demonio *guaíota* [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -751,7 +751,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3912.9,
+      "response_time_ms": 3836.9,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -775,7 +775,7 @@
         "idioma",
         "normativa"
       ],
-      "answer": "La Academia Canaria de la Lengua es un organismo dedicado al estudio y descripción de la variedad canaria del español, así como a la promoción de la producción literaria del archipiélago [1]. Su objetivo fundamental, según sus estatutos, incluye publicar los resultados de sus investigaciones y responder consultas lingüísticas sobre el español de Canarias [1].",
+      "answer": "La Academia Canaria de la Lengua es una institución dedicada al estudio y descripción de la variedad canaria del español, así como a la promoción de la producción literaria del archipiélago [1]. Su objetivo fundamental, según sus estatutos, es investigar y publicar los resultados de estos estudios, incluyendo la respuesta a consultas lingüísticas sobre el español de Canarias [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -824,7 +824,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1836.1,
+      "response_time_ms": 1911.1,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -848,7 +848,7 @@
         "canario",
         "vocabulario"
       ],
-      "answer": "El Diccionario Básico de Canarismos tiene como finalidad cuantificar, describir y divulgar el léxico diferencial del español de Canarias, incluyendo guanchismos, portuguesismos, leonesismos, andalucismos, americanismos e innovaciones lingüísticas [2]. Sirve como herramienta de calidad para conocer el léxico característico del Archipiélago y es útil para estudiantes, especialmente en el estudio de la lengua castellana y su variedad regional canaria [2].",
+      "answer": "El Diccionario Básico de Canarismos tiene como finalidad cuantificar, describir y divulgar el léxico diferencial del español de Canarias, incluyendo guanchismos, portuguesismos, leonesismos, andalucismos, americanismos e innovaciones lingüísticas [2]. Sirve como herramienta de calidad para conocer el vocabulario característico del Archipiélago y es útil para estudiantes, especialmente en el estudio de la lengua castellana y su variedad regional canaria [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -897,7 +897,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2678.0,
+      "response_time_ms": 2473.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -921,7 +921,7 @@
         "significado",
         "término"
       ],
-      "answer": "El término \"guagua\" no aparece en el contexto proporcionado. Por tanto, no se puede definir según el diccionario o el texto recuperado [1].",
+      "answer": "El contexto proporcionado no contiene información sobre el significado de la palabra \"guagua\" en ningún diccionario. No se puede responder con base en los textos recuperados [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -970,7 +970,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1230.9,
+      "response_time_ms": 1213.7,
       "recall_at_1": 0,
       "recall_at_3": 0,
       "recall_at_5": 1,
@@ -1043,7 +1043,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1865.6,
+      "response_time_ms": 1735.9,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1067,7 +1067,7 @@
         "investigación",
         "patrimonio"
       ],
-      "answer": "La arqueología en Canarias es fundamental para comprender el pasado prehistórico e histórico de sus islas, especialmente a través del estudio de restos materiales de las poblaciones antiguas [2]. Las jornadas y conferencias organizadas por El Museo Canario destacan su relevancia en investigaciones actuales, como las \"BIO-ARQUEOLOGÍAS DE CANARIAS\" o los estudios sobre \"Recuperando memorias\" y \"Nuevas investigaciones\", evidenciando su papel en la exploración del patrimonio arqueológico insular [1].",
+      "answer": "La arqueología en Canarias es fundamental para comprender el pasado prehistórico e histórico de sus islas, especialmente a través del estudio de restos materiales de las poblaciones antiguas [2]. Las jornadas y conferencias organizadas por El Museo Canario destacan su relevancia en investigaciones actuales, como las \"BIO-ARQUEOLOGÍAS DE CANARIAS\" o los estudios sobre \"Recuperando memorias\" y \"Nuevas investigaciones\" [1], evidenciando su papel clave en la conservación y reinterpretación del patrimonio insular.",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1116,7 +1116,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2865.2,
+      "response_time_ms": 2672.7,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1142,7 +1142,7 @@
         "museo",
         "archivo"
       ],
-      "answer": "En Canarias, instituciones como El Museo Canario conservan patrimonio histórico. Esta institución, declarada Monumento Histórico-Artístico en 1962 [1], fue incorporada al Sistema Español de Museos en 1987 [1] y ha recibido reconocimientos como la Medalla de Oro de la Ciudad de Las Palmas de Gran Canaria en 1993 y el Premio Canarias de Acervo Histórico en 1996 [1]. Su labor se centra en preservar y exponer fondos arqueológicos de las culturas prehispánicas de Gran Canaria [1].",
+      "answer": "En Canarias, instituciones como El Museo Canario conservan patrimonio histórico. Esta institución, declarada Monumento Histórico-Artístico en 1962 [1], fue incorporada al Sistema Español de Museos en 1987 [1] y ha recibido reconocimientos como la Medalla de Oro de la Ciudad de Las Palmas de Gran Canaria en 1993 y el Premio Canarias de Acervo Histórico en 1996 [1]. Su labor se centra en preservar y exhibir fondos arqueológicos de las culturas prehispánicas de Gran Canaria [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1191,7 +1191,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2798.8,
+      "response_time_ms": 2908.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1215,7 +1215,7 @@
         "acceso",
         "colección"
       ],
-      "answer": "Memoria de Lanzarote ofrece recursos como testimonios orales de artesanos y profesionales vinculados al arte y la cultura, que reconstruyen el legado de César Manrique y el desarrollo sostenible de la isla [1]. También incluye publicaciones visuales como *Lanzarote* (en inglés y español), que destaca el paisaje volcánico del Parque Nacional de Timanfaya, zonas turísticas, municipios y sitios emblemáticos como los Jameos del Agua, la Cueva de los Verdes y La Geria [2].",
+      "answer": "Memoria de Lanzarote ofrece recursos como testimonios orales de artesanos y figuras clave en la cultura insular, que destacan el impacto de César Manrique y el papel del Cabildo en la preservación del paisaje y la arquitectura [1]. También incluye publicaciones visuales como *Lanzarote* (en inglés y español), que documenta la isla mediante fotografías y textos sobre sus características volcánicas, zonas turísticas, municipios y sitios emblemáticos como el Parque Nacional de Timanfaya, los Jameos del Agua, la Cueva de los Verdes y La Geria [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1264,7 +1264,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2586.3,
+      "response_time_ms": 2874.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1288,7 +1288,7 @@
         "escolar",
         "programa"
       ],
-      "answer": "Los museos de Gran Canaria, especialmente El Museo Canario, ofrecen actividades educativas gratuitas para escolares de Infantil, Primaria y Secundaria, incluyendo visitas guiadas o autónomas que requieren reserva previa [1]. Estas actividades se basan en el modelo educativo History Thinking®, que promueve habilidades sociales, valores como la igualdad y sostenibilidad, y utiliza innovación tecnológica para un aprendizaje inmersivo [1]. Además, el Museo Canario desarrolla el proyecto EMC Inno Lab, que combina el estudio del pasado con la innovación para fomentar el futuro, en colaboración con la Fundación Sergio Alonso [2].",
+      "answer": "Los museos de Gran Canaria, especialmente El Museo Canario, ofrecen actividades educativas gratuitas para escolares de Infantil, Primaria y Secundaria, incluyendo visitas guiadas o autónomas que requieren reserva previa [1]. Estas actividades se basan en el modelo educativo History Thinking®, que promueve habilidades sociales, valores como la igualdad y la sostenibilidad, y utiliza innovación tecnológica para un aprendizaje inmersivo [1]. Además, el Museo Canario desarrolla el proyecto EMC Inno Lab, que combina el estudio del pasado con la innovación para fomentar el desarrollo social y la transformación comunitaria [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1337,7 +1337,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2909.3,
+      "response_time_ms": 2821.9,
       "recall_at_1": 0,
       "recall_at_3": 0,
       "recall_at_5": 1,
@@ -1361,7 +1361,7 @@
         "análisis",
         "estudio"
       ],
-      "answer": "Las principales líneas de investigación del Museo Canario se centran en el estudio del origen y la forma de vida de los antiguos pobladores de las islas, desarrollando colaboraciones con investigadores de instituciones nacionales e internacionales de prestigio [1]. Además, el Museo impulsa proyectos innovadores como EMC Inno Lab, que utiliza piezas arqueológicas y documentos históricos para crear narrativas educativas que vinculan a niños y adolescentes, especialmente en riesgo de exclusión, con su entorno y futuro, promoviendo la transformación social a través de la didáctica de la historia [2].",
+      "answer": "Las principales líneas de investigación del Museo Canario se centran en el estudio del origen y la forma de vida de los antiguos pobladores de las islas, desarrollando colaboraciones con instituciones científicas nacionales e internacionales [1]. Además, el Museo impulsa el proyecto EMC Inno Lab, que combina la didáctica de la historia con la innovación educativa para promover la transformación social, especialmente entre niños, niñas y adolescentes en riesgo de exclusión en los barrios de los riscos de Las Palmas de Gran Canaria [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1410,7 +1410,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2649.2,
+      "response_time_ms": 2674.8,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1434,7 +1434,7 @@
         "pesca",
         "náutico"
       ],
-      "answer": "El proyecto Canarias Azul se centra en la documentación y difusión del patrimonio marítimo de Gran Canaria, incluyendo elementos materiales e inmateriales vinculados a su litoral [1]. Este patrimonio refleja la importancia estratégica de las Islas Canarias en procesos de mundialización y globalización, especialmente a través de su litoral, que ha sido clave en actividades económicas y políticas entre Europa, América y África a lo largo de los siglos [2]. El proyecto busca crear una base de datos y una herramienta informática gratuita, avalada por la Universidad de Las Palmas de Gran Canaria y el IATEXT, para promover el conocimiento del patrimonio marítimo de forma rigurosa y atractiva [1].",
+      "answer": "El proyecto Canarias Azul se centra en la documentación y difusión del patrimonio marítimo de Gran Canaria, incluyendo elementos materiales e inmateriales vinculados a su litoral [1]. Este patrimonio refleja la importancia estratégica de las Islas Canarias en procesos de mundialización y globalización, especialmente a través de su actividad económica y política marítima a lo largo de los siglos [2]. El proyecto busca crear una base de datos y una herramienta informática gratuita, avalada por la Universidad de Las Palmas de Gran Canaria y el IATEXT, para promover el conocimiento del pasado marítimo canario [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1483,7 +1483,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3260.0,
+      "response_time_ms": 2961.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1507,7 +1507,7 @@
         "costumbre",
         "documentación"
       ],
-      "answer": "En Izuran se documentan tipos de patrimonio relacionados con la cosmovisión ancestral canaria, destacando entidades religiosas y mitológicas. Entre ellas, se menciona a Magec (el sol), considerado un dios venerado [1], y a Guayota, demonio asociado al interior de la tierra, especialmente en Tenerife y Gran Canaria [1]. También se refieren a otras entidades malignas como Yruene, Haguayan, Gucancha y Tibicenas, vinculadas a regiones específicas [1]. El concepto de infierno se asocia con Echeyde o Chimichi, ubicado en el interior del Teide o Taraire, y por extensión en otros volcanes activos [1].",
+      "answer": "En Izuran se documentan tipos de patrimonio relacionados con la cosmovisión ancestral canaria, destacando creencias religiosas y mitológicas. Entre ellas, se menciona a Magec (el sol), considerado una entidad sagrada, y a Guayota, demonio asociado al interior de la tierra, especialmente en Tenerife y Gran Canaria [1]. También se refieren entidades malignas como Yruene, Haguayan, Gucancha y Tibicenas, vinculadas a la geografía volcánica [1]. El infierno, conceptualizado como Echeyde o Chimichi, se localiza en el interior del Teide o Taraire, asociado a volcanes activos [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1556,7 +1556,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3289.8,
+      "response_time_ms": 3233.3,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1629,7 +1629,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1991.7,
+      "response_time_ms": 2014.3,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1653,7 +1653,7 @@
         "colección",
         "documento"
       ],
-      "answer": "Memoria de Lanzarote ofrece información sobre la historia insular a través de testimonios y documentos que abarcan distintos periodos. En particular, se destaca el análisis de los ataques corsarios berberiscos en la segunda mitad del siglo XVI, que afectaron a Lanzarote y Fuerteventura, con el objetivo de saqueo y captura de personas para venderlas como esclavas [2]. Debido a la destrucción de archivos municipales por estos ataques, el estudio se basa en las actas del Concejo de La Palma (1559-1599) para documentar cinco grandes incursiones [2]. Estos episodios impulsaron el desarrollo de un sistema de alerta coordinado entre las islas de la Macaronesia [2]. Además, el documento también aborda el impacto cultural y arquitectónico de figuras como César Manrique, destacando el papel del Cabildo, Pepín Ramírez y técnicos como Jesús Soto en la preservación del paisaje y la identidad insular [1].",
+      "answer": "Memoria de Lanzarote ofrece información sobre la historia insular a través de testimonios y documentos que abordan distintos aspectos. En particular, se menciona el impacto de los ataques corsarios berberiscos en Lanzarote y Fuerteventura durante la segunda mitad del siglo XVI, que provocaron la destrucción de archivos municipales y generaron la necesidad de un sistema de alerta coordinado entre las islas de la Macaronesia [2]. Además, el documento también recoge la memoria oral sobre el proyecto insular liderado por César Manrique, destacando el papel del Cabildo, Pepín Ramírez y técnicos como Jesús Soto en la preservación del paisaje y la arquitectura mediante obras emblemáticas [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1702,7 +1702,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 4361.4,
+      "response_time_ms": 3155.7,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1726,7 +1726,7 @@
         "conservación",
         "patrimonio"
       ],
-      "answer": "Las colecciones arqueológicas del Museo Canario, especialmente el Fondo de Arqueología de Gran Canaria, son de suma importancia por ser el más extenso y completo del archipiélago, constituyendo una referencia obligada para el estudio de la sociedad prehispánica de Gran Canaria [2]. Este fondo, que incluye restos de poblaciones prehistóricas e históricas, así como objetos procedentes de otras islas canarias, se ha ido ampliando desde la fundación del museo en 1879 mediante depósitos de particulares y entidades institucionales [2]. Destacan en él colecciones de cerámicas, ídolos, pintaderas, manufacturas en fibras y piel, industria lítica, ósea y de madera, además de restos antropológicos [2]. Estas colecciones son un pilar básico de la institución [2].",
+      "answer": "Las colecciones arqueológicas del Museo Canario, especialmente el Fondo de Arqueología de Gran Canaria, son de suma importancia pues constituyen el conjunto más extenso y completo del archipiélago, siendo una referencia obligada para el estudio de la sociedad prehispánica de Gran Canaria [2]. Este fondo, que incluye restos de poblaciones prehistóricas e históricas, se ha ido ampliando desde la fundación del museo en 1879 mediante depósitos de particulares y entidades institucionales [2], y destaca por sus colecciones de cerámicas, ídolos, pintaderas, manufacturas en fibras y piel, industria lítica, ósea y de madera, así como restos antropológicos [2]. Su valor reside en su aporte fundamental al conocimiento de la cultura canaria prehispánica [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1775,7 +1775,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3761.4,
+      "response_time_ms": 3708.6,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1850,7 +1850,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1737.9,
+      "response_time_ms": 1701.4,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1924,7 +1924,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2314.7,
+      "response_time_ms": 2331.1,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -1949,7 +1949,7 @@
         "complemento",
         "memoria"
       ],
-      "answer": "La relación entre el Museo Canario y los recursos de Memoria de Lanzarote se centra en la preservación y difusión de la memoria colectiva de Lanzarote, especialmente en torno a figuras clave como César Manrique. El Museo Canario, a través de sus colecciones y actividades, contribuye a la valoración del patrimonio cultural insular, alineándose con los objetivos de Memoria de Lanzarote, que recopila testimonios orales, anécdotas y documentos sobre artesanos, arquitectos y proyectos emblemáticos como los de Manrique [1]. Ambas instituciones promueven la identidad local mediante el arte, la arquitectura y la artesanía, reforzando el vínculo entre territorio y memoria [1].",
+      "answer": "La relación entre el Museo Canario y los recursos de Memoria de Lanzarote se centra en la preservación y difusión de la memoria colectiva de Lanzarote, especialmente en torno a figuras clave como César Manrique. El Museo Canario, a través de sus colecciones y proyectos, contribuye a la valoración del patrimonio cultural insular, alineándose con los esfuerzos de Memoria de Lanzarote, que recopila testimonios orales, anécdotas y documentos sobre artesanos, arquitectos y procesos históricos que moldearon el territorio [1]. Ambas instituciones promueven la identidad cultural de Lanzarote, destacando el papel de Manrique en la protección del paisaje y la integración del arte en el entorno natural [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -1998,7 +1998,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3678.1,
+      "response_time_ms": 3621.5,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2073,7 +2073,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2326.0,
+      "response_time_ms": 2381.6,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2098,7 +2098,7 @@
         "material",
         "registro"
       ],
-      "answer": "El patrimonio arqueológico se refiere a los restos materiales del pasado humano, como herramientas, estructuras y enterramientos, estudiados a través de excavaciones y análisis físicos [1]. En cambio, el patrimonio documental incluye colecciones de textos, archivos, fotografías y otros registros escritos o visuales que conservan la memoria histórica, como el archivo de Antonio López Botas [1]. Ambos tipos de patrimonio se gestionan bajo normativas específicas para su consulta y preservación [2].",
+      "answer": "El patrimonio arqueológico se refiere a los restos materiales del pasado humano, como herramientas, estructuras y enterramientos, estudiados a través de excavaciones y análisis físicos [1]. En cambio, el patrimonio documental comprende colecciones de textos, archivos, fotografías y otros registros escritos o visuales que conservan la memoria histórica y cultural [1]. Ambos tipos de patrimonio se gestionan bajo normativas específicas para su consulta y preservación [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2147,7 +2147,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2480.6,
+      "response_time_ms": 2364.9,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2173,7 +2173,7 @@
         "investigación",
         "diversidad"
       ],
-      "answer": "Los recursos que permiten estudiar la historia de Canarias desde distintas perspectivas incluyen la serie documental *Una historia compartida. Descubrir la historia de Canarias para inspirar el futuro*, producida por El Museo Canario, que aborda la historia de las islas mediante temáticas transversales, utilizando piezas arqueológicas y documentos con rigor científico y un lenguaje ameno para todos los públicos [1]. Además, el proyecto *Canarias Azul* ofrece una plataforma digital que contribuye al estudio histórico desde enfoques diversos [2].",
+      "answer": "Los recursos que permiten estudiar la historia de Canarias desde distintas perspectivas incluyen la serie documental *Una historia compartida. Descubrir la historia de Canarias para inspirar el futuro*, producida por El Museo Canario, que aborda la historia de las Islas mediante temáticas transversales, utilizando piezas arqueológicas y documentos con rigor científico y un lenguaje ameno para todos los públicos [1]. Además, el proyecto *Canarias Azul* ofrece una plataforma digital que contribuye al estudio histórico desde enfoques diversos [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2222,7 +2222,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2413.2,
+      "response_time_ms": 2391.1,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2296,7 +2296,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1886.7,
+      "response_time_ms": 1756.7,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2321,7 +2321,7 @@
         "preservar",
         "difundir"
       ],
-      "answer": "Ambos, el Museo Canario y Memoria de Lanzarote, comparten el objetivo de preservar y difundir la memoria cultural, artesanal y paisajística de Canarias, especialmente de Lanzarote. Mientras el Museo Canario promueve la identidad insular a través de colecciones y exposiciones, Memoria de Lanzarote recoge testimonios orales, anécdotas y materiales visuales para reconstruir la historia local, destacando figuras como César Manrique y el impacto de su obra en la arquitectura y el paisaje [1]. Ambos fomentan la conexión entre arte, artesanía, identidad y territorio, contribuyendo a la valorización del patrimonio cultural [1].",
+      "answer": "Ambos, el Museo Canario y Memoria de Lanzarote, comparten el objetivo de preservar y difundir la memoria cultural, artesanal y paisajística de Canarias, especialmente de Lanzarote. Mientras el Museo Canario promueve el conocimiento del patrimonio insular a través de colecciones y exposiciones, Memoria de Lanzarote utiliza testimonios orales, fotografías y documentación histórica para reconstruir la identidad local, destacando figuras como César Manrique y el impacto de su obra en la arquitectura y el paisaje [1]. Ambos fomentan la conexión entre arte, artesanía, territorio y memoria colectiva [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2370,7 +2370,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3194.4,
+      "response_time_ms": 3032.8,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2396,7 +2396,7 @@
         "investigación",
         "recurso"
       ],
-      "answer": "Para investigar la cultura tradicional canaria, se pueden utilizar recursos digitales como el proyecto **Museoguagua**, que ofrece paneles expositivos, piezas 3D, vídeos explicativos y audioguías accesibles mediante códigos QR [1]. Además, mediante la aplicación «AR El Museo Canario» (disponible para Android e iPhone), se puede acceder a realidad aumentada con personajes interactivos en las guaguas municipales [1]. Estos recursos permiten explorar la historia y organización social de la población indígena de Gran Canaria, así como los fondos del Museo Canario [1].",
+      "answer": "Para investigar la cultura tradicional canaria, se pueden utilizar recursos digitales como el proyecto Museoguagua, que ofrece paneles expositivos, piezas 3D, vídeos explicativos y audioguías accesibles mediante códigos QR [1]. Además, la aplicación «AR El Museo Canario» permite experiencias de realidad aumentada con personajes interactivos en las guaguas municipales [1]. Estos recursos facilitan el acceso a la historia y cultura de Gran Canaria, especialmente la vida y organización social de la población indígena [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2445,7 +2445,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2736.3,
+      "response_time_ms": 2431.3,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2470,7 +2470,7 @@
         "preservar",
         "canaria"
       ],
-      "answer": "Las instituciones culturales y lingüísticas contribuyen a preservar la identidad canaria mediante la promoción de la cultura local, la protección del patrimonio y el fomento del uso del idioma canario. El Cabildo de Gran Canaria, a través de su Servicio de Cultura y Servicio de Museos, implementa planes estratégicos, subvenciones y acciones culturales que refuerzan la identidad insular [1]. La Ley 1/2023 del Sistema Público de Cultura de Canarias y la Ley 11/2019 de Patrimonio Cultural de Canarias establecen marcos legales que protegen y promueven el patrimonio cultural, incluyendo elementos lingüísticos y tradicionales [2]. Proyectos como Canarias Azul también aportan al conocimiento histórico y cultural de las islas, reforzando la conciencia identitaria [3].",
+      "answer": "Las instituciones culturales y lingüísticas contribuyen a preservar la identidad canaria mediante la promoción de la cultura local, la protección del patrimonio y el fomento del uso del idioma canario. El Cabildo de Gran Canaria, a través de su Servicio de Cultura y Servicio de Museos, implementa planes estratégicos, subvenciones y acciones culturales que refuerzan la identidad insular [1]. La Ley 1/2023 del Sistema Público de Cultura de Canarias y la Ley 11/2019 de Patrimonio Cultural de Canarias establecen marcos legales que protegen y promueven el patrimonio cultural y lingüístico [2]. Proyectos como Canarias Azul también aportan al conocimiento histórico y cultural de las islas, fortaleciendo la conciencia identitaria [3].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2519,7 +2519,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 4038.8,
+      "response_time_ms": 3631.5,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2544,7 +2544,7 @@
         "colectiva",
         "conservación"
       ],
-      "answer": "Los archivos y museos desempeñan un papel fundamental en la conservación de la memoria colectiva al preservar y difundir materiales históricos, como los objetos arqueológicos custodiados en la Cueva Pintada de Gáldar, gestionada por el Cabildo grancanario [1]. A través de iniciativas como la digitalización 3D de sus fondos en colaboración con Global Digital Heritage, se garantiza la conservación de bienes históricos y se facilita su acceso y difusión, consolidando así su función como instituciones clave en la interpretación y transmisión del pasado prehispánico y colonial de Canarias [1].",
+      "answer": "Los archivos y museos desempeñan un papel clave en la conservación de la memoria colectiva al preservar y difundir materiales históricos, como los objetos arqueológicos custodiados en la Cueva Pintada de Gáldar, mediante técnicas digitales que garantizan su protección y acceso público [1]. El Museo y Parque Arqueológico Cueva Pintada, gestionado por el Cabildo grancanario, ejerce esta función al conservar y interpretar el pasado prehispánico y colonial de Gran Canaria, convirtiéndose en una institución de referencia accesible a la sociedad [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2593,7 +2593,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2934.9,
+      "response_time_ms": 2829.5,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2668,7 +2668,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2405.7,
+      "response_time_ms": 2431.1,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2694,7 +2694,7 @@
         "recurso",
         "estudio"
       ],
-      "answer": "Para estudiar la herencia cultural de Canarias, existen recursos como el Museo Canario, que alberga materiales arqueológicos de Gran Canaria [1], y la Cueva Pintada, cuyos materiales están siendo digitalizados gracias a un convenio con Global Digital Heritage, lo que permite su documentación, preservación y difusión [2].",
+      "answer": "Para estudiar la herencia cultural de Canarias, existen recursos como el Museo Canario, que alberga materiales arqueológicos de Gran Canaria [1], y el Museo y Parque Arqueológico Cueva Pintada, cuyos materiales están siendo digitalizados mediante un convenio con Global Digital Heritage para su preservación, documentación y difusión [2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2743,7 +2743,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1717.0,
+      "response_time_ms": 1885.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2768,7 +2768,7 @@
         "conservar",
         "institución"
       ],
-      "answer": "El Museo Canario es una institución clave en la conservación de la memoria histórica del archipiélago, destacando por su especialización en los fondos arqueológicos de las culturas prehispánicas de Gran Canaria desde 1984 [1]. Su incorporación al Sistema Español de Museos en 1987, junto con reconocimientos como la declaración de Monumento Histórico-Artístico en 1962, la Medalla de Oro al Mérito en las Bellas Artes en 1980 y el Premio Canarias de Acervo Histórico en 1996, refuerzan su papel en la preservación del patrimonio cultural [1]. Además, el Cabildo insular ha desempeñado un papel fundamental al asumir su gestión económica desde 1973 mediante un patronato que incluye representantes del cabildo y otras entidades culturales [1].",
+      "answer": "El Museo Canario es una institución clave en la conservación de la memoria histórica del archipiélago, gracias a su dedicación a los fondos arqueológicos de las culturas prehispánicas de Gran Canaria desde 1984 [1]. Su incorporación al Sistema Español de Museos en 1987, junto con reconocimientos como la Medalla de Oro al Mérito en las Bellas Artes (1980) y el Premio Canarias de Acervo Histórico (1996), refuerza su papel en la preservación cultural [1]. Además, el cabildo insular, a través del patronato que lo gestiona, ha sido fundamental en su sostenibilidad económica y en su modernización [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2817,7 +2817,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3834.8,
+      "response_time_ms": 3178.5,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2842,7 +2842,7 @@
         "prehispánico",
         "Canarias"
       ],
-      "answer": "Puedes encontrar información sobre los antiguos pobladores de Canarias en el Museo Canario, que desarrolla investigaciones sobre su origen y forma de vida [1]. Además, se ofrecen publicaciones como el catálogo de arqueología «Miradas a los antiguos canarios desde la exposición permanente de El Museo Canario» y otras obras digitales y en papel que abordan temas históricos, arqueológicos y climatológicos de las islas [2]. También se organizan jornadas de arqueología que incluyen temas relacionados con estos pobladores [3].",
+      "answer": "Puedes encontrar información sobre los antiguos pobladores de Canarias en el Museo Canario, que desarrolla investigaciones sobre su origen y forma de vida [1]. Además, se ofrecen publicaciones como el catálogo de arqueología «Miradas a los antiguos canarios desde la exposición permanente de El Museo Canario» y otras obras digitales y en papel que abordan aspectos históricos, climatológicos y patológicos de las islas [2]. También se organizan jornadas de arqueología que incluyen temas relacionados con estos pobladores [3].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2891,7 +2891,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2632.3,
+      "response_time_ms": 2638.7,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2916,7 +2916,7 @@
         "pesca",
         "canario"
       ],
-      "answer": "El legado marítimo canario puede conocerse a través del Diccionario básico de canarismos de la Academia Canaria de la Lengua, que incluye términos relacionados con actividades tradicionales como la pesca, reflejando el vínculo histórico de las islas con el mar [1].",
+      "answer": "El legado marítimo canario puede conocerse a través del Diccionario básico de canarismos de la Academia Canaria de la Lengua, que incluye términos relacionados con la pesca y actividades marítimas tradicionales, reflejando el vocabulario específico del Archipiélago [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -2965,7 +2965,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 1567.1,
+      "response_time_ms": 1653.1,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -2990,7 +2990,7 @@
         "canario",
         "vocabulario"
       ],
-      "answer": "El habla tradicional de Canarias está documentada principalmente mediante el *Diccionario básico de canarismos*, elaborado por la Academia Canaria de la Lengua, que recoge voces, frases hechas y refranes obtenidos directamente de informantes de las distintas islas [1]. Este diccionario se basa en repertorios léxicos y fraseológicos recopilados por estudiosos, con criterios de selección que incluyen el uso general, la difusión en el Archipiélago y la especificidad insular [1].",
+      "answer": "El habla tradicional de Canarias está documentada principalmente mediante el *Diccionario básico de canarismos*, elaborado por la Academia Canaria de la Lengua, que recoge voces, frases hechas y refranes obtenidos directamente de informantes de las distintas islas [1]. Este diccionario se basa en repertorios léxicos y fraseológicos recopilados por estudiosos, con criterios de selección que incluyen el uso general, la difusión insular y las peculiaridades de cada isla, así como el lenguaje especializado relacionado con la cultura, la naturaleza y las actividades tradicionales [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3039,7 +3039,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2467.6,
+      "response_time_ms": 2791.5,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3065,7 +3065,7 @@
         "investigación",
         "canaria"
       ],
-      "answer": "La herramienta principal que ayuda a investigar la identidad cultural canaria es el proyecto **Museoguagua**, que utiliza guaguas municipales como vehículos itinerantes de exposición. Este proyecto, liderado por El Museo Canario, ofrece paneles expositivos, piezas 3D, realidad aumentada mediante códigos QR y una aplicación móvil («AR El Museo Canario») para acceder a audioguías, vídeos y personajes virtuales [1]. Así, permite acercar la historia y la organización social de la población indígena de Gran Canaria, promoviendo la difusión del patrimonio cultural canario [1].",
+      "answer": "La herramienta principal que ayuda a investigar la identidad cultural canaria es el proyecto **Museoguagua**, que utiliza guaguas municipales como vehículos itinerantes de exposición. Este proyecto, liderado por El Museo Canario, ofrece paneles expositivos, piezas 3D, realidad aumentada mediante códigos QR y una aplicación móvil («AR El Museo Canario») para acceder a audioguías, vídeos explicativos y personajes interactivos en realidad aumentada [1]. Así, permite acercar la historia y la organización social de la población indígena de Gran Canaria, promoviendo el conocimiento del patrimonio cultural canario [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3114,7 +3114,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2830.9,
+      "response_time_ms": 2954.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3188,7 +3188,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2112.8,
+      "response_time_ms": 2082.0,
       "recall_at_1": 0,
       "recall_at_3": 0,
       "recall_at_5": 1,
@@ -3214,7 +3214,7 @@
         "patrimonio",
         "trabajo"
       ],
-      "answer": "Organizaciones que trabajan en la preservación del patrimonio del archipiélago incluyen proyectos como Canarias Azul, que se enfoca en la conservación y visibilidad del patrimonio cultural material e inmaterial ligado al litoral, especialmente fortificaciones, infraestructuras portuarias y procesos históricos asociados [1]. Este proyecto promueve el uso del patrimonio como herramienta para el turismo cultural y el desarrollo comunitario, destacando la importancia de su preservación [1].",
+      "answer": "Organizaciones que trabajan en la preservación del patrimonio del archipiélago incluyen proyectos como Canarias Azul, que se enfoca en la conservación y visibilidad del patrimonio cultural material e inmaterial ligado al litoral, especialmente fortificaciones, infraestructuras portuarias y procesos históricos asociados [1]. Este proyecto promueve la integración del patrimonio litoral en actividades culturales y turísticas sostenibles, favoreciendo su preservación comunitaria [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3263,7 +3263,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2270.0,
+      "response_time_ms": 2303.5,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3289,7 +3289,7 @@
         "diccionario",
         "complemento"
       ],
-      "answer": "Los museos, archivos digitales y diccionarios especializados se complementan en la conservación de la cultura canaria al integrar la preservación física y digital del patrimonio, facilitar el acceso remoto y garantizar la seguridad de los documentos. El Museo Canario, mediante su hemeroteca digital, promueve la accesibilidad para investigadores y el público global, permitiendo búsquedas detalladas [1]. La digitalización protege los originales al reducir su manipulación, mientras que la seguridad de los datos se asegura mediante copias de seguridad y replicación en centros de datos geográficamente distribuidos [1]. Esta sinergia entre instituciones, como la colaboración con Red Eléctrica-Redeia, enriquece los repositorios digitales y fortalece la identidad cultural canaria [1].",
+      "answer": "Los museos, archivos digitales y diccionarios especializados se complementan en la conservación de la cultura canaria al integrar la preservación física y digital del patrimonio. El Museo Canario, mediante su hemeroteca digital, mejora la accesibilidad y conservación de documentos históricos, permitiendo consultas remotas sin manipular los originales [1]. La digitalización, impulsada por colaboraciones como la con Red Eléctrica-Redeia, asegura la seguridad y continuidad del patrimonio mediante copias de seguridad y replicación en centros de datos geográficamente dispersos [1]. Estas iniciativas, junto con diccionarios especializados, forman un ecosistema que protege, documenta y difunde la identidad cultural canaria.",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3338,7 +3338,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3438.5,
+      "response_time_ms": 3121.3,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3363,7 +3363,7 @@
         "material",
         "intangible"
       ],
-      "answer": "La conservación de objetos arqueológicos se centra en la protección física de restos materiales del pasado, como herramientas, cerámicas o estructuras, mediante técnicas de restauración y almacenamiento controlado [1]. En cambio, la conservación del patrimonio lingüístico implica preservar lenguas, dialectos y formas de expresión oral, enfocándose en su documentación, transmisión y revitalización, especialmente en contextos de riesgo de desaparición [2]. Mientras que los objetos arqueológicos se conservan en espacios físicos como museos, el patrimonio lingüístico requiere estrategias digitales y comunitarias para mantener su vida activa [1].",
+      "answer": "La conservación de objetos arqueológicos se centra en la protección física de restos materiales del pasado, como herramientas, cerámicas o estructuras, mediante técnicas de restauración y almacenamiento controlado [1]. En cambio, la conservación del patrimonio lingüístico implica preservar lenguas, dialectos y formas de expresión oral, enfocándose en su documentación, transmisión y revitalización, especialmente en contextos de riesgo de desaparición [2]. Mientras que los objetos arqueológicos requieren intervención física para su mantenimiento, el patrimonio lingüístico depende más de procesos de registro, educación y uso social.",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3412,7 +3412,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3072.6,
+      "response_time_ms": 2964.4,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3438,7 +3438,7 @@
         "tecnología",
         "patrimonio"
       ],
-      "answer": "La digitalización desempeña un papel clave en la conservación del patrimonio cultural canario al permitir documentar, preservar y difundir los bienes culturales mediante tecnologías de vanguardia [1]. El convenio entre el Cabildo de Gran Canaria y Global Digital Heritage, especializada en la digitalización de patrimonio cultural, facilita la conservación y acceso global al patrimonio de la Cueva Pintada, garantizando su protección y difusión con rigor científico [1].",
+      "answer": "La digitalización desempeña un papel clave en la conservación del patrimonio cultural canario al permitir documentar, preservar y difundir los bienes culturales mediante tecnologías de vanguardia [1]. En el caso de la Cueva Pintada en Gran Canaria, el Cabildo ha firmado un convenio con Global Digital Heritage, una entidad especializada que utiliza herramientas modernas para garantizar la investigación científica y la difusión global del patrimonio, asegurando su protección a largo plazo [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3487,7 +3487,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2259.7,
+      "response_time_ms": 2367.6,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3513,7 +3513,7 @@
         "consultar",
         "por qué"
       ],
-      "answer": "Para investigar la identidad cultural de Canarias, se recomienda consultar el proyecto *Canarias Azul* [1], que ofrece una base de datos rigurosa y atractiva sobre elementos patrimoniales materiales e inmateriales vinculados al litoral de Gran Canaria, avalada por la Universidad de Las Palmas de Gran Canaria y el Instituto de Análisis y Aplicaciones Textuales (IATEXT) [2]. Este recurso es especialmente útil porque abarca aspectos culturales relacionados con el mar, clave en la identidad canaria, y su diseño permite potencialmente su extensión a otras islas, ofreciendo una perspectiva regional y cultural profunda [1].",
+      "answer": "Para investigar la identidad cultural de Canarias, se recomienda consultar el proyecto *Canarias Azul* [1], que ofrece una base de datos rigurosa y atractiva sobre elementos patrimoniales materiales e inmateriales vinculados al litoral de Gran Canaria, avalada por la Universidad de Las Palmas de Gran Canaria y el Instituto de Análisis y Aplicaciones Textuales (IATEXT) [2]. Este recurso es especialmente útil porque abarca aspectos culturales relacionados con el mar, clave en la identidad insular, y su diseño permite potencialmente su extensión a otras islas, ofreciendo una perspectiva regional y cultural profunda [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3562,7 +3562,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2932.7,
+      "response_time_ms": 3005.0,
       "recall_at_1": 0,
       "recall_at_3": 0,
       "recall_at_5": 1,
@@ -3588,7 +3588,7 @@
         "integración",
         "acceso"
       ],
-      "answer": "Combinar información de museos, archivos históricos y recursos lingüísticos en una misma plataforma permite una recuperación más profunda y multidimensional del patrimonio canario, facilitando el acceso a colecciones valiosas como el archivo de Antonio López Botas [1] y promoviendo la investigación a través de contenidos digitales interactivos, como los que se ofrecen en exposiciones itinerantes [2]. Esta integración enriquece la comprensión del pasado, fomenta la educación y la participación ciudadana, y potencia la preservación del patrimonio cultural.",
+      "answer": "Combinar información de museos, archivos históricos y recursos lingüísticos en una misma plataforma permite una recuperación más profunda y multidimensional del patrimonio canario, facilitando el acceso a colecciones valiosas como el archivo de Antonio López Botas [1] y promoviendo la investigación a través de contenidos digitales interactivos, como los que se ofrecen en exposiciones itinerantes [2]. Esta integración enriquece la comprensión del pasado, conecta diferentes formas de saber (arqueológico, documental y lingüístico) y potencia la difusión cultural mediante herramientas modernas [1][2].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3637,7 +3637,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2628.9,
+      "response_time_ms": 2809.9,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3663,7 +3663,7 @@
         "construcción",
         "patrimonio"
       ],
-      "answer": "El patrimonio material e inmaterial contribuyen conjuntamente a la construcción de la identidad canaria al reflejar la historia estratégica y cultural del archipiélago, especialmente a través de su litoral [1]. El patrimonio material, como fortificaciones, muelles, faros y almacenes, evidencia la importancia histórica de Canarias en los procesos de mundialización [1]. Paralelamente, el patrimonio inmaterial, vinculado al uso histórico de estos espacios y a los procesos sociales y económicos desarrollados en ellos, enriquece esta realidad tangible [1]. Su fusión permite potenciar actividades culturales, como el turismo patrimonial, promoviendo la identidad local y la preservación comunitaria [1].",
+      "answer": "El patrimonio material e inmaterial contribuyen conjuntamente a la construcción de la identidad canaria al reflejar la historia estratégica y cultural del archipiélago. El patrimonio material, como fortificaciones, muelles, faros y almacenes litorales, evidencia la importancia histórica de Canarias en los procesos de mundialización [1]. Paralelamente, el patrimonio inmaterial, vinculado al uso histórico de estos espacios y a los procesos sociales y económicos desarrollados en el litoral, enriquece esta realidad tangible [1]. Su fusión permite potenciar actividades culturales, como el turismo patrimonial, fortaleciendo la identidad local y promoviendo la preservación comunitaria [1].",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3712,7 +3712,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 3104.6,
+      "response_time_ms": 3128.3,
       "recall_at_1": 0,
       "recall_at_3": 1,
       "recall_at_5": 1,
@@ -3738,7 +3738,7 @@
         "digital",
         "plataforma"
       ],
-      "answer": "La tecnología permite preservar y difundir el patrimonio cultural de Canarias mediante la digitalización y gestión de materiales arqueológicos, como los depositados en El Museo Canario tras intervenciones en Gran Canaria [1], y mediante sistemas informáticos que facilitan la comunicación cultural. El Cabildo de Gran Canaria, por ejemplo, utiliza un sistema informático para gestionar suscripciones y enviar información sobre actividades culturales a usuarios, promoviendo el acceso y conocimiento del patrimonio [2]. Estas herramientas permiten la conservación digital y la difusión ampliada del patrimonio cultural.",
+      "answer": "La tecnología permite preservar y difundir el patrimonio cultural de Canarias mediante la digitalización y gestión de materiales arqueológicos, como los depositados en El Museo Canario tras intervenciones en Gran Canaria [1], y mediante sistemas informáticos que facilitan la comunicación cultural, como el Sistema de Gestión de Usuarios Culturales del Cabildo de Gran Canaria, que envía información sobre actividades y servicios culturales a sus suscriptores [2]. Estas herramientas permiten el acceso remoto, la conservación digital y la difusión sostenida del patrimonio.",
       "answer_mode": "llm",
       "sources": [
         {
@@ -3787,7 +3787,7 @@
           "is_fallback": false
         }
       ],
-      "response_time_ms": 2673.6,
+      "response_time_ms": 2529.8,
       "recall_at_1": 1,
       "recall_at_3": 1,
       "recall_at_5": 1,

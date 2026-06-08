@@ -129,8 +129,8 @@ La app integra:
 
 ```
 [Evaluacion.aspx]
-  Botón "Evaluar — LLM remoto"  ──► python scripts/run_evaluation.py --label remote
-  Botón "Evaluar — LLM local"   ──► python scripts/run_evaluation.py --label local
+  Botón "Evaluar — LLM remoto"  ──► run_evaluation.py --label remote --llm-base-url Llm:RemoteUrl --llm-model Llm:RemoteModel
+  Botón "Evaluar — LLM local"   ──► run_evaluation.py --label local  --llm-base-url Llm:LocalUrl  --llm-model Llm:LocalModel
                                           │
                                POST /query × 50 preguntas
                                           │
@@ -258,7 +258,8 @@ La configuración de LLM vive en `Web.config`:
 
 ## Evaluación del Sistema
 
-La página **Evaluación** ejecuta 50 preguntas de patrimonio cultural canario contra la API y calcula métricas estándar de recuperación.
+La página **Evaluación** ejecuta 50 preguntas de patrimonio cultural canario y calcula métricas estándar de recuperación.
+Cada botón fuerza su endpoint/modelo de LLM desde `Web.config`, así que la evaluación local usa Ollama local aunque la Demo API esté activa contra el LLM remoto.
 
 ### Métricas globales (corpus: 315 páginas, 501 puntos Qdrant)
 

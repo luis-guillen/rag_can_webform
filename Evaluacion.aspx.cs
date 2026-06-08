@@ -21,6 +21,11 @@ namespace rag_can_aspx
         private string ResultsPathFor(string label) => Path.Combine(PythonDir, "evaluation", $"results_{label}.json");
         private string RunLogPathFor(string label)  => Path.Combine(PythonDir, "evaluation", $"run_{label}.log");
         private string AppKey(string label)         => "Evaluacion:Running:" + label;
+        private static string Cfg(string key, string fallback) => ConfigurationManager.AppSettings[key] ?? fallback;
+        private static string RemoteLlmUrl   => Cfg("Llm:RemoteUrl", "http://10.17.159.197:11434");
+        private static string RemoteLlmModel => Cfg("Llm:RemoteModel", "qwen3:30b-a3b-instruct-2507-q4_K_M");
+        private static string LocalLlmUrl    => Cfg("Llm:LocalUrl", "http://127.0.0.1:11434");
+        private static string LocalLlmModel  => Cfg("Llm:LocalModel", "qwen3.5:4b");
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -54,6 +59,11 @@ namespace rag_can_aspx
             string lbl        = label;
             HttpApplicationState app = Application;
 
+            // El LLM se fija EN PROCESO según la etiqueta, para que cada botón use
+            // de verdad su GPU (local vs remota) y no el LLM que tenga cargado :8000.
+            string llmUrl   = (lbl == "remote") ? RemoteLlmUrl   : LocalLlmUrl;
+            string llmModel = (lbl == "remote") ? RemoteLlmModel : LocalLlmModel;
+
             var thread = new Thread(() =>
             {
                 try
@@ -63,7 +73,10 @@ namespace rag_can_aspx
                     var psi = new ProcessStartInfo
                     {
                         FileName               = pythonExe,
-                        Arguments              = $"\"{scriptPath}\" --label {lbl}",
+                        Arguments              = Quote(scriptPath)
+                                                 + " --label " + Quote(lbl)
+                                                 + " --llm-base-url " + Quote(llmUrl)
+                                                 + " --llm-model " + Quote(llmModel),
                         WorkingDirectory       = pythonDir,
                         UseShellExecute        = false,
                         RedirectStandardOutput = true,
@@ -81,6 +94,7 @@ namespace rag_can_aspx
                         log.WriteLine($"=== Evaluación [{lbl}] iniciada: {DateTime.UtcNow:o} ===");
                         log.WriteLine("Python : " + pythonExe);
                         log.WriteLine("Script : " + scriptPath);
+                        log.WriteLine("LLM    : " + llmModel + " @ " + llmUrl);
                         log.Flush();
 
                         string stdout = proc.StandardOutput.ReadToEnd();
@@ -110,6 +124,11 @@ namespace rag_can_aspx
 
             thread.IsBackground = true;
             thread.Start();
+        }
+
+        private static string Quote(string value)
+        {
+            return "\"" + (value ?? "").Replace("\"", "\\\"") + "\"";
         }
 
         protected void TmrPoll_Tick(object sender, EventArgs e)

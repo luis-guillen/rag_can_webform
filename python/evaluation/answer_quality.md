@@ -117,6 +117,27 @@ muy específico y deja poco margen de paráfrasis:
 
 ---
 
+## Alineación respuesta–fuente: casos destacados
+
+| Q | Pregunta | Chunks recuperados | Respuesta | Valoración |
+|---|----------|-------------------|-----------|------------|
+| Q06 | Memoria de Lanzarote | `memoriadelanzarote.com` ×3 | Describe contenido del sitio con precisión | ✓ Bien fundamentada |
+| Q09 | Blog Izuran | `izuran.blogspot.com` ×3 | Describe vocabulario guanche correcto | ✓ Bien fundamentada |
+| Q12 | Significado "guagua" | `izuran.blogspot.com` ×3 (mitología) | "No hay información sobre guagua" | ✓ Abstención honesta (buen comportamiento) |
+| Q26 | Relación Museo Canario + Memoria Lanzarote | `memoriadelanzarote.com` ×3 (sin chunks de `elmuseocanario.com`) | Menciona contribuciones del "Museo Canario" | ⚠️ Síntesis más allá del corpus |
+| Q44 | Complementariedad museos/archivos/diccionarios | `elmuseocanario.com` + `cultura.grancanaria.com` | Usa contenido de ambas fuentes | ✓ Bien fundamentada |
+
+**Q12** pone de manifiesto una limitación de la métrica Recall@K: el dominio `izuran.blogspot.com`
+coincide con `expected_sources` (R@5=1) aunque el contenido recuperado no responde la pregunta.
+Los modelos manejan esto correctamente absteniéndose, pero la métrica no refleja ese acierto.
+
+**Q26** es el único caso donde el LLM genera contenido que no está en los chunks recuperados.
+No es una alucinación factual grave (la relación institucional puede ser real), pero demuestra
+que el modelo infiere más allá de lo que Qdrant devuelve cuando la pregunta implica una
+relación que el corpus solo cubre parcialmente.
+
+---
+
 ## Evaluación cualitativa
 
 | Dimensión | Remoto (30B) | Local (4B) |
@@ -128,10 +149,14 @@ muy específico y deja poco margen de paráfrasis:
 | Razonamiento meta | Sí (reconoce límites del corpus) | Menos frecuente |
 | Aclaraciones extra | Pocas | Más frecuentes (paréntesis) |
 | Respuestas rechazadas | 0 % | 0 % |
-| Alucinaciones detectadas | No observadas | No observadas (*) |
+| Síntesis fuera de corpus | Q26 (1 caso) | Q26 (1 caso) (*) |
 
-(*) Ningún modelo inventó información fuera del corpus en los casos revisados.
-Ambos citan exclusivamente lo que Qdrant recuperó.
+(*) Se detectó un caso probable de síntesis más allá del corpus: **Q26** ("¿Qué relación existe
+entre el Museo Canario y los recursos de Memoria de Lanzarote?"). Los 3 chunks recuperados
+son exclusivamente de `memoriadelanzarote.com` (contenido sobre César Manrique, artesanos,
+objetos parroquiales), pero ambos modelos responden mencionando contribuciones del
+"Museo Canario" — información que no está en ninguno de los chunks devueltos por Qdrant.
+El modelo infiere una relación institucional no explicitada en el corpus.
 
 ---
 

@@ -98,9 +98,51 @@ def query_api(question: str) -> tuple[dict, float]:
         elapsed_ms = (time.monotonic() - t0) * 1000
         return {"error": str(exc)}, elapsed_ms
 
+# ── Consulta en proceso (LLM forzado) ────────────────────────────────────────
+# Cuando se pasa --llm-base-url/--llm-model, NO se usa la API HTTP (que tiene el
+# LLM fijado al arrancar): se ejecuta el pipeline en este mismo proceso con el LLM
+# indicado. Así la evaluación 'local' usa de verdad la GPU local y la 'remote' la
+# remota, sin depender de qué LLM tenga cargado el servidor de :8000.
+
+def make_inprocess_query_fn(base_url: str, model: str):
+    import os
+
+    os.environ["RAG_LLM_ENABLED"] = "true"
+    os.environ["RAG_LLM_BASE_URL"] = base_url
+    os.environ["RAG_LLM_MODEL"] = model
+    os.environ.setdefault("RAG_LLM_API_KEY", "ollama")
+
+    # Importar DESPUÉS de fijar el entorno: config.py lee las env al importarse.
+    sys.path.insert(0, str(ROOT))
+    from app.retrieval import search          # noqa: E402
+    from app.generation import generate_answer  # noqa: E402
+
+    def _source_to_dict(s) -> dict:
+        if hasattr(s, "model_dump"):
+            return s.model_dump(exclude={"text"})
+        return s.dict(exclude={"text"})
+
+    def _fn(question: str) -> tuple[dict, float]:
+        t0 = time.monotonic()
+        try:
+            sources = search(question, TOP_K)
+            answer, answer_mode, diagnostics = generate_answer(question, sources)
+            elapsed_ms = (time.monotonic() - t0) * 1000
+            return {
+                "answer": answer,
+                "answer_mode": answer_mode,
+                "diagnostics": diagnostics,
+                "sources": [_source_to_dict(s) for s in sources],
+            }, elapsed_ms
+        except Exception as exc:
+            elapsed_ms = (time.monotonic() - t0) * 1000
+            return {"error": str(exc)}, elapsed_ms
+
+    return _fn
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
-def run_evaluation(questions: list[dict]) -> list[dict]:
+def run_evaluation(questions: list[dict], query_fn=query_api) -> list[dict]:
     results: list[dict] = []
     n = len(questions)
 
@@ -108,7 +150,7 @@ def run_evaluation(questions: list[dict]) -> list[dict]:
         prefix = f"[{i:2d}/{n}] Q{q['id']:02d} ({q['difficulty']:6s}/{q['category']:11s})"
         print(f"{prefix} ...", end=" ", flush=True)
 
-        resp, elapsed_ms = query_api(q["question"])
+        resp, elapsed_ms = query_fn(q["question"])
 
         if "error" in resp:
             record = {
@@ -506,9 +548,27 @@ def main() -> int:
         "--label", default=None,
         help="Etiqueta del run: 'local' o 'remote'. Si se omite, se auto-detecta del /health."
     )
+    parser.add_argument(
+        "--llm-base-url", default=None,
+        help="Si se indica (junto a --llm-model), ejecuta el LLM EN PROCESO contra esta URL "
+             "en vez de usar la API HTTP de :8000. Garantiza que se use la GPU correcta."
+    )
+    parser.add_argument(
+        "--llm-model", default=None,
+        help="Modelo a usar en el modo en proceso (p. ej. qwen3.5:4b o qwen3:30b-...)."
+    )
     args = parser.parse_args()
 
     label = args.label or detect_llm_label()
+
+    # Modo en proceso: LLM forzado (resuelve el enrutado de GPU local/remota).
+    if args.llm_base_url and args.llm_model:
+        query_fn = make_inprocess_query_fn(args.llm_base_url, args.llm_model)
+        api_url = f"in-process · {args.llm_model} @ {args.llm_base_url}"
+    else:
+        query_fn = query_api
+        api_url = API_URL
+
     out_results = OUT_DIR / f"results_{label}.json"
     out_report  = OUT_DIR / f"report_{label}.md"
     out_tables  = OUT_DIR / f"tfg_tables_{label}.md"
@@ -524,11 +584,11 @@ def main() -> int:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     print(f"RAG Canarias - Evaluacion automatica  [{label}]")
-    print(f"Preguntas: {len(questions)}  |  API: {API_URL}  |  Top-K: {TOP_K}")
+    print(f"Preguntas: {len(questions)}  |  API: {api_url}  |  Top-K: {TOP_K}")
     print(f"Inicio: {ts}")
     print("=" * 70)
 
-    results = run_evaluation(questions)
+    results = run_evaluation(questions, query_fn)
     metrics = aggregate(results)
 
     print("=" * 70)
@@ -544,7 +604,7 @@ def main() -> int:
 
     payload = {
         "generated_at": ts,
-        "api_url": API_URL,
+        "api_url": api_url,
         "top_k": TOP_K,
         "label": label,
         "metrics": metrics,
