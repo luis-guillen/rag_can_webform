@@ -7,6 +7,8 @@
 namespace rag_can_aspx {
     public partial class Crawler {
         protected global::System.Web.UI.WebControls.TextBox txtUrl;
+        protected global::System.Web.UI.WebControls.FileUpload fuSeeds;
+        protected global::System.Web.UI.WebControls.RadioButtonList rblSeedFileMode;
         protected global::System.Web.UI.WebControls.TextBox txtMaxPages;
         protected global::System.Web.UI.WebControls.TextBox txtMaxDepth;
         protected global::System.Web.UI.UpdatePanel updControl;

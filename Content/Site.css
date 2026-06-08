@@ -72,6 +72,10 @@ html.dark-mode .form-control:focus {
     color: var(--text-muted);
 }
 
+.file-upload-wide {
+    max-width: min(100%, 32rem);
+}
+
 .text-muted {
     color: var(--text-muted) !important;
 }

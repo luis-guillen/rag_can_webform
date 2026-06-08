@@ -15,6 +15,18 @@
                     <label for="txtUrl" class="form-label"><i class="fas fa-link"></i> URL unica (opcional):</label>
                     <asp:TextBox ID="txtUrl" runat="server" CssClass="form-control" Placeholder="https://ejemplo.com (vacio = usar seeds.txt)" />
                 </div>
+                <div class="mb-3">
+                    <label for="fuSeeds" class="form-label"><i class="fas fa-file-lines"></i> Archivo de URLs (.txt):</label>
+                    <asp:FileUpload ID="fuSeeds" runat="server" CssClass="form-control file-upload-wide" />
+                    <div class="form-text">Una URL por linea. Las lineas vacias y las que empiezan por # se ignoran.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block">Modo del archivo:</label>
+                    <asp:RadioButtonList ID="rblSeedFileMode" runat="server" CssClass="form-check" RepeatDirection="Vertical">
+                        <asp:ListItem Value="crawlOnly" Selected="True">Usar solo este crawl</asp:ListItem>
+                        <asp:ListItem Value="saveAndUse">Guardar como semillas y usar</asp:ListItem>
+                    </asp:RadioButtonList>
+                </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="txtMaxPages" class="form-label">Max Paginas:</label>
@@ -34,6 +46,9 @@
                         <asp:Button ID="btnParar" runat="server" Text="Parar"
                             CssClass="btn btn-outline-danger btn-lg ms-2" OnClick="BtnParar_Click" />
                     </ContentTemplate>
+                    <Triggers>
+                        <asp:PostBackTrigger ControlID="btnIniciar" />
+                    </Triggers>
                 </asp:UpdatePanel>
             </div>
         </div>

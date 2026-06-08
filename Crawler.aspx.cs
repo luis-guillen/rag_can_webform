@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Web;
 using System.Web.UI;
@@ -38,9 +39,22 @@ namespace rag_can_aspx
             }
 
             string url = (txtUrl.Text ?? string.Empty).Trim();
-            JobActionResult result = string.IsNullOrWhiteSpace(url)
-                ? _facade.StartCrawl(maxPages, maxDepth)
-                : _facade.StartCrawlSource(url, maxPages, maxDepth);
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                JobActionResult resultUrl = _facade.StartCrawlSource(url, maxPages, maxDepth);
+                string mensaje = resultUrl.Message;
+                if (fuSeeds.HasFile)
+                    mensaje += " Se ignoro el archivo subido porque la URL unica tiene prioridad.";
+
+                MostrarMensaje(mensaje, resultUrl.Accepted);
+                RefrescarVista();
+                ActualizarEstado();
+                return;
+            }
+
+            JobActionResult result = fuSeeds.HasFile
+                ? IniciarCrawlDesdeArchivo(maxPages, maxDepth)
+                : _facade.StartCrawl(maxPages, maxDepth);
 
             MostrarMensaje(result.Message, result.Accepted);
             RefrescarVista();
@@ -120,9 +134,74 @@ namespace rag_can_aspx
 
         private void MostrarMensaje(string mensaje, bool ok)
         {
-            lblMensaje.Text = HttpUtility.HtmlEncode(mensaje ?? string.Empty);
+            lblMensaje.Text = HttpUtility.HtmlEncode(mensaje ?? string.Empty).Replace("\n", "<br />");
             lblMensaje.CssClass = ok ? "alert alert-info d-block mb-3" : "alert alert-danger d-block mb-3";
             lblMensaje.Visible = true;
+        }
+
+        private JobActionResult IniciarCrawlDesdeArchivo(int maxPages, int maxDepth)
+        {
+            if (fuSeeds.PostedFile == null || fuSeeds.PostedFile.ContentLength == 0)
+                return JobActionResult.Fail("Archivo vacio.");
+
+            string extension = Path.GetExtension(fuSeeds.FileName);
+            if (!string.Equals(extension, ".txt", StringComparison.OrdinalIgnoreCase))
+                return JobActionResult.Fail("El archivo debe ser .txt.");
+
+            SeedLoadResult seeds;
+            try
+            {
+                using (var reader = new StreamReader(fuSeeds.FileContent))
+                {
+                    seeds = SeedUrlProvider.ParseLines(LeerLineas(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                return JobActionResult.Fail("No se pudo leer el archivo: " + ex.GetBaseException().Message);
+            }
+
+            if (seeds.InvalidEntries != null && seeds.InvalidEntries.Count > 0)
+                return JobActionResult.Fail("URLs invalidas detectadas:\n" + string.Join("\n", seeds.InvalidEntries));
+
+            if (seeds.EntryCount == 0)
+                return JobActionResult.Fail("Archivo sin URLs validas.");
+
+            if (seeds.Urls == null || seeds.Urls.Count == 0)
+                return JobActionResult.Fail("Archivo sin URLs validas.");
+
+            bool guardar = string.Equals(rblSeedFileMode.SelectedValue, "saveAndUse", StringComparison.OrdinalIgnoreCase);
+            if (guardar)
+            {
+                try
+                {
+                    var provider = new SeedUrlProvider(CrawlerSettings.Load());
+                    provider.SaveUrls(seeds.Urls);
+                }
+                catch (Exception ex)
+                {
+                    return JobActionResult.Fail("No se pudo guardar el archivo de semillas: " + ex.GetBaseException().Message);
+                }
+            }
+
+            JobActionResult result = _facade.StartCrawlSources(seeds.Urls, maxPages, maxDepth);
+            if (!result.Accepted)
+                return result;
+
+            string prefijo = guardar
+                ? "Archivo guardado e inicio de crawl aceptado"
+                : "Archivo aceptado para este crawl";
+
+            return JobActionResult.Ok(prefijo + " (" + seeds.Urls.Count + " URL(s)). " + result.Message);
+        }
+
+        private static List<string> LeerLineas(StreamReader reader)
+        {
+            var lines = new List<string>();
+            string line;
+            while ((line = reader.ReadLine()) != null)
+                lines.Add(line);
+            return lines;
         }
 
         private string ConstruirEstadoHtml(JobRunStatus s)

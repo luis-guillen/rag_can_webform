@@ -74,6 +74,40 @@ namespace rag_can_aspx.Services
             return StartCrawlInternal(new List<string> { parsed.ToString() }, maxPages, maxDepth);
         }
 
+        public JobActionResult StartCrawlSources(List<string> urls, int maxPages, int maxDepth)
+        {
+            if (urls == null || urls.Count == 0)
+                return JobActionResult.Fail("No hay URLs validas para procesar.");
+
+            var seeds = new List<string>();
+            var invalidas = new List<string>();
+
+            foreach (string url in urls)
+            {
+                string valor = (url ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(valor))
+                    continue;
+
+                Uri parsed;
+                if (!Uri.TryCreate(valor, UriKind.Absolute, out parsed))
+                {
+                    invalidas.Add(valor);
+                    continue;
+                }
+
+                seeds.Add(parsed.ToString());
+            }
+
+            if (invalidas.Count > 0)
+                return JobActionResult.Fail("Hay URLs invalidas: " + string.Join(", ", invalidas));
+
+            seeds = seeds
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return StartCrawlInternal(seeds, maxPages, maxDepth);
+        }
+
         public JobActionResult StopCrawl()
         {
             bool ok = JobStatusManager.RequestStopCrawl();
