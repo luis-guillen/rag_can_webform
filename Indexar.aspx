@@ -40,13 +40,17 @@
             </div>
         </div>
 
-        <!-- Escaneo manual de metadata (funcionalidad existente conservada) -->
+        <!-- Escaneo manual de metadata (herramienta de reparacion) -->
         <div class="card mb-4">
             <div class="card-body">
-                <h4 class="mb-3"><i class="fas fa-folder-open"></i> Regenerar metadata (manual)</h4>
+                <h4 class="mb-3"><i class="fas fa-folder-open"></i> Reparar sidecars (mantenimiento)</h4>
                 <p class="text-muted">
-                    Escanea una carpeta y regenera <code>metadata.json</code> + sidecars a partir de los
-                    <code>.txt</code> ya crawleados, sin volver a crawlear.
+                    <strong>No es parte del flujo normal.</strong>
+                    Usa esto solo si los archivos <code>*.metadata.json</code> se corrompieron, se borraron,
+                    o si tienes carpetas de <code>.txt</code> antiguas sin sidecars.
+                    Regenera los sidecars y el <code>metadata.json</code> raíz a partir de los <code>.txt</code>
+                    ya descargados, detecta duplicados entre páginas y limpia BOM.
+                    El crawler nuevo genera los sidecars correctamente de forma automática.
                 </p>
 
                 <div class="mb-3">
@@ -75,7 +79,7 @@
                 <asp:Label ID="lblError" runat="server" CssClass="alert alert-danger d-block mb-3"
                     Visible="false"></asp:Label>
 
-                <asp:Button ID="btnIndexar" runat="server" Text="Escanear y generar metadatos"
+                <asp:Button ID="btnIndexar" runat="server" Text="Reparar sidecars"
                     CssClass="btn btn-secondary" OnClick="BtnIndexar_Click" />
             </div>
         </div>
