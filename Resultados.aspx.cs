@@ -11,8 +11,8 @@ namespace rag_can_aspx
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (IsPostBack)
-                return;
+            // El estado del crawl se muestra ahora en Crawler.aspx (estado en vivo + logs).
+            Response.Redirect("~/Crawler.aspx", true);
 
             string jobId = (Request.QueryString["jobId"] ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(jobId))

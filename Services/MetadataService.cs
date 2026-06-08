@@ -90,6 +90,19 @@ namespace rag_can_aspx.Services
 
         [JsonProperty("depth")]
         public int Depth { get; set; }
+
+        // ---- Estado incremental de indexado (NIVEL 1) ----
+        // needs_index: true cuando la pagina es nueva o su contenido cambio (hash distinto)
+        // y aun no se ha indexado. El IndexJob solo procesa las que tienen needs_index=true
+        // y lo pone a false tras indexar correctamente.
+        [JsonProperty("needs_index")]
+        public bool NeedsIndex { get; set; }
+
+        [JsonProperty("last_indexed_at")]
+        public string LastIndexedAt { get; set; }
+
+        [JsonProperty("chunks")]
+        public int Chunks { get; set; }
     }
 
     public class PageMetadataDocument
@@ -303,7 +316,9 @@ namespace rag_can_aspx.Services
                 ? string.Format("(auto) {0} - pagina {1}", DomainToHost(domain), pageNumber)
                 : htmlTitle;
 
-            return Build(text, relFile, url, titleValue, jobName, domain, pageNumber, crawledAtUtc, depth);
+            PageMetadataDocument doc = Build(text, relFile, url, titleValue, jobName, domain, pageNumber, crawledAtUtc, depth);
+            ApplyIncrementalState(doc, absoluteFilePath);
+            return doc;
         }
 
         public PageMetadataDocument BuildForExistingPage(string absoluteFilePath, string jobName)
@@ -317,7 +332,47 @@ namespace rag_can_aspx.Services
             DateTime crawledAt = System.IO.File.GetLastWriteTimeUtc(absoluteFilePath);
             int depth = LoadExistingDepth(absoluteFilePath, url);
 
-            return Build(text, relFile, url, title, jobName, domain, pageNumber, crawledAt, depth);
+            PageMetadataDocument doc = Build(text, relFile, url, title, jobName, domain, pageNumber, crawledAt, depth);
+            ApplyIncrementalState(doc, absoluteFilePath);
+            return doc;
+        }
+
+        /// <summary>
+        /// Decide el estado incremental comparando el hash nuevo con el del sidecar previo:
+        ///  - mismo sha  -> se conserva needs_index/last_indexed_at/chunks (no re-indexar).
+        ///  - sha distinto o pagina nueva -> needs_index=true y se resetea el estado de indexado.
+        /// </summary>
+        private void ApplyIncrementalState(PageMetadataDocument doc, string absoluteFilePath)
+        {
+            if (doc == null || doc.PageMetadata == null)
+                return;
+
+            try
+            {
+                string sidecarPath = GetSidecarPath(absoluteFilePath);
+                PageMetadataDocument previous = System.IO.File.Exists(sidecarPath)
+                    ? LoadPageMetadata(sidecarPath)
+                    : null;
+
+                if (previous != null && previous.PageMetadata != null &&
+                    !string.IsNullOrEmpty(previous.PageMetadata.Sha256) &&
+                    string.Equals(previous.PageMetadata.Sha256, doc.PageMetadata.Sha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Contenido sin cambios: conservar el estado de indexado previo.
+                    doc.PageMetadata.NeedsIndex = previous.PageMetadata.NeedsIndex;
+                    doc.PageMetadata.LastIndexedAt = previous.PageMetadata.LastIndexedAt;
+                    doc.PageMetadata.Chunks = previous.PageMetadata.Chunks;
+                    return;
+                }
+            }
+            catch
+            {
+            }
+
+            // Nueva o cambiada: marcar para re-indexar.
+            doc.PageMetadata.NeedsIndex = true;
+            doc.PageMetadata.LastIndexedAt = null;
+            doc.PageMetadata.Chunks = 0;
         }
 
         private PageMetadataDocument Build(

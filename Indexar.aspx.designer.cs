@@ -6,6 +6,14 @@
 
 namespace rag_can_aspx {
     public partial class Indexar {
+        protected global::System.Web.UI.UpdatePanel updIndexControl;
+        protected global::System.Web.UI.WebControls.Label lblIndexMsg;
+        protected global::System.Web.UI.WebControls.Button btnIniciarIndex;
+        protected global::System.Web.UI.WebControls.Button btnPararIndex;
+        protected global::System.Web.UI.UpdatePanel updIndexEstado;
+        protected global::System.Web.UI.Timer tmrIndex;
+        protected global::System.Web.UI.WebControls.Literal litIndexEstado;
+        protected global::System.Web.UI.WebControls.Literal litIndexLogs;
         protected global::System.Web.UI.WebControls.DropDownList ddlCarpeta;
         protected global::System.Web.UI.WebControls.TextBox txtCarpetaCustom;
         protected global::System.Web.UI.WebControls.CheckBox chkRecursivo;

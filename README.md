@@ -397,10 +397,193 @@ rag_can_webform/
 
 ---
 
+## Operación en background (NIVEL 1): crawler/indexer controlables
+
+A partir de esta versión, el crawler y el indexer funcionan como **procesos en segundo plano
+controlables** desde Web Forms (iniciar / parar / consultar progreso / ver logs), con estado
+**persistido en disco**, **crawling e indexado incrementales por hash**, un **scheduler interno**
+y exposición opcional como **servicio WCF**. No se ejecuta trabajo largo dentro del request web.
+
+### Arquitectura nueva
+
+```
+UI:  Crawler.aspx        Indexar.aspx       (Default.aspx / Resultados.aspx -> redirigen a Crawler.aspx)
+        |                     |
+        v                     v
+   ┌──────────────────────────────────────────┐       ┌──────────────────────────────┐
+   │  CrawlerIndexerFacade  (capa de control)  │ <──── │ CrawlerIndexerService.svc     │
+   │  StartCrawl/StopCrawl/GetCrawlStatus/...   │  WCF  │ + ICrawlerIndexerService      │
+   └──────────────────────────────────────────┘       └──────────────────────────────┘
+        |            |              |             |
+        v            v              v             v
+   CrawlJob      IndexJob      JobStatusManager   Scheduler (Timer in-process)
+        |            |              |
+        v            v              v
+   CrawlerService MetadataService  App_Data/status/*.json  +  App_Data/logs/*.log  (escritura atomica)
+   (reutilizados)
+```
+
+Cada job se lanza con `HostingEnvironment.QueueBackgroundWorkItem`, escribe su estado mediante
+`JobStatusManager`, respeta un `CancellationToken` (para *Parar*) y un *single-flight lock*
+(impide ejecuciones concurrentes duplicadas). El estado persiste a disco, por lo que sobrevive a
+que el usuario cambie de página o recargue.
+
+### Métodos públicos (fachada y WCF)
+
+Definidos en `Services/CrawlerIndexerFacade.cs` y expuestos por `Services/Wcf/ICrawlerIndexerService.cs`:
+
+| Método | Descripción |
+|--------|-------------|
+| `StartCrawl()` | Lanza el crawl de todas las semillas de `seeds.txt` en segundo plano. |
+| `StartCrawlSource(string url)` | Crawl de una sola URL. |
+| `StopCrawl()` | Solicita parar el crawl en curso. |
+| `GetCrawlStatus()` | Estado actual del crawl (estado, progreso, URL actual, contadores). |
+| `GetLastCrawlRun()` | Última ejecución del crawl (mismo fichero de estado persistido). |
+| `StartIndexing()` | Indexa en segundo plano solo lo que tiene `needs_index=true`. |
+| `StopIndexing()` | Solicita parar la indexación. |
+| `GetIndexingStatus()` / `GetLastIndexingRun()` | Estado de la indexación. |
+| `GetSources()` | Lista de fuentes con su estado. |
+| `GetSourceStatus(string url)` | Estado de una fuente concreta. |
+| `GetLogs(int lines)` | Últimas N líneas de `crawler.log` e `indexer.log`. |
+
+### Ficheros de estado y logs (`App_Data/`)
+
+Se crean automáticamente al arrancar la app (`Global.asax` → `JobStatusManager.EnsureFolders()`):
+
+| Fichero | Contenido |
+|---------|-----------|
+| `status/crawl_status.json` | Estado del crawl: `state` (idle/running/completed/error/stopped), `started_at`, `finished_at`, `total_sources`, `processed_sources`, `failed_sources`, `skipped_sources`, `current_url`, `last_error`, `progress_percent`. |
+| `status/index_status.json` | Igual que el anterior, para la indexación. |
+| `status/sources_status.json` | Una entrada por URL: `last_crawled_at`, `http_status`, `title`, `content_sha256`, rutas (`txt_path`/`metadata_path`), `needs_index`, `last_indexed_at`, `chunk_count`, `pages_total/changed/skipped`, `state`, `last_error`. |
+| `status/scheduler_config.json` | Configuración del scheduler (modo, intervalo/hora, habilitado). |
+| `logs/crawler.log`, `logs/indexer.log` | Logs con timestamp UTC (rotan a `.1` al superar ~5 MB). |
+
+> Se mantiene la compatibilidad con `App_Data/crawlings/` y `App_Data/seeds.txt`. Los `.txt` y los
+> sidecars `*.metadata.json` siguen generándose igual; ahora el sidecar incluye además
+> `needs_index`, `last_indexed_at` y `chunks`.
+
+### Cómo lanzar el crawling
+
+1. Ir a **Crawler.aspx** (enlace *Crawler* del menú).
+2. Opcional: indicar una URL única, ajustar *Max Páginas* / *Max Profundidad*.
+3. Pulsar **Iniciar Crawling**. El job arranca en segundo plano y la página muestra estado,
+   barra de progreso, URL actual, contadores, tabla de fuentes y logs (refresco automático cada 3 s).
+4. Se puede cerrar o cambiar de página: el job sigue. Para detenerlo, **Parar**.
+
+**Incremental por hash:** para cada página se calcula el SHA-256 del texto limpio. Si coincide con el
+del crawl anterior, se marca como *skipped* y **no** se vuelve a indexar; si cambió (o es nueva), se
+marca `needs_index=true`.
+
+### Cómo lanzar la indexación
+
+1. Ir a **Indexar.aspx**.
+2. Pulsar **Iniciar Indexado**: procesa **solo** los documentos con `needs_index=true`, calcula el
+   número de *chunks*, registra `last_indexed_at` y pone `needs_index=false`.
+3. (Conservado) *Regenerar metadata (manual)*: escanea una carpeta y regenera `metadata.json`
+   + sidecars sin volver a crawlear.
+
+> **Integración Qdrant (preparada, no activa):** el push real de *embeddings* a Qdrant
+> (`rag_can_python`) está abstraído en `Services/Jobs/IVectorIndexSink.cs`. Por defecto se usa
+> `NullVectorIndexSink` (no-op). Para activarlo en el futuro, implementar `RagPythonVectorIndexSink`
+> y asignarlo a `IndexJob.Sink`.
+
+### Cómo programarlo (scheduler)
+
+En **Crawler.aspx**, tarjeta *Programación*:
+- **Modo**: `manual` (sin programación), `interval` (cada X horas) o `daily` (diario a una hora).
+- Marcar *Ejecutar crawl programado* y/o *Ejecutar indexado tras el crawl*.
+- **Guardar programación** → se persiste en `App_Data/status/scheduler_config.json`.
+
+Un `Timer` interno (arrancado en `Global.asax` → `Scheduler.Start()`) revisa la configuración cada
+minuto y, si toca y no hay jobs en curso, ejecuta el ciclo **crawl → index**.
+
+> **Importante (in-process):** el scheduler interno solo se ejecuta mientras el *app pool* esté vivo.
+> En IIS conviene habilitar **Application Initialization** / *AlwaysRunning* (o un *keep-alive*) para
+> que no se duerma. Ver más abajo la alternativa con Tarea programada de Windows.
+
+### Servicio WCF (opcional)
+
+- Endpoint: `/Services/Wcf/CrawlerIndexerService.svc` (SOAP / `basicHttpBinding`, con WSDL).
+- Implementación delgada que delega en `CrawlerIndexerFacade`.
+- **Requisito**: tener instalada la característica de Windows **"WCF HTTP Activation"** (en
+  *Activar o desactivar características de Windows → .NET Framework 4.8 Advanced Services →
+  Activación de WCF → Activación HTTP*) para que IIS/IIS Express mapeen la extensión `.svc`.
+- Probar con el *WCF Test Client* (`WcfTestClient.exe`) o `Add Service Reference` apuntando al `.svc`.
+- Si la característica no está instalada, la web y la UI siguen funcionando con normalidad; solo
+  queda inaccesible el endpoint WCF (la fachada interna es la vía principal).
+
+### Cómo escalar de 5 a 500 URLs
+
+1. **Ampliar las semillas**: añadir las ~500 URLs a `App_Data/seeds.txt` (o `~/Config/seeds.txt`), una por línea.
+2. **Ajustar concurrencia/politeness** en `Web.config`:
+   - `Crawler:MaxConcurrentDomains` (subir con cuidado, p. ej. 4–8),
+   - `Crawler:RequestDelayMs`, `Crawler:HttpTimeoutSeconds`,
+   - `Crawler:MaxPages` / `Crawler:MaxDepth`, `Index:ChunkSize`.
+3. **Incremental**: en cada ejecución solo se re-indexa lo que cambió (hash), por lo que el coste
+   de mantener 500 webs al día es bajo.
+4. **Programación robusta para producción**: en lugar del scheduler in-process, usar la **Tarea
+   programada de Windows** (ver abajo) que sobrevive a reciclajes del *app pool*.
+5. **Vectorización real**: conectar `IVectorIndexSink` con `rag_can_python`/Qdrant para indexar a escala.
+
+### Ejecutar en Windows (PC propio y servidor del profesor)
+
+> El proyecto es **.NET Framework 4.8.1 + ASP.NET Web Forms**: se compila y ejecuta en **Windows**
+> (Visual Studio 2022 / `msbuild` / IIS Express / IIS). No se ejecuta en Linux/WSL.
+
+**En tu PC (desarrollo):**
+1. Abrir la solución en Visual Studio 2022 y restaurar paquetes NuGet.
+2. Compilar (F6) y ejecutar (F5 / Ctrl+F5) con IIS Express.
+3. Asegurar permisos de escritura en `App_Data/` (normalmente automático con IIS Express).
+
+**En el servidor Windows del profesor (IIS):**
+1. Publicar el sitio (Build → Publish, o copiar el contenido compilado) a una carpeta del servidor.
+2. Crear un sitio/aplicación en IIS apuntando a esa carpeta, con un *Application Pool* de
+   **.NET Framework v4.0** (modo integrado).
+3. Dar permisos de **escritura** a la identidad del *app pool* (p. ej. `IIS AppPool\<nombre>`) sobre
+   `App_Data/` (subcarpetas `status`, `logs`, `crawlings`).
+4. (Recomendado) Habilitar **Application Initialization** y poner el *app pool* en `AlwaysRunning`
+   para que el scheduler interno no se detenga.
+5. (Opcional WCF) Instalar **WCF HTTP Activation**.
+
+**Programación con Tarea de Windows (alternativa de producción, sobrevive a reciclajes):**
+- Crear una tarea en el *Programador de tareas* que, en el horario deseado, invoque el servicio
+  (p. ej. con `curl`/PowerShell) llamando a `StartCrawl` y `StartIndexing` del `.svc`, o a una URL
+  de disparo de la aplicación. Así el ciclo no depende de que el *app pool* esté activo en ese momento.
+
+### Robustez
+
+- *Single-flight*: no se permiten dos crawls (ni dos indexados) simultáneos.
+- Control de excepciones **por URL**: una URL que falla no detiene el resto (se registra en
+  `failed_sources` y en el log).
+- Toda escritura queda **anclada a `App_Data`** (validación de rutas en `PathHelper`).
+- *Parar* cancela el job vía `CancellationToken` y deja el estado en `stopped`.
+- Tras un reciclaje del *app pool*, los estados que quedaron en `running` se reparan a `stopped`
+  al arrancar (`JobStatusManager.ReconcileOnStartup()`).
+
+### Nuevos archivos relevantes
+
+```
+Services/CrawlerIndexerFacade.cs        # capa de control (metodos publicos)
+Services/Jobs/JobStatusModels.cs        # modelos de estado (JSON)
+Services/Jobs/JobStatusManager.cs       # estado central + single-flight + cancelacion
+Services/Jobs/JsonFile.cs               # escritura/lectura JSON atomica
+Services/Jobs/JobLogger.cs              # logs con rotacion
+Services/Jobs/CrawlJob.cs               # crawl incremental
+Services/Jobs/IndexJob.cs               # indexado incremental
+Services/Jobs/Chunker.cs               # troceo (chunk_count + base para Qdrant)
+Services/Jobs/IVectorIndexSink.cs       # hook Qdrant (NullVectorIndexSink por defecto)
+Services/Jobs/Scheduler.cs              # scheduler in-process
+Services/Wcf/ICrawlerIndexerService.cs  # contrato WCF + DTOs
+Services/Wcf/CrawlerIndexerService.svc(.cs)  # servicio WCF (wrapper de la fachada)
+Crawler.aspx(.cs/.designer.cs)          # UI unificada de crawling
+```
+
+---
+
 ## Licencia
 
 Este proyecto está bajo licencia **MIT**. Consulta `LICENSE` para más detalles.
 
 ---
 
-**Última actualización:** 2026-06-07 | **Versión:** 1.0 | **Estado:** En desarrollo
+**Última actualización:** 2026-06-08 | **Versión:** 1.1 | **Estado:** En desarrollo
