@@ -31,11 +31,19 @@ app.add_middleware(
 
 @app.on_event("startup")
 def _warmup() -> None:
-    # Precargar modelo y verificar conexión a Qdrant.
-    try:
-        get_model()
-    except Exception as exc:  # pragma: no cover - log de arranque
-        print(f"[api] WARN: no se pudo precargar el modelo: {exc}")
+    # Precargar el modelo en segundo plano: cargarlo aquí de forma síncrona
+    # bloquea el arranque de uvicorn (no atiende /health hasta terminar), lo
+    # que hace que el botón "API ON/OFF" se quede en OFF durante el arranque
+    # en frío. Lo lanzamos en un hilo daemon para que /health responda ya.
+    import threading
+
+    def _preload() -> None:
+        try:
+            get_model()
+        except Exception as exc:  # pragma: no cover - log de arranque
+            print(f"[api] WARN: no se pudo precargar el modelo: {exc}")
+
+    threading.Thread(target=_preload, name="warmup-model", daemon=True).start()
 
 
 @app.get("/health")
