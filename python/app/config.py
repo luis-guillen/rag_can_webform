@@ -61,6 +61,13 @@ INDEX_UPSERT_BATCH = _env_int("RAG_UPSERT_BATCH", 128)
 E5_QUERY_PREFIX = _env_str("RAG_E5_QUERY_PREFIX", "query: ")
 E5_PASSAGE_PREFIX = _env_str("RAG_E5_PASSAGE_PREFIX", "passage: ")
 
+# Dispositivo para el modelo de embeddings: "auto" (usa CUDA solo si la GPU es
+# compatible con el build de torch instalado, si no CPU), "cuda" o "cpu".
+# "auto" evita el error `cudaErrorNoKernelImageForDevice` en GPUs cuya compute
+# capability no está incluida en el wheel de torch (p. ej. Pascal/GTX 10xx con
+# torch cu128, que solo trae kernels sm_75+).
+EMBED_DEVICE = _env_str("RAG_EMBED_DEVICE", "auto").strip().lower()
+
 # --- Chunking --------------------------------------------------------------
 CHUNK_SIZE = _env_int("RAG_CHUNK_SIZE", 2200)
 CHUNK_OVERLAP = _env_int("RAG_CHUNK_OVERLAP", 250)

@@ -21,11 +21,8 @@ from . import config
 
 
 def _select_device() -> str:
-    try:
-        import torch
-    except ImportError:
-        return "cpu"
-    return "cuda" if torch.cuda.is_available() else "cpu"
+    from .retrieval import _resolve_device
+    return _resolve_device()
 
 
 def _load_model(device: str):

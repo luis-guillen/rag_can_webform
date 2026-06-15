@@ -31,18 +31,54 @@ def get_client() -> QdrantClient:
     return QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY)
 
 
+def _resolve_device() -> str:
+    """Elige dispositivo para embeddings respetando config.EMBED_DEVICE.
+
+    En modo "auto" usa CUDA SOLO si la GPU es realmente ejecutable por el build
+    de torch instalado: una GPU puede estar "disponible" pero sin kernels para
+    su compute capability (p. ej. Pascal sm_61 con torch cu128 → en runtime
+    falla con `cudaErrorNoKernelImageForDevice`). Comprobamos la capability
+    contra la lista de arquitecturas compiladas y, ante la duda, caemos a CPU.
+    """
+    forced = config.EMBED_DEVICE
+    try:
+        import torch
+    except ImportError:
+        return "cpu"
+
+    if forced == "cpu":
+        return "cpu"
+    if forced == "cuda":
+        return "cuda" if torch.cuda.is_available() else "cpu"
+
+    # "auto"
+    if not torch.cuda.is_available():
+        return "cpu"
+    try:
+        major, minor = torch.cuda.get_device_capability(0)
+        dev_cc = major * 10 + minor  # 6.1 -> 61, 7.5 -> 75
+        supported = []
+        for arch in torch.cuda.get_arch_list():  # p. ej. ['sm_75', 'sm_80', ...]
+            if arch.startswith("sm_") and arch[3:].isdigit():
+                supported.append(int(arch[3:]))
+        # torch ejecuta una GPU si hay un arch <= su CC (compatibilidad hacia atrás).
+        if supported and any(dev_cc >= s for s in supported) and dev_cc >= min(supported):
+            return "cuda"
+    except Exception:
+        pass
+    print(
+        "[retrieval] GPU no compatible con el build de torch instalado; "
+        "usando CPU para embeddings."
+    )
+    return "cpu"
+
+
 @lru_cache(maxsize=1)
 def get_model():
     # Import perezoso: torch/sentence_transformers son pesados.
     from sentence_transformers import SentenceTransformer
 
-    try:
-        import torch
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    except ImportError:
-        device = "cpu"
-    return SentenceTransformer(config.EMBEDDING_MODEL, device=device)
+    return SentenceTransformer(config.EMBEDDING_MODEL, device=_resolve_device())
 
 
 # --- Detección de fuente --------------------------------------------------
